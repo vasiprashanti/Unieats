@@ -4,12 +4,6 @@
 
 ---
 
-## 📌 Project Background
-
-Unieats was originally launched in **2021** as the first platform of its kind. It operated successfully for a year and even received a purchase offer of ₹5 lakhs from faculty members, which was declined. Due to unforeseen circumstances, the platform was paused but is now being rebuilt from the ground up with improved features, UI/UX, and scalability.
-
----
-
 ## 🎯 Project Goal
 
 To deliver a **seamless and secure** food ordering experience for students, while providing vendors with efficient order management tools, and ensuring administrators have full control over operations.
