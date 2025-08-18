@@ -6,10 +6,9 @@ export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
 
   const images = useMemo(
     () => [
-      "https://images.unsplash.com/photo-1600891964599-f61ba0e24092",
-      "https://images.unsplash.com/photo-1600891964790-61ba0e24092",
-      "https://images.unsplash.com/photo-1600891964890-61ba0e24092",
-      "https://images.unsplash.com/photo-1600891964990-61ba0e24092",
+      "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0",
+      "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe",
+      "https://images.unsplash.com/photo-1543352634-87393f13c33b",
     ],
     []
   );
