@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+/dist/
+/build/
+/out/
+.next/
+.nuxt/
+.svelte-kit/
+.vite/
+coverage/
+storybook-static/
+
+# Caches
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+.stylelintcache
+.swc/
+.wrangler/
+.vercel/
+.netlify/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
