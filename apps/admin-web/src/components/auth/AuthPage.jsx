@@ -1,0 +1,175 @@
+import React, { useEffect, useMemo, useState } from "react";
+
+// Reusable Auth Page with Carousel + Toggle Login/Signup
+// Props:
+// - initialMode: 'login' | 'signup'
+// - roleLabel: string (e.g., 'Admin', 'Vendor', 'User')
+export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
+  const [mode, setMode] = useState(initialMode); // 'login' | 'signup'
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const images = useMemo(
+    () => [
+      "https://images.unsplash.com/photo-1600891964599-f61ba0e24092",
+      "https://images.unsplash.com/photo-1600891964790-61ba0e24092",
+      "https://images.unsplash.com/photo-1600891964890-61ba0e24092",
+      "https://images.unsplash.com/photo-1600891964990-61ba0e24092",
+    ],
+    []
+  );
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCurrentIndex((i) => (i + 1) % images.length);
+    }, 2000);
+    return () => clearInterval(id);
+  }, [images.length]);
+
+  const toggleMode = () => setMode((m) => (m === "login" ? "signup" : "login"));
+
+  return (
+    <div className="flex h-screen overflow-hidden relative font-sans bg-white">
+      {/* Inline keyframes for slide-in animation */}
+      <style>{`
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      `}</style>
+
+      {/* Left - Carousel */}
+      <div
+        className="relative w-[60%] overflow-hidden block"
+        style={{ clipPath: "polygon(0 0, 85% 0, 70% 100%, 0% 100%)" }}
+      >
+        {images.map((src, idx) => (
+          <img
+            key={src}
+            src={`${src}?auto=format&fit=crop&w=1600&q=60`}
+            alt="UniEats"
+            className={
+              "absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 " +
+              (idx === currentIndex ? "opacity-100 z-20" : "opacity-0")
+            }
+          />
+        ))}
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/40 z-30" />
+        <span className="absolute z-40 text-white text-3xl font-bold drop-shadow-md text-center"
+          style={{ top: "50%", left: "30%", transform: "translate(-50%, -50%)" }}
+        >
+          Welcome to Unieats{roleLabel ? ` — ${roleLabel}` : ""}
+        </span>
+      </div>
+
+      {/* Right - Forms */}
+      <div className="flex-1 flex justify-start items-center bg-white p-8">
+        <div className="w-full max-w-[400px] bg-[#fafafa] p-8 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] relative overflow-hidden">
+          <div className={`${mode === "login" ? "block animate-[slideIn_0.6s_ease_forwards]" : "hidden"}`}>
+            <h2 className="text-[#ff6600] text-2xl font-semibold mb-4 text-center">Login</h2>
+            <LoginForm onSwitch={toggleMode} />
+          </div>
+          <div className={`${mode === "signup" ? "block animate-[slideIn_0.6s_ease_forwards]" : "hidden"}`}>
+            <h2 className="text-[#ff6600] text-2xl font-semibold mb-4 text-center">Sign Up</h2>
+            <SignupForm onSwitch={toggleMode} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, type = "text", placeholder, value, onChange, required }) {
+  return (
+    <div className="mb-4">
+      <label className="block mb-1 text-sm text-[#333]">{label}</label>
+      <input
+        className="w-full p-3 text-base border border-[#ddd] rounded-lg outline-none transition-colors focus:border-[#ff6600]"
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        required={required}
+      />
+    </div>
+  );
+}
+
+function PrimaryButton({ children, type = "button" }) {
+  return (
+    <button
+      type={type}
+      className="w-full py-3 bg-[#ff6600] text-white font-bold rounded-lg text-base cursor-pointer mt-2 transition-colors hover:bg-[#e65500]"
+    >
+      {children}
+    </button>
+  );
+}
+
+function SwitchText({ children }) {
+  return <div className="text-center mt-4 text-sm text-[#555]">{children}</div>;
+}
+
+function LinkButton({ onClick, children }) {
+  return (
+    <button type="button" onClick={onClick} className="text-[#ff6600] font-semibold">
+      {children}
+    </button>
+  );
+}
+
+function LoginForm({ onSwitch }) {
+  const [emailOrPhone, setEmailOrPhone] = useState("");
+  const [password, setPassword] = useState("");
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="block">
+      <Field
+        label="Email or Phone"
+        placeholder="Email or phone"
+        value={emailOrPhone}
+        onChange={setEmailOrPhone}
+        required
+      />
+      <Field
+        label="Password"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={setPassword}
+        required
+      />
+      <PrimaryButton type="submit">Login</PrimaryButton>
+      <SwitchText>
+        Never ordered before? <LinkButton onClick={onSwitch}>Sign up here</LinkButton>
+      </SwitchText>
+    </form>
+  );
+}
+
+function SignupForm({ onSwitch }) {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="block">
+      <Field label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required />
+      <Field label="Email" type="email" placeholder="Email" value={email} onChange={setEmail} required />
+      <Field label="Phone" type="tel" placeholder="Phone number" value={phone} onChange={setPhone} />
+      <Field label="Password" type="password" placeholder="Password" value={password} onChange={setPassword} required />
+      <Field label="Confirm Password" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} required />
+      <PrimaryButton type="submit">Sign Up</PrimaryButton>
+      <SwitchText>
+        Already have an account? <LinkButton onClick={onSwitch}>Login here</LinkButton>
+      </SwitchText>
+    </form>
+  );
+}
