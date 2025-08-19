@@ -27,7 +27,7 @@ export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
   const toggleMode = () => setMode((m) => (m === "login" ? "signup" : "login"));
 
   return (
-    <div className="flex h-screen overflow-hidden relative font-sans bg-[#e7ece8]">
+    <div className="flex h-screen overflow-hidden relative font-sans bg-[#ffffff]">
       {/* Inline keyframes for slide-in animation */}
       <style>{`
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -51,15 +51,13 @@ export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
         ))}
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/40 z-30" />
-        <span className="absolute z-40 text-white text-3xl font-bold drop-shadow-md text-center"
-          style={{ top: "50%", left: "30%", transform: "translate(-50%, -50%)" }}
-        >
-          Welcome to Unieats{roleLabel ? ` — ${roleLabel}` : ""}
-        </span>
       </div>
 
       {/* Right - Forms */}
-      <div className="flex-1 flex justify-start items-center bg-[#e7ece8] p-8">
+      <div className="flex-1 flex flex-col justify-center items-center bg-[#ffffff] p-8">
+        <h1 className="text-[#ff6600] text-3xl font-bold mb-8 text-center">
+          Welcome to Unieats{roleLabel ? ` — ${roleLabel}` : ""}
+        </h1>
         <div className="w-full max-w-[400px] bg-[#fafafa] p-8 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] relative overflow-hidden">
           <div className={`${mode === "login" ? "block animate-[slideIn_0.6s_ease_forwards]" : "hidden"}`}>
             <h2 className="text-[#ff6600] text-2xl font-semibold mb-4 text-center">Login</h2>
