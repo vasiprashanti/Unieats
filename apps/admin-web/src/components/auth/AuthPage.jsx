@@ -27,7 +27,7 @@ export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
   const toggleMode = () => setMode((m) => (m === "login" ? "signup" : "login"));
 
   return (
-    <div className="flex h-screen overflow-hidden relative font-sans bg-white">
+    <div className="flex h-screen overflow-hidden relative font-sans bg-[#e7ece8]">
       {/* Inline keyframes for slide-in animation */}
       <style>{`
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -59,7 +59,7 @@ export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
       </div>
 
       {/* Right - Forms */}
-      <div className="flex-1 flex justify-start items-center bg-white p-8">
+      <div className="flex-1 flex justify-start items-center bg-[#e7ece8] p-8">
         <div className="w-full max-w-[400px] bg-[#fafafa] p-8 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] relative overflow-hidden">
           <div className={`${mode === "login" ? "block animate-[slideIn_0.6s_ease_forwards]" : "hidden"}`}>
             <h2 className="text-[#ff6600] text-2xl font-semibold mb-4 text-center">Login</h2>
@@ -75,18 +75,34 @@ export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
   );
 }
 
-function Field({ label, type = "text", placeholder, value, onChange, required }) {
+function Field({ label, type = "text", placeholder, value, onChange, required, enableToggle = false }) {
+  // Local visibility state only when toggle is enabled on password fields
+  const [visible, setVisible] = useState(false);
+  const actualType = enableToggle && type === "password" ? (visible ? "text" : "password") : type;
+
   return (
     <div className="mb-4">
       <label className="block mb-1 text-sm text-[#333]">{label}</label>
-      <input
-        className="w-full p-3 text-base border border-[#ddd] rounded-lg outline-none transition-colors focus:border-[#ff6600]"
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange?.(e.target.value)}
-        required={required}
-      />
+      <div className="relative">
+        <input
+          className="w-full p-3 text-base border border-[#ddd] rounded-lg outline-none transition-colors focus:border-[#ff6600] pr-16"
+          type={actualType}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          required={required}
+        />
+        {enableToggle && type === "password" && (
+          <button
+            type="button"
+            onClick={() => setVisible((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#555] hover:text-[#333]"
+            aria-label={visible ? "Hide password" : "Show password"}
+          >
+            {visible ? "Hide" : "Show"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -138,7 +154,11 @@ function LoginForm({ onSwitch }) {
         value={password}
         onChange={setPassword}
         required
+        enableToggle
       />
+      <div className="text-right -mt-2 mb-2">
+        <button type="button" className="text-sm text-[#ff6600] hover:underline">Forgot password?</button>
+      </div>
       <PrimaryButton type="submit">Login</PrimaryButton>
       <SwitchText>
         Never ordered before? <LinkButton onClick={onSwitch}>Sign up here</LinkButton>
@@ -163,8 +183,8 @@ function SignupForm({ onSwitch }) {
       <Field label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required />
       <Field label="Email" type="email" placeholder="Email" value={email} onChange={setEmail} required />
       <Field label="Phone" type="tel" placeholder="Phone number" value={phone} onChange={setPhone} />
-      <Field label="Password" type="password" placeholder="Password" value={password} onChange={setPassword} required />
-      <Field label="Confirm Password" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} required />
+      <Field label="Password" type="password" placeholder="Password" value={password} onChange={setPassword} required enableToggle />
+      <Field label="Confirm Password" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} required enableToggle />
       <PrimaryButton type="submit">Sign Up</PrimaryButton>
       <SwitchText>
         Already have an account? <LinkButton onClick={onSwitch}>Login here</LinkButton>
