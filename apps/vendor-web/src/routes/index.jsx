@@ -11,15 +11,28 @@ const roleHome = (role) => {
 };
 
 function ProtectedVendor({ children }) {
-  const { user, role, loading } = useAuth();
-  if (loading) return <div className="p-8">Loading...</div>;
+  const { user, role, initializing } = useAuth();
+  if (initializing) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
   if (!user) return <Navigate to="/vendor/login" replace />;
   if (role !== 'vendor') return <Navigate to={roleHome(role)} replace />;
   return children;
 }
 
 function GuestOnly() {
-  const { user, role } = useAuth();
+  const { user, role, initializing } = useAuth();
+  if (initializing) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
   if (user) return <Navigate to={roleHome(role)} replace />;
   return null;
 }

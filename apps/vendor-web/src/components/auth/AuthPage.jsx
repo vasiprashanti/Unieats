@@ -63,7 +63,7 @@ export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
   );
 }
 
-function Field({ label, type = "text", placeholder, value, onChange, required, enableToggle = false }) {
+function Field({ label, type = "text", placeholder, value, onChange, onBlur, required, enableToggle = false, error }) {
   const [visible, setVisible] = useState(false);
   const actualType = enableToggle && type === "password" ? (visible ? "text" : "password") : type;
 
@@ -72,12 +72,15 @@ function Field({ label, type = "text", placeholder, value, onChange, required, e
       <label className="block mb-1 text-sm text-[#333]">{label}</label>
       <div className="relative">
         <input
-          className="w-full p-3 text-base border border-[#ddd] rounded-lg outline-none transition-colors focus:border-[#ff6600] pr-16"
+          className={`w-full p-3 text-base border rounded-lg outline-none transition-colors pr-16 ${error ? "border-red-400 focus:border-red-500" : "border-[#ddd] focus:border-[#ff6600]"}`}
           type={actualType}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
+          onBlur={onBlur}
           required={required}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${label}-error` : undefined}
         />
         {enableToggle && type === "password" && (
           <button
@@ -90,6 +93,9 @@ function Field({ label, type = "text", placeholder, value, onChange, required, e
           </button>
         )}
       </div>
+      {error ? (
+        <p id={`${label}-error`} className="mt-1 text-xs text-red-600">{error}</p>
+      ) : null}
     </div>
   );
 }
@@ -118,36 +124,87 @@ function LinkButton({ onClick, children }) {
   );
 }
 
+import Alert from "../Alert";
+import { useAuth } from "../../context/AuthContext";
+
 function LoginForm({ onSwitch }) {
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [touched, setTouched] = useState({ emailOrPhone: false, password: false });
+  const [submitting, setSubmitting] = useState(false);
 
-  const onSubmit = (e) => {
+  const { login, loading, error, setError } = useAuth();
+
+  const isEmail = (v) => /.+@.+\..+/.test(v);
+  const errors = {
+    emailOrPhone:
+      touched.emailOrPhone && !emailOrPhone ? "Email is required" :
+      touched.emailOrPhone && emailOrPhone && !isEmail(emailOrPhone) ? "Enter a valid email (name@domain.com)" : "",
+    password: touched.password && !password ? "Password is required" : "",
+  };
+  const hasErrors = Object.values(errors).some(Boolean);
+
+  const friendly = (code) => {
+    if (!code) return null;
+    const map = {
+      "auth/wrong-password": "Invalid email or password",
+      "auth/user-not-found": "Invalid email or password",
+      default: "Something went wrong. Please try again.",
+    };
+    return map[code] || map.default;
+  };
+
+  const onSubmit = async (e) => {
     e.preventDefault();
+    setTouched({ emailOrPhone: true, password: true });
+    if (hasErrors) return;
+    setSubmitting(true);
+    const res = await login({ email: emailOrPhone, password });
+    setSubmitting(false);
+  };
+
+  const onChangeClear = (key, setter) => (val) => {
+    setter(val);
+    if (!touched[key]) setTouched((t) => ({ ...t, [key]: true }));
+    if (error) setError(null);
   };
 
   return (
     <form onSubmit={onSubmit} className="block">
+      <Alert type="error" message={friendly(error)} />
       <Field
-        label="Email or Phone"
-        placeholder="Email or phone"
+        label="Email"
+        placeholder="Email"
         value={emailOrPhone}
-        onChange={setEmailOrPhone}
+        onChange={onChangeClear('emailOrPhone', setEmailOrPhone)}
+        onBlur={() => setTouched((t) => ({ ...t, emailOrPhone: true }))}
         required
+        error={errors.emailOrPhone}
       />
       <Field
         label="Password"
         type="password"
         placeholder="Password"
         value={password}
-        onChange={setPassword}
+        onChange={onChangeClear('password', setPassword)}
+        onBlur={() => setTouched((t) => ({ ...t, password: true }))}
         required
         enableToggle
+        error={errors.password}
       />
       <div className="text-right -mt-2 mb-2">
         <button type="button" className="text-sm text-[#ff6600] hover:underline">Forgot password?</button>
       </div>
-      <PrimaryButton type="submit">Login</PrimaryButton>
+      <PrimaryButton type="submit" disabled={loading || submitting || hasErrors}>
+        {loading || submitting ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
+            Loading...
+          </span>
+        ) : (
+          "Login"
+        )}
+      </PrimaryButton>
       <SwitchText>
         Never ordered before? <LinkButton onClick={onSwitch}>Sign up here</LinkButton>
       </SwitchText>
@@ -162,25 +219,63 @@ function SignupForm({ onSwitch }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const onSubmit = (e) => {
+  const { signup, loading, error, setError } = useAuth();
+
+  const friendly = (code) => {
+    if (!code) return null;
+    const map = {
+      "auth/email-already-in-use": "This email is already registered",
+      "auth/password-mismatch": "Passwords do not match",
+      default: "Something went wrong. Please try again.",
+    };
+    return map[code] || map.default;
+  };
+
+  const onSubmit = async (e) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('auth/password-mismatch');
+      return;
+    }
+    setSubmitting(true);
+    const res = await signup({ email, password, displayName: fullName });
+    if (!res?.ok) {
+      // error shown via Alert
+    }
+    setSubmitting(false);
+  };
+
+  const onChangeClear = (setter) => (val) => {
+    setter(val);
+    if (error) setError(null);
   };
 
   return (
     <form onSubmit={onSubmit} className="block">
-      <Field label="Full Name" placeholder="Full Name" value={fullName} onChange={setFullName} required />
-      <Field label="Email" type="email" placeholder="Email" value={email} onChange={setEmail} required />
-      <Field label="Phone" type="tel" placeholder="Phone number" value={phone} onChange={setPhone} />
-      <Field label="Password" type="password" placeholder="Password" value={password} onChange={setPassword} required enableToggle />
-      <Field label="Confirm Password" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} required enableToggle />
+      <Alert type="error" message={friendly(error)} />
+      <Field label="Full Name" placeholder="Full Name" value={fullName} onChange={onChangeClear(setFullName)} required />
+      <Field label="Email" type="email" placeholder="Email" value={email} onChange={onChangeClear(setEmail)} required />
+      <Field label="Phone" type="tel" placeholder="Phone number" value={phone} onChange={onChangeClear(setPhone)} />
+      <Field label="Password" type="password" placeholder="Password" value={password} onChange={onChangeClear(setPassword)} required enableToggle />
+      <Field label="Confirm Password" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={onChangeClear(setConfirmPassword)} required enableToggle />
       <label className="flex items-start gap-2 text-sm text-[#333] mt-2">
         <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} />
         <span>
           I agree to the <a href="#" className="text-[#ff6600] hover:underline">Terms of Service</a> and <a href="#" className="text-[#ff6600] hover:underline">Privacy Policy</a>
         </span>
       </label>
-      <PrimaryButton type="submit" disabled={!acceptTerms}>Sign Up</PrimaryButton>
+      <PrimaryButton type="submit" disabled={!acceptTerms || loading || submitting}>
+        {loading || submitting ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
+            Loading...
+          </span>
+        ) : (
+          "Sign Up"
+        )}
+      </PrimaryButton>
       <SwitchText>
         Already have an account? <LinkButton onClick={onSwitch}>Login here</LinkButton>
       </SwitchText>

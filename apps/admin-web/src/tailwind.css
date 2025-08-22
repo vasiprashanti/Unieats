@@ -1,1 +1,95 @@
 @import "tailwindcss";
+
+/* Root tokens for light mode */
+:root {
+  /* Main Layout */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  /* Cards & Surfaces */
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  /* Brand Colors */
+  --primary: 24 100% 56%;
+  --primary-foreground: 210 40% 98%;
+  /* Text & Content */
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  /* Interactive Elements */
+  --accent: 24 100% 96%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  /* Status Colors */
+  --destructive: 0 84.2% 60.2%;
+  --secondary: 210 40% 96.1%;
+  /* Borders */
+  --border: 214.3 31.8% 91.4%;
+  /* Sidebar */
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 24 100% 50%;
+  --sidebar-accent: 240 4.8% 95.9%;
+}
+
+/* Dark mode overrides */
+.dark {
+  /* Main Layout */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  /* Cards & Surfaces */
+  --card: 0 0% 0%;
+  --card-foreground: 0 0% 100%;
+  /* Brand Colors */
+  --primary: 24 100% 58%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  /* Text & Content */
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  /* Interactive Elements */
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  /* Status Colors */
+  --destructive: 0 62.8% 30.6%;
+  --secondary: 217.2 32.6% 17.5%;
+  /* Borders */
+  --border: 217.2 32.6% 17.5%;
+  /* Sidebar */
+  --sidebar-background: 240 5.9% 10%;
+  --sidebar-foreground: 240 4.8% 95.9%;
+  --sidebar-primary: 24 100% 60%;
+  --sidebar-accent: 240 3.7% 15.9%;
+}
+
+/* Apply tokens to actual elements via HSL */
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.card {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+}
+
+.sidebar {
+  /* Match dashboard background */
+  background-color: hsl(var(--background));
+  color: hsl(var(--sidebar-foreground));
+  border-color: hsl(var(--border));
+}
+
+.btn-primary {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.border-base {
+  border-color: hsl(var(--border));
+}
+
+.text-muted {
+  color: hsl(var(--muted-foreground));
+}
+
+.bg-accent {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}

@@ -6,11 +6,21 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children, initialRole = 'vendor' }) {
   const [user, setUser] = useState(null); // { uid, email, displayName, role }
   const [role, setRole] = useState(initialRole);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // action-level loading
+  const [initializing, setInitializing] = useState(true); // initial auth check
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    return () => {};
+    let active = true;
+    (async () => {
+      try {
+        await new Promise(r => setTimeout(r, 500));
+        // Optionally set user if session exists
+      } finally {
+        if (active) setInitializing(false);
+      }
+    })();
+    return () => { active = false; };
   }, []);
 
   const login = useCallback(async ({ email, password }) => {
@@ -19,10 +29,10 @@ export function AuthProvider({ children, initialRole = 'vendor' }) {
       await new Promise(r => setTimeout(r, 400));
       setUser({ uid: 'demo', email, displayName: 'Vendor', role: 'vendor' });
       setRole('vendor');
-      return true;
+      return { ok: true };
     } catch (e) {
-      setError('Failed to login');
-      return false;
+      setError('auth/wrong-password');
+      return { ok: false, code: 'auth/wrong-password' };
     } finally { setLoading(false); }
   }, []);
 
@@ -32,10 +42,10 @@ export function AuthProvider({ children, initialRole = 'vendor' }) {
       await new Promise(r => setTimeout(r, 400));
       setUser({ uid: 'demo', email, displayName, role: 'vendor' });
       setRole('vendor');
-      return true;
+      return { ok: true };
     } catch (e) {
-      setError('Failed to signup');
-      return false;
+      setError('auth/email-already-in-use');
+      return { ok: false, code: 'auth/email-already-in-use' };
     } finally { setLoading(false); }
   }, []);
 
@@ -50,7 +60,7 @@ export function AuthProvider({ children, initialRole = 'vendor' }) {
     } finally { setLoading(false); }
   }, []);
 
-  const value = useMemo(() => ({ user, role, loading, error, login, signup, logout, setRole }), [user, role, loading, error, login, signup, logout]);
+  const value = useMemo(() => ({ user, role, loading, initializing, error, login, signup, logout, setRole, setError }), [user, role, loading, initializing, error, login, signup, logout]);
 
   return (
     <AuthContext.Provider value={value}>
