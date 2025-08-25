@@ -40,7 +40,7 @@ const navigation = [
     ) },
 ];
 
-export default function AdminSidebar({ collapsed = false }) {
+export default function AdminSidebar({ collapsed = false, onToggle }) {
   return (
     <aside
       className={cn(
@@ -48,15 +48,24 @@ export default function AdminSidebar({ collapsed = false }) {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex h-16 items-center justify-center border-b border-base">
-        <h1
+      <div className="flex h-16 items-center justify-start border-b border-base px-3">
+        {/* Logo toggles sidebar and stays at the far left in both states */}
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label="Toggle sidebar"
+          title="Toggle sidebar"
           className={cn(
-            "font-bold text-xl text-[hsl(var(--sidebar-primary))] transition-opacity duration-200",
-            collapsed ? "opacity-0" : "opacity-100"
+            "flex items-center justify-center cursor-pointer bg-transparent p-0 rounded focus:outline-none focus:ring-0 focus-visible:outline-none active:outline-none",
+            collapsed ? "h-8 w-8" : "h-8 w-8"
           )}
         >
-          {!collapsed && "Admin Panel"}
-        </h1>
+          <img
+            src="/logo.jpg"
+            alt="UniEats Logo"
+            className={cn("object-contain", "h-8 w-8")}
+          />
+        </button>
       </div>
       <nav className="flex-1 space-y-1 p-2">
         {navigation.map((item) => (

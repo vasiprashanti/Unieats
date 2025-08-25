@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 
 // Reusable Auth Page with Carousel + Toggle Login/Signup
 // Props:
@@ -6,23 +6,9 @@ import React, { useEffect, useMemo, useState } from "react";
 // - roleLabel: string (e.g., 'Admin', 'Vendor', 'User')
 export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
   const [mode, setMode] = useState(initialMode); // 'login' | 'signup'
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const images = useMemo(
-    () => [
-      "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0",
-      "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe",
-      "https://images.unsplash.com/photo-1543352634-87393f13c33b",
-    ],
-    []
-  );
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCurrentIndex((i) => (i + 1) % images.length);
-    }, 2000);
-    return () => clearInterval(id);
-  }, [images.length]);
+  // Single static hero image for login/signup (use local public asset to avoid external loading issues)
+  const heroImage = "/login.jpg"; // TODO: replace with '/pancakes.jpg' once added
+  const [imageSrc, setImageSrc] = useState(heroImage);
 
   const toggleMode = () => setMode((m) => (m === "login" ? "signup" : "login"));
 
@@ -38,19 +24,14 @@ export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
         className="relative w-[60%] overflow-hidden block"
         style={{ clipPath: "polygon(0 0, 85% 0, 70% 100%, 0% 100%)" }}
       >
-        {images.map((src, idx) => (
-          <img
-            key={src}
-            src={`${src}?auto=format&fit=crop&w=1600&q=60`}
-            alt="UniEats"
-            className={
-              "absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 " +
-              (idx === currentIndex ? "opacity-100 z-20" : "opacity-0")
-            }
-          />
-        ))}
+        <img
+          src={imageSrc}
+          onError={() => setImageSrc('/logo.jpg')}
+          alt="UniEats"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/40 z-30" />
+        <div className="absolute inset-0 bg-black/40 z-10" />
       </div>
 
       {/* Right - Forms */}
