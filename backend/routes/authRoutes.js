@@ -3,9 +3,12 @@ import { check } from 'express-validator';
 import { registerUser, getMe } from '../controllers/authController.js';
 import { verifyFirebaseToken } from '../middleware/authMiddleware.js';
 import { registerUser, getMe, verifyToken } from '../controllers/authController.js';
+import { getBasicAnalytics, getComprehensiveAnalytics } from '../controllers/analyticsController.js';
+import { monitorRealTimeOrders, exportOrdersToCSV } from '../controllers/orderAdminController.js'; 
 
 
 const router = express.Router();
+const adminOnly = [verifyFirebaseToken, checkRole('admin')];
 
 // REGISTER ROUTE
 // @route   POST /api/v1/auth/register
@@ -32,5 +35,13 @@ router.get('/me', verifyFirebaseToken, getMe); // <-- Middleware is applied here
 // @desc    Verify a token is still valid
 // @access  Private
 router.get('/verify', verifyFirebaseToken, verifyToken);
+
+// --- Analytics Routes ---
+router.get('/analytics/basic', ...adminOnly, getBasicAnalytics);
+router.get('/analytics/comprehensive', ...adminOnly, getComprehensiveAnalytics);
+
+// Order Management & Export Routes
+router.get('/orders/monitor', ...adminOnly, monitorRealTimeOrders);
+router.get('/orders/export-csv', ...adminOnly, exportOrdersToCSV);
 
 export default router;
