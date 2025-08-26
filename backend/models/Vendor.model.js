@@ -6,6 +6,7 @@ const vendorSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'User',
+        index: true,
     },
     businessName: {
         type: String,
@@ -32,6 +33,7 @@ const vendorSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending',
+        index: true,
     },
     // Cloudinary URLs for uploaded documents
     documents: {

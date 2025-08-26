@@ -1,33 +1,11 @@
-import mongoose,{Schema} from "mongoose";
+import mongoose from 'mongoose';
 
-const userSchema = new Schema({
-    // The link to Firebase Authentication
-    firebaseUid: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    // A single field for the user's name
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-    },
-    // The field to control access
-    role: {
-      type: String,
-      enum: ['user', 'vendor', 'admin'],
-      default: 'user',
-    },
-  },
-  { timestamps: true }
-);
+const userSchema = new mongoose.Schema({
+    firebaseUid: { type: String, required: true, unique: true, index: true }, // Indexed for fast lookups
+    email: { type: String, required: true, unique: true, lowercase: true, index: true }, // Indexed for fast lookups
+    name: { type: String, required: true, trim: true },
+    role: { type: String, enum: ['user', 'vendor', 'admin'], default: 'user', index: true }, // Indexed for filtering by role
+}, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
 export default User;
