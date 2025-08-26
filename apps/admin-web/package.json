@@ -8,12 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-<<<<<<< HEAD
+    "firebase": "^12.1.0",
     "lucide-react": "^0.453.0",
     "quill": "^2.0.3",
-=======
-    "firebase": "^12.1.0",
->>>>>>> bce0f01ccec6d69fdc5f96a0d3171f17d37f5332
     "react": "*",
     "react-dom": "*",
     "react-quill": "^2.0.0",
