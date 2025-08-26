@@ -1,4 +1,7 @@
 import React from "react";
+import Vendors from "./Vendors";
+
+// Users & Vendors page currently focuses on vendor approvals
 export default function Users() {
-  return <div className="p-8">Admin Users</div>;
+  return <Vendors />;
 }

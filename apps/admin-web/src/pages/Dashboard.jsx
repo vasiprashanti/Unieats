@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { IndianRupee } from 'lucide-react';
 
 // Minimal UI primitives to avoid external dependencies
 function Card({ children, className = "" }) {
@@ -23,6 +24,81 @@ function CardDescription({ children, className = "" }) {
 }
 function CardContent({ children, className = "" }) {
   return <div className={`px-4 py-4 ${className}`}>{children}</div>;
+}
+
+// Inline Restaurants selector component
+function InlineRestaurants({ inline }) {
+  const restaurants = [
+    { id: 'r1', name: 'Lets Go Live', logo: '/lgl.jpg' },
+    { id: 'r2', name: 'Tea Tradition', logo: '/tea.jpg' },
+    { id: 'r3', name: 'Nescafe', logo: '/nescafe.jpg' },
+    { id: 'r4', name: 'The Italian Oven', logo: '/oven.jpg' },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      {restaurants.map((r) => (
+        <button
+          key={r.id}
+          type="button"
+          onClick={() => inline.setSelectedRestaurant(r.name)}
+          className="group flex flex-col items-center rounded-lg border border-base p-3 hover:shadow-md transition-shadow"
+          title={`View ${r.name} orders`}
+        >
+          <img src={r.logo} alt={r.name} className="h-16 w-16 rounded-full object-cover border" />
+          <span className="mt-2 text-sm font-medium group-hover:text-[hsl(var(--primary))]">{r.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Inline Orders list component
+function InlineOrders({ inline, recentOrders }) {
+  const selected = inline.selectedRestaurant;
+  const filtered = selected
+    ? recentOrders.filter((o) => o.vendor.toLowerCase() === selected.toLowerCase())
+    : [];
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-sm font-semibold">
+          {selected ? `Recent Orders • ${selected}` : 'Select a restaurant to see recent orders'}
+        </h4>
+        {selected && (
+          <button
+            type="button"
+            onClick={() => inline.setSelectedRestaurant(null)}
+            className="text-xs text-[hsl(var(--primary))] hover:underline"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      {selected && (
+        filtered.length === 0 ? (
+          <p className="text-sm text-muted">No recent orders for this restaurant.</p>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((order) => (
+              <div key={order.id} className="flex items-center justify-between rounded-lg border border-base p-3">
+                <div>
+                  <p className="font-medium text-sm">{order.id}</p>
+                  <p className="text-xs text-muted">{order.customer} • {order.vendor}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-sm">{order.amount}</p>
+                  <Badge variant={order.status === 'delivered' ? 'default' : order.status === 'preparing' ? 'secondary' : order.status === 'ready' ? 'outline' : 'destructive'}>
+                    {order.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+    </div>
+  );
 }
 
 function Badge({ children, variant = "default", className = "" }) {
@@ -99,19 +175,26 @@ const Clock = (props) => (
   </IconBase>
 );
 
+// Local UI state for inline orders
+function useInlineOrdersState() {
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  return { selectedRestaurant, setSelectedRestaurant };
+}
+
 export default function Dashboard() {
   const stats = [
-    { title: "Total Revenue", value: "$125,430", change: "+12.5%", icon: DollarSign, trend: "up" },
+    { title: "Total Revenue", value: "₹125,430", change: "+12.5%", icon: IndianRupee, trend: "up" },
     { title: "Total Orders", value: "1,250", change: "+8.2%", icon: ShoppingBag, trend: "up" },
     { title: "Active Users", value: "2,340", change: "+15.3%", icon: UsersIcon, trend: "up" },
     { title: "Conversion Rate", value: "3.2%", change: "-2.1%", icon: TrendingUp, trend: "down" },
   ];
 
   const recentOrders = [
-    { id: "ORD-001", customer: "John Doe", vendor: "Pizza Palace", amount: "$45.99", status: "delivered" },
-    { id: "ORD-002", customer: "Sarah Wilson", vendor: "Burger Barn", amount: "$32.50", status: "preparing" },
-    { id: "ORD-003", customer: "Mike Chen", vendor: "Sushi Zen", amount: "$67.80", status: "placed" },
-    { id: "ORD-004", customer: "Lisa Wang", vendor: "Taco Time", amount: "$28.90", status: "ready" },
+    { id: "ORD-001", customer: "John Doe", vendor: "Lets Go Live", amount: "$45.99", status: "delivered" },
+    { id: "ORD-002", customer: "Sarah Wilson", vendor: "Tea Tradition", amount: "$12.50", status: "preparing" },
+    { id: "ORD-003", customer: "Mike Chen", vendor: "Nescafe", amount: "$8.80", status: "placed" },
+    { id: "ORD-004", customer: "Lisa Wang", vendor: "The Italian Oven", amount: "$28.90", status: "ready" },
+    { id: "ORD-005", customer: "Emma Brown", vendor: "Lets Go Live", amount: "$16.40", status: "delivered" },
   ];
 
   const alerts = [
@@ -119,6 +202,8 @@ export default function Dashboard() {
     { type: "info", message: "System maintenance scheduled for tonight", icon: Clock },
     { type: "error", message: "Payment gateway error reported", icon: AlertTriangle },
   ];
+
+  const inline = useInlineOrdersState();
 
   return (
     <div className="space-y-6">
@@ -151,35 +236,17 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Orders */}
+        {/* Restaurants Grid + Inline Orders */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
-            <CardDescription>Latest orders from your platform</CardDescription>
+            <CardTitle>Restaurants</CardTitle>
+            <CardDescription>Select a restaurant to view its recent orders below</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{order.id}</p>
-                    <p className="text-sm text-muted">{order.customer} • {order.vendor}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{order.amount}</p>
-                    <Badge
-                      variant={
-                        order.status === 'delivered' ? 'default' :
-                        order.status === 'preparing' ? 'secondary' :
-                        order.status === 'ready' ? 'outline' : 'destructive'
-                      }
-                    >
-                      {order.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Restaurant grid */}
+            <InlineRestaurants inline={inline} />
+            {/* Inline orders list */}
+            <InlineOrders inline={inline} recentOrders={recentOrders} />
           </CardContent>
         </Card>
 
