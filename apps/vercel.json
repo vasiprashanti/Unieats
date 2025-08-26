@@ -1,0 +1,26 @@
+{
+  "builds": [
+    {
+      "src": "user-web/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    },
+    {
+      "src": "admin-web/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    },
+    {
+      "src": "vendor-web/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    }
+  ],
+  "routes": [
+    { "src": "^/$", "dest": "user-web/dist/index.html" },
+    { "src": "^/admin$", "dest": "admin-web/dist/index.html" },
+    { "src": "^/admin/(.*)$", "dest": "admin-web/dist/index.html" },
+    { "src": "^/vendor$", "dest": "vendor-web/dist/index.html" },
+    { "src": "^/vendor/(.*)$", "dest": "vendor-web/dist/index.html" }
+  ]
+}
