@@ -1,83 +1,107 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+  sendPasswordResetEmail
+} from 'firebase/auth';
+import { auth } from '../config/firebase'; // adjust path as needed
 
-// Simple role type for now: 'admin' | 'vendor' | 'user' | null
-const AuthContext = createContext(null);
 
-export function AuthProvider({ children, initialRole = 'admin' }) {
-  const [user, setUser] = useState(null); // { uid, email, displayName, role }
-  const [role, setRole] = useState(initialRole);
-  const [loading, setLoading] = useState(false); // action-level loading (login/signup/logout)
-  const [initializing, setInitializing] = useState(true); // initial auth check
+const AuthContext = createContext();
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+export function AuthProvider({ children }) {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Placeholder: integrate Firebase onAuthStateChanged here later
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        // Simulate Firebase session check
-        await new Promise(r => setTimeout(r, 500));
-        // If a session is found, set user here
-        // setUser({ uid: 'demo', email: 'admin@example.com', displayName: 'Admin', role: 'admin' });
-        // setRole('admin');
-      } finally {
-        if (active) setInitializing(false);
+  const login = async ({ email, password }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      return { success: true, user: userCredential.user };
+    } catch (error) {
+      setError(error.code);
+      return { success: false, error: error.code };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signup = async ({ email, password, displayName }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Create user account
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Update display name
+      if (displayName) {
+        await updateProfile(userCredential.user, {
+          displayName: displayName
+        });
       }
-    })();
-    return () => { active = false; };
-  }, []);
+      
+      return { success: true, user: userCredential.user };
+    } catch (error) {
+      setError(error.code);
+      return { success: false, error: error.code };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const login = useCallback(async ({ email, password }) => {
-    setLoading(true); setError(null);
+  const logout = async () => {
     try {
-      // TODO: replace with Firebase signInWithEmailAndPassword
-      await new Promise(r => setTimeout(r, 400));
-      setUser({ uid: 'demo', email, displayName: 'Admin', role: 'admin' });
-      setRole('admin');
-      return { ok: true };
-    } catch (e) {
-      setError('auth/wrong-password');
-      return { ok: false, code: 'auth/wrong-password' };
-    } finally { setLoading(false); }
-  }, []);
+      await signOut(auth);
+      return { success: true };
+    } catch (error) {
+      setError(error.code);
+      return { success: false, error: error.code };
+    }
+  };
 
-  const signup = useCallback(async ({ email, password, displayName }) => {
-    setLoading(true); setError(null);
+  const resetPassword = async (email) => {
     try {
-      // TODO: replace with Firebase createUserWithEmailAndPassword
-      await new Promise(r => setTimeout(r, 400));
-      setUser({ uid: 'demo', email, displayName, role: 'admin' });
-      setRole('admin');
-      return { ok: true };
-    } catch (e) {
-      setError('auth/email-already-in-use');
-      return { ok: false, code: 'auth/email-already-in-use' };
-    } finally { setLoading(false); }
+      await sendPasswordResetEmail(auth, email);
+      return { success: true };
+    } catch (error) {
+      setError(error.code);
+      return { success: false, error: error.code };
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoading(false);
+    });
+
+    return unsubscribe;
   }, []);
 
-  const logout = useCallback(async () => {
-    setLoading(true); setError(null);
-    try {
-      // TODO: replace with Firebase signOut
-      await new Promise(r => setTimeout(r, 200));
-      setUser(null);
-      setRole(null);
-    } catch (e) {
-      setError('Failed to logout');
-    } finally { setLoading(false); }
-  }, []);
-
-  const value = useMemo(() => ({ user, role, loading, initializing, error, login, signup, logout, setRole, setError }), [user, role, loading, initializing, error, login, signup, logout]);
+  const value = {
+    currentUser,
+    login,
+    signup,
+    logout,
+    resetPassword,
+    loading,
+    error,
+    setError
+  };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
 }
