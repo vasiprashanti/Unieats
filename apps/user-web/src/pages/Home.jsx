@@ -91,7 +91,7 @@ const Header = () => (
     <h1 className="text-[2.4rem] font-extrabold text-[#ff802c]">UniEats</h1>
     <nav className="flex items-center space-x-[30px] text-[#ff802c] font-semibold text-[1.1rem] md:text-[1.2rem]">
       <a href="#why-us" className="hover:text-white transition-colors">Why Choose Us</a>
-      <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
+      <a href="#benefits" className="hover:text-white transition-colors">Benefits</a>
       <a href="#contact" className="hover:text-white transition-colors">Contact</a>
     </nav>
   </header>
