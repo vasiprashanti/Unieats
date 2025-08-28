@@ -41,12 +41,14 @@ import Dashboard from '../pages/Dashboard';
 import Orders from '../pages/Orders';
 import Menu from '../pages/Menu';
 import Profile from '../pages/Profile';
+import Register from '../pages/Register';
 
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/vendor/login" element={<><GuestOnly /> <Login /></>} />
       <Route path="/vendor/signup" element={<><GuestOnly /> <Signup /></>} />
+      <Route path="/vendor/register" element={<ProtectedVendor><Register /></ProtectedVendor>} />
       <Route path="/vendor/dashboard" element={<ProtectedVendor><Dashboard /></ProtectedVendor>} />
       <Route path="/vendor/orders" element={<ProtectedVendor><Orders /></ProtectedVendor>} />
       <Route path="/vendor/menu" element={<ProtectedVendor><Menu /></ProtectedVendor>} />

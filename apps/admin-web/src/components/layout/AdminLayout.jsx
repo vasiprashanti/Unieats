@@ -21,30 +21,16 @@ export default function AdminLayout() {
     <div className="flex h-screen">
       {/* App shell */}
       <div className="flex h-screen w-full bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
-        <AdminSidebar collapsed={sidebarCollapsed} />
+        <AdminSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <header className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] border-b border-base h-16 flex items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                className="p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                aria-label="Toggle sidebar"
-              >
-                {/* Hamburger icon */}
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-              </button>
-              <span className="font-semibold">Admin</span>
-            </div>
+            {/* Sidebar toggle is now handled by the sidebar logo; left area kept minimal for balance */}
+            <div className="flex items-center gap-2" />
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                className="p-2 rounded bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                 aria-label="Toggle Theme"
                 title="Toggle Theme"
               >
@@ -65,7 +51,8 @@ export default function AdminLayout() {
                 type="button"
                 onClick={onLogout}
                 disabled={loading}
-                className="px-3 py-2 rounded bg-orange-600 text-white font-medium hover:bg-orange-700 disabled:opacity-60"
+                className="px-3 py-2 rounded border border-base text-[hsl(var(--foreground))] hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-60"
+                title="Logout"
               >
                 Logout
               </button>

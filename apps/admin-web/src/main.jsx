@@ -5,13 +5,16 @@ import AppRoutes from './routes';
 import './tailwind.css';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './components/ui/Toast';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <ThemeProvider>
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   </ThemeProvider>
 );
