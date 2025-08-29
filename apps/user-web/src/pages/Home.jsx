@@ -122,7 +122,7 @@ const Hero = () => {
           </h1>
           <div className="flex flex-col items-center md:items-start gap-2">
             <p className="text-[1.1rem] text-[#9aa4b2] max-w-2xl fade-up" style={{ animationDelay: '0.6s' }}>
-              Get pure insider access. Sneak peeks, insider perks, and early-bird treats?
+              Your signup = your shot at ₹200. New Winners every week! <br /> Sign up today, lucky draw tomorrow – ₹200 could be yours!
             </p>
             <p className="text-[1.1rem] text-[#9aa4b2] max-w-2xl fade-up" style={{ animationDelay: '0.8s' }}>
               Are you on the list, or watching from the sidelines?
@@ -157,26 +157,7 @@ const Hero = () => {
   );
 };
 
-const WhyUs = () => (
-  <section id="why-us" className="py-16 px-[5%]">
-    <h2 className="text-[2.2rem] font-bold text-[#ff802c] text-center mb-8">Why Choose UniEats?</h2>
-    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
-      <div className="flex-1 max-w-xl">
-        <p className="text-[#ccc] text-[1.1rem] mb-4">
-          UniEats is your ultimate campus food solution—bringing convenience, affordability, and variety right to your fingertips.
-        </p>
-        <ul className="text-[#ccc] text-[1.1rem] space-y-3">
-          <li className="flex items-start"><CheckIcon />Fast and easy ordering</li>
-          <li className="flex items-start"><CheckIcon />Exclusive student discounts</li>
-          <li className="flex items-start"><CheckIcon />Trusted campus vendors</li>
-        </ul>
-      </div>
-      <div className="md:w-1/3">
-        <IPhoneMockup />
-      </div>
-    </div>
-  </section>
-);
+
 
 // --- New Benefits section (matches the screenshot style) ---
 const Benefits = () => (
@@ -195,9 +176,9 @@ const Benefits = () => (
           <div className="p-1">
             <MapPinIcon className="w-10 h-10 md:w-12 md:h-12 text-[#ff802c] drop-shadow-[0_0_8px_rgba(255,128,44,0.35)]" />
           </div>
-          <h3 className="text-white text-2xl font-semibold mt-5">Built in Manipal for Manipal</h3>
+          <h3 className="text-white text-2xl font-semibold mt-5">Early Bird Access</h3>
           <p className="text-[#9aa4b2] mt-3 max-w-xs leading-relaxed">
-            Designed specifically for the Manipal University ecosystem
+            Be among the first to explore UniEats before anyone else.
           </p>
         </div>
 
@@ -206,9 +187,9 @@ const Benefits = () => (
           <div className="p-1">
             <UsersIcon className="w-10 h-10 md:w-12 md:h-12 text-[#ff802c] drop-shadow-[0_0_8px_rgba(255,128,44,0.35)]" />
           </div>
-          <h3 className="text-white text-2xl font-semibold mt-5">Student-friendly</h3>
+          <h3 className="text-white text-2xl font-semibold mt-5">5 Orders at ₹0 Platform Fee</h3>
           <p className="text-[#9aa4b2] mt-3 max-w-xs leading-relaxed">
-            Affordable pricing and features tailored for student life
+            Enjoy your first 5 orders with zero platform charges.
           </p>
         </div>
 
@@ -217,9 +198,9 @@ const Benefits = () => (
           <div className="p-1">
             <ZapIcon className="w-10 h-10 md:w-12 md:h-12 text-[#ff802c] drop-shadow-[0_0_8px_rgba(255,128,44,0.35)]" />
           </div>
-          <h3 className="text-white text-2xl font-semibold mt-5">Tech-driven</h3>
+          <h3 className="text-white text-2xl font-semibold mt-5">Lucky Draw Rewards</h3>
           <p className="text-[#9aa4b2] mt-3 max-w-xs leading-relaxed">
-            Cutting-edge technology for the fastest food delivery experience
+            Stand a chance to win exciting goodies in our exclusive early-user lucky draw.
           </p>
         </div>
       </div>
@@ -246,18 +227,23 @@ const FaqItem = ({ question, answer }) => {
 
 const Faq = () => (
   <section id="faq" className="py-16 px-[5%]">
-    <h2 className="text-[2.8rem] md:text-[3.2rem] font-extrabold text-[#ff802c] text-left mb-8">Questions? We Got Answers</h2>
+    <div className="text-left mb-8">
+      <p className="text-white text-[1.3rem] md:text-[2rem] font-semibold">Questions?</p>
+      <h2 className="text-[#ff802c] text-[2.8rem] md:text-[3.2rem] font-extrabold leading-tight">We've got answers</h2>
+    </div>
     <div className="w-full space-y-3">
-      <FaqItem question="When will UniEats launch?" answer="We're launching very soon! Sign up to get notified first." />
-      <FaqItem question="Is it free to use?" answer="Yes! Using UniEats is completely free for students." />
-      <FaqItem question="How do I place an order?" answer="Once we launch, just log in and select your favorite vendor to order instantly." />
+      <FaqItem question="When will UniEats launch?" answer="Taking orders from September last week – get ready!
+" />
+      <FaqItem question="Is it free to use?" answer="Yes, absolutely free for everyone. (Psst… we do have exclusive deals for Club Pass holders)" />
+      <FaqItem question="How do I enter the lucky draw?
+" answer="Super simple – fill the sign-up form, follow us on Instagram, and stay tuned. We announce winners every week!" />
     </div>
   </section>
 );
 
 const Contact = () => (
   <section id="contact" className="text-center py-16 px-[5%]">
-    <h2 className="text-[2.2rem] font-bold text-[#ff802c] text-center mb-4">Need Help? Contact Us</h2>
+    <h2 className="text-[3.2rem] font-bold text-[#ff802c] text-center mb-4">Need Help? Contact Us</h2>
     <p className="text-[#ccc] mb-8">Reach us anytime via email or phone.</p>
     <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-8">
       <a
@@ -303,7 +289,6 @@ export default function App() {
       <Header />
       <main>
         <Hero />
-        <WhyUs />
         <Benefits />
         <Faq />
         <Contact />
