@@ -192,8 +192,8 @@ const Benefits = () => (
       <div className="grid gap-12 md:grid-cols-3 mt-12">
         {/* Card 1 */}
         <div className="flex flex-col items-center text-center fade-up" style={{ animationDelay: '0.3s' }}>
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#ff802c] flex items-center justify-center">
-            <MapPinIcon className="w-8 h-8 md:w-10 md:h-10 text-black" />
+          <div className="p-1">
+            <MapPinIcon className="w-10 h-10 md:w-12 md:h-12 text-[#ff802c] drop-shadow-[0_0_8px_rgba(255,128,44,0.35)]" />
           </div>
           <h3 className="text-white text-2xl font-semibold mt-5">Built in Manipal for Manipal</h3>
           <p className="text-[#9aa4b2] mt-3 max-w-xs leading-relaxed">
@@ -203,8 +203,8 @@ const Benefits = () => (
 
         {/* Card 2 */}
         <div className="flex flex-col items-center text-center fade-up" style={{ animationDelay: '0.45s' }}>
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#ff802c] flex items-center justify-center">
-            <UsersIcon className="w-8 h-8 md:w-10 md:h-10 text-black" />
+          <div className="p-1">
+            <UsersIcon className="w-10 h-10 md:w-12 md:h-12 text-[#ff802c] drop-shadow-[0_0_8px_rgba(255,128,44,0.35)]" />
           </div>
           <h3 className="text-white text-2xl font-semibold mt-5">Student-friendly</h3>
           <p className="text-[#9aa4b2] mt-3 max-w-xs leading-relaxed">
@@ -214,8 +214,8 @@ const Benefits = () => (
 
         {/* Card 3 */}
         <div className="flex flex-col items-center text-center fade-up" style={{ animationDelay: '0.6s' }}>
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#ff802c] flex items-center justify-center">
-            <ZapIcon className="w-8 h-8 md:w-10 md:h-10 text-black" />
+          <div className="p-1">
+            <ZapIcon className="w-10 h-10 md:w-12 md:h-12 text-[#ff802c] drop-shadow-[0_0_8px_rgba(255,128,44,0.35)]" />
           </div>
           <h3 className="text-white text-2xl font-semibold mt-5">Tech-driven</h3>
           <p className="text-[#9aa4b2] mt-3 max-w-xs leading-relaxed">
@@ -303,6 +303,7 @@ export default function App() {
       <Header />
       <main>
         <Hero />
+        <WhyUs />
         <Benefits />
         <Faq />
         <Contact />
