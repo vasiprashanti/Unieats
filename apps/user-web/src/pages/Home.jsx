@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 // --- Helper Components for Icons ---
 // You can replace these with an icon library like lucide-react or Font Awesome if you have it installed.
@@ -90,39 +90,62 @@ const Header = () => (
   <header className="sticky top-0 z-10 flex justify-between items-center px-[5%] py-4 bg-[#121214] border-b border-[#111]">
     <h1 className="text-[2.4rem] font-extrabold text-[#ff802c]">UniEats</h1>
     <nav className="flex items-center space-x-[30px] text-[#ff802c] font-semibold text-[1.1rem] md:text-[1.2rem]">
-      <a href="#why-us" className="hover:text-white transition-colors">Why Choose Us</a>
-      <a href="#benefits" className="hover:text-white transition-colors">Benefits</a>
+      <a href="#why-us" className="hover:text-white transition-colors">Why Unieats</a>
+      <a href="#benefits" className="hover:text-white transition-colors">Perks</a>
       <a href="#contact" className="hover:text-white transition-colors">Contact</a>
     </nav>
   </header>
 );
 
-const Hero = () => (
-  <section className="text-center py-32 px-[5%] flex flex-col items-center gap-10">
-    <h1 className="text-[3rem] font-bold text-[#ff802c] fade-up" style={{ animationDelay: '0s' }}>
-      We are building a site that turns <br />visitors into happy foodies
-    </h1>
-    <div className="flex flex-col items-center gap-1">
-      <h2 className="text-[1.5rem] text-white fade-up" style={{ animationDelay: '0.4s' }}>
-        Snacks for Stress, Coffee for Code.
-      </h2>
-      <p className="text-[1.2rem] text-[#ccc] max-w-xl fade-up" style={{ animationDelay: '0.8s' }}>
-        Labs. Lectures. Assignments. Fests. Repeat.<br />
-        You manage the deadlines, we’ll manage your cravings.
-      </p>
-    </div>
-    <div className="w-full max-w-[400px] bg-[#1f1f1f] p-5 rounded-[10px] mt-4 fade-up" style={{ animationDelay: '1.2s' }}>
-      <form className="space-y-3">
-        <input type="text" placeholder="Name" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
-        <input type="email" placeholder="Email" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
-        <input type="tel" placeholder="Phone" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
-        <button type="submit" className="w-full p-3 bg-[#ff802c] text-white font-semibold rounded-[8px] text-[1rem] hover:bg-[#ff6600] transition-colors">
-          Join Club
-        </button>
-      </form>
-    </div>
-  </section>
-);
+const Hero = () => {
+  const [showForm, setShowForm] = useState(false);
+  const nameInputRef = useRef(null);
+
+  const handleOpenForm = () => {
+    setShowForm(true);
+    // Focus the first field immediately after state update
+    setTimeout(() => nameInputRef.current?.focus(), 0);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert('You will be notified soon!');
+  };
+
+  return (
+    <section className="text-center py-32 px-[5%] flex flex-col items-center gap-10">
+      <h1 className="text-[4rem] font-bold text-[#ff802c] fade-up" style={{ animationDelay: '0s' }}>
+        We are building a site that turns <br />visitors into happy foodies
+      </h1>
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-[1.1rem] text-[#9aa4b2] max-w-2xl fade-up" style={{ animationDelay: '0.6s' }}>
+          Get pure insider access. Sneak peeks, insider perks, and early-bird treats?
+        </p>
+        <p className="text-[1.1rem] text-[#9aa4b2] max-w-2xl fade-up" style={{ animationDelay: '0.8s' }}>
+          Are you on the list, or watching from the sidelines?
+        </p>
+      </div>
+      <button
+        onClick={handleOpenForm}
+        className="inline-flex items-center rounded-full bg-[#ff802c] px-6 py-3 text-[1rem] font-semibold text-black hover:bg-[#ff6f17] transition-colors"
+      >
+        Join Table
+      </button>
+      {showForm && (
+        <div className="w-full max-w-[400px] bg-[#1f1f1f] p-5 rounded-[10px] mt-4">
+          <form className="space-y-3" onSubmit={handleSubmit}>
+            <input ref={nameInputRef} type="text" placeholder="Name" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
+            <input type="email" placeholder="Email" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
+            <input type="tel" placeholder="Phone" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
+            <button type="submit" className="w-full p-3 bg-[#ff802c] text-white font-semibold rounded-[8px] text-[1rem] hover:bg-[#ff6600] transition-colors">
+              Join Club
+            </button>
+          </form>
+        </div>
+      )}
+    </section>
+  );
+};
 
 const WhyUs = () => (
   <section id="why-us" className="py-16 px-[5%]">
