@@ -90,7 +90,6 @@ const Header = () => (
   <header className="sticky top-0 z-10 flex justify-between items-center px-[5%] py-4 bg-[#121214] border-b border-[#111]">
     <h1 className="text-[2.4rem] font-extrabold text-[#ff802c]">UniEats</h1>
     <nav className="flex items-center space-x-[30px] text-[#ff802c] font-semibold text-[1.1rem] md:text-[1.2rem]">
-      <a href="#why-us" className="hover:text-white transition-colors">Why Unieats</a>
       <a href="#benefits" className="hover:text-white transition-colors">Perks</a>
       <a href="#contact" className="hover:text-white transition-colors">Contact</a>
     </nav>
@@ -110,39 +109,50 @@ const Hero = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     alert('You will be notified soon!');
+    setShowForm(false);
   };
 
   return (
-    <section className="text-center py-32 px-[5%] flex flex-col items-center gap-10">
-      <h1 className="text-[4rem] font-bold text-[#ff802c] fade-up" style={{ animationDelay: '0s' }}>
-        We are building a site that turns <br />visitors into happy foodies
-      </h1>
-      <div className="flex flex-col items-center gap-2">
-        <p className="text-[1.1rem] text-[#9aa4b2] max-w-2xl fade-up" style={{ animationDelay: '0.6s' }}>
-          Get pure insider access. Sneak peeks, insider perks, and early-bird treats?
-        </p>
-        <p className="text-[1.1rem] text-[#9aa4b2] max-w-2xl fade-up" style={{ animationDelay: '0.8s' }}>
-          Are you on the list, or watching from the sidelines?
-        </p>
-      </div>
-      <button
-        onClick={handleOpenForm}
-        className="inline-flex items-center rounded-full bg-[#ff802c] px-6 py-3 text-[1rem] font-semibold text-black hover:bg-[#ff6f17] transition-colors"
-      >
-        Join Table
-      </button>
-      {showForm && (
-        <div className="w-full max-w-[400px] bg-[#1f1f1f] p-5 rounded-[10px] mt-4">
-          <form className="space-y-3" onSubmit={handleSubmit}>
-            <input ref={nameInputRef} type="text" placeholder="Name" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
-            <input type="email" placeholder="Email" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
-            <input type="tel" placeholder="Phone" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
-            <button type="submit" className="w-full p-3 bg-[#ff802c] text-white font-semibold rounded-[8px] text-[1rem] hover:bg-[#ff6600] transition-colors">
-              Join Club
-            </button>
-          </form>
+    <section className="py-32 px-[5%]">
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 items-center gap-12">
+        {/* Left: copy + CTA + form */}
+        <div className="text-center md:text-left flex flex-col items-center md:items-start gap-6">
+          <h1 className="text-[4rem] font-bold text-[#ff802c] fade-up" style={{ animationDelay: '0s' }}>
+            We are building a site that turns <br />visitors into happy foodies
+          </h1>
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <p className="text-[1.1rem] text-[#9aa4b2] max-w-2xl fade-up" style={{ animationDelay: '0.6s' }}>
+              Get pure insider access. Sneak peeks, insider perks, and early-bird treats?
+            </p>
+            <p className="text-[1.1rem] text-[#9aa4b2] max-w-2xl fade-up" style={{ animationDelay: '0.8s' }}>
+              Are you on the list, or watching from the sidelines?
+            </p>
+          </div>
+          <button
+            onClick={handleOpenForm}
+            className="inline-flex items-center rounded-full bg-[#ff802c] px-6 py-3 text-[1rem] font-semibold text-black hover:bg-[#ff6f17] transition-colors"
+          >
+            Join Table
+          </button>
+          {showForm && (
+            <div className="w-full max-w-[400px] bg-[#1f1f1f] p-5 rounded-[10px] mt-2">
+              <form className="space-y-3" onSubmit={handleSubmit}>
+                <input ref={nameInputRef} type="text" placeholder="Name" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
+                <input type="email" placeholder="Email" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
+                <input type="tel" placeholder="Phone" required className="w-full p-3 border border-[#333] rounded-[8px] bg-[#111] text-white text-[1rem] focus:outline-none focus:ring-2 focus:ring-[#ff802c]" />
+                <button type="submit" className="w-full p-3 bg-[#ff802c] text-white font-semibold rounded-[8px] text-[1rem] hover:bg-[#ff6600] transition-colors">
+                  Join Club
+                </button>
+              </form>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Right: phone mockup (center on phones, right-aligned on laptops/desktops) */}
+        <div className="flex justify-center md:justify-end">
+          <IPhoneMockup />
+        </div>
+      </div>
     </section>
   );
 };
@@ -293,7 +303,6 @@ export default function App() {
       <Header />
       <main>
         <Hero />
-        <WhyUs />
         <Benefits />
         <Faq />
         <Contact />
