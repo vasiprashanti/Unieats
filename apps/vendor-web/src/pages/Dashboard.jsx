@@ -3,12 +3,13 @@ import StatCard from "../components/dashboard/StatCard";
 import Alert from "../components/Alert";
 import { getVendorDashboard } from "../api/vendor";
 import { useAuth } from "../context/AuthContext";
+import ApprovalStatusBanner from "../components/dashboard/ApprovalStatusBanner";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({ todayRevenue: 0, pendingOrders: 0, avgPrepTime: 0, status: "pending" });
   const [loading, setLoading] = useState(true);
-  const [notif, setNotif] = useState("You have a new order!"); // basic notification demo
+  const [notif, setNotif] = useState(""); // placeholder notifications handled in header
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -17,69 +18,101 @@ export default function Dashboard() {
       setLoading(true);
       try {
         const data = await getVendorDashboard({ token: user?.token });
-        if (active) setStats({
-          todayRevenue: data.todayRevenue ?? 0,
-          pendingOrders: data.pendingOrders ?? 0,
-          avgPrepTime: data.avgPrepTime ?? 0,
-          status: data.status ?? "pending",
-        });
+        if (active)
+          setStats({
+            todayRevenue: data.todayRevenue ?? 0,
+            pendingOrders: data.pendingOrders ?? 0,
+            avgPrepTime: data.avgPrepTime ?? 0,
+            status: data.status ?? "pending",
+          });
       } catch (e) {
         if (active) setError("Failed to load dashboard. Showing placeholders.");
       } finally {
         if (active) setLoading(false);
       }
     })();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [user?.token]);
 
-  const statusBanner = () => {
-    if (stats.status === "approved") {
-      return (
-        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-green-700">
-          Your vendor account is approved. You can accept orders.
-        </div>
-      );
-    }
-    if (stats.status === "rejected") {
-      return (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
-          Your application was rejected. Please contact support.
-        </div>
-      );
-    }
-    return (
-      <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-yellow-800">
-        Your application is pending review.
-      </div>
-    );
-  };
-
   return (
-    <div className="p-6">
-      <h1 className="mb-2 text-2xl font-semibold">Vendor Dashboard</h1>
-      <p className="mb-4 text-sm text-gray-500">Overview of today’s performance and status.</p>
+    <div className="p-4 md:p-6 text-[hsl(var(--foreground))]">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+          <p className="text-sm text-white/60">Welcome back! Here's what's happening today.</p>
+        </div>
 
-      {statusBanner()}
+      </div>
+
+      <ApprovalStatusBanner status={stats.status} />
       <Alert type="error" message={error} />
 
-      {/* Stats grid */}
+      {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Today's Revenue" value={`₹ ${Number(stats.todayRevenue).toLocaleString()}`} subtitle={loading ? "Loading..." : "Updated just now"} />
-        <StatCard title="Pending Orders" value={String(stats.pendingOrders)} subtitle={loading ? "Loading..." : "Live"} />
-        <StatCard title="Avg Prep Time" value={`${stats.avgPrepTime} mins`} subtitle={loading ? "Loading..." : "Today"} />
+        <StatCard
+          title="Today's Revenue"
+          value={`₹ ${Number(stats.todayRevenue).toLocaleString()}`}
+          subtitle={loading ? "Loading..." : "+12% from yesterday"}
+        />
+        <StatCard
+          title="Pending Orders"
+          value={String(stats.pendingOrders)}
+          subtitle={loading ? "Loading..." : "Require immediate attention"}
+        />
+        <StatCard
+          title="Avg Prep Time"
+          value={`${stats.avgPrepTime}m`}
+          subtitle={loading ? "Loading..." : "~2m from yesterday"}
+        />
       </div>
 
-      {/* Notifications */}
-      <div className="mt-6">
-        <h2 className="mb-2 text-lg font-medium">Notifications</h2>
-        {notif ? (
-          <div className="flex items-center justify-between rounded-md border border-orange-200 bg-orange-50 px-4 py-3 text-orange-700">
-            <span>{notif}</span>
-            <button onClick={() => setNotif("")} className="text-sm font-medium text-orange-700 hover:underline">Dismiss</button>
+      {/* Placeholder sections for future widgets to match design */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 rounded-2xl border border-base bg-[hsl(var(--card))] p-4">
+          <h2 className="text-xl font-semibold mb-1">Recent Orders</h2>
+          <p className="text-sm text-muted mb-4">Latest orders that need your attention</p>
+          <div className="rounded-xl border border-base bg-[hsl(var(--background))] p-4 text-sm text-muted">
+            Coming soon...
           </div>
-        ) : (
-          <p className="text-sm text-gray-500">No new notifications.</p>
-        )}
+        </div>
+        <div className="rounded-2xl border border-base bg-[hsl(var(--card))] p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Notifications</h2>
+            <button className="text-xs text-muted hover:text-[hsl(var(--foreground))]">Mark all read</button>
+          </div>
+          <div className="mt-3 rounded-xl border border-base bg-[hsl(var(--background))] p-4 text-sm text-muted">
+            No new notifications.
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-base bg-[hsl(var(--card))] p-4">
+        <h2 className="text-xl font-semibold mb-1">Performance Overview</h2>
+        <p className="text-sm text-muted">Your restaurant's key metrics over time</p>
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="text-center">
+            <p className="text-2xl font-extrabold">156</p>
+            <p className="text-xs text-white/60">Total Orders</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-extrabold">₹45,230</p>
+            <p className="text-xs text-white/60">Total Revenue</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-extrabold">4.5★</p>
+            <p className="text-xs text-white/60">Customer Rating</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-extrabold">89</p>
+            <p className="text-xs text-white/60">Total Reviews</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-extrabold">3</p>
+            <p className="text-xs text-white/60">Cuisine Types</p>
+          </div>
+        </div>
       </div>
     </div>
   );
