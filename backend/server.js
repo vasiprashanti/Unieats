@@ -14,7 +14,7 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import vendorRoutes from './routes/vendorRoutes.js';
 import contentRoutes from './routes/contentRoutes.js';
-import prelaunchRoutes from './routes/prelaunchRoutes.js';
+import preLaunchUserRoutes from './routes/preLaunchUserRoutes.js'
 
 dotenv.config();
 connectDB();
@@ -35,7 +35,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/vendors', vendorRoutes);
 app.use('/api/v1/content', contentRoutes);
-app.use('/api/v1/prelaunch', prelaunchRoutes); 
+app.use('/api/v1/prelaunch', preLaunchUserRoutes); 
 
 app.use(errorHandler);
 
