@@ -3,11 +3,11 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { connectDB } from './config/db.js';
+import connectDB from './config/db.js';
 import initializeFirebaseAdmin from './config/firebaseAdmin.js';
 import { cloudinaryConfig } from './config/cloudinary.js';
-import rateLimiter from './middleware/rateLimiter.js';
-import errorHandler from './middleware/errorHandler.js';
+// import rateLimiter from './middleware/rateLimiter.js';
+// import errorHandler from './middleware/errorHandler.js';
 
 // Import Routes
 import authRoutes from './routes/authRoutes.js';

@@ -1,6 +1,6 @@
-import User from '../models/User.js';
-import Vendor from '../models/Vendor.js';
-import Order from '../models/Order.js';
+import User from '../models/User.model.js';
+import Vendor from '../models/Vendor.model.js';
+import Order from '../models/Order.model.js';
 
 const getBasicAnalytics = async (req, res) => {
     try {

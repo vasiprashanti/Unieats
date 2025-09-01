@@ -1,6 +1,5 @@
 import User from '../models/User.model.js'; // Import the User model
 import { validationResult } from 'express-validator';
-import { registerUser, getMe } from './authController.js';
 
 // REGISTRATION CONTROLLER 
 const registerUser = async (req, res) => {

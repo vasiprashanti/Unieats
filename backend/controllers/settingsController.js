@@ -1,5 +1,5 @@
-import Settings from '../models/Settings.js';
-import AuditLog from '../models/AuditLog.js';
+import Settings from '../models/Settings.model.js';
+import AuditLog from '../models/AuditLog.model.js';
 import { validationResult } from 'express-validator';
 
 // --- GET SETTINGS ---
