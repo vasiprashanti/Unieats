@@ -1,6 +1,5 @@
 import express from 'express';
 import { check } from 'express-validator';
-import { registerUser, getMe } from '../controllers/authController.js';
 import { verifyFirebaseToken } from '../middleware/authMiddleware.js';
 import { registerUser, getMe, verifyToken } from '../controllers/authController.js';
 import { getBasicAnalytics, getComprehensiveAnalytics } from '../controllers/analyticsController.js';

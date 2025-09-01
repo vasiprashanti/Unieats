@@ -14,7 +14,7 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import vendorRoutes from './routes/vendorRoutes.js';
 import contentRoutes from './routes/contentRoutes.js';
-import prelaunchRoutes from './routes/prelaunchRoutes.js';
+import prelaunchRoutes from './routes/preLaunchUserRoutes.js';
 
 dotenv.config();
 connectDB();
