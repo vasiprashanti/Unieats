@@ -66,7 +66,8 @@ export default function AppRoutes() {
         <Route path="profile" element={<Profile />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/vendor/login" replace />} />
+      {/* Default landing should show the new signup page */}
+      <Route path="*" element={<Navigate to="/vendor/signup" replace />} />
     </Routes>
   );
 }
