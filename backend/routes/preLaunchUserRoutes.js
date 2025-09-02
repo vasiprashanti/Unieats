@@ -1,5 +1,5 @@
 import express from 'express';
-import PrelaunchUser from '../models/PrelaunchUser.js';
+import PrelaunchUser from '../models/preLaunchUser.model.js';
 
 const router = express.Router();
 
