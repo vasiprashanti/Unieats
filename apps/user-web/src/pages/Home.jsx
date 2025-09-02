@@ -260,18 +260,18 @@ const Faq = () => (
 
 const Contact = () => (
   <section id="contact" className="text-center py-16 px-[5%]">
-    <h2 className="text-[3.2rem] font-bold text-[#ff802c] text-center mb-4">Need Help? Contact Us</h2>
-    <p className="text-[#ccc] mb-8">Reach us anytime via email or phone.</p>
+    <h2 className="text-[3.2rem] font-bold text-[#ff802c] text-centre mb-4">Contact Us</h2>
+    <p className="text-[#ccc] text-centre mb-8">Reach us anytime via email or phone.</p>
     <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mt-8">
       <a
         href="mailto:unieats.co@gmail.com"
-        className="inline-flex items-center justify-center w-full sm:w-auto border border-[#333] text-[#ddd] py-2.5 px-5 rounded-[10px] text-[0.95rem] font-medium hover:border-[#ff802c] hover:text-[#ff802c] transition-colors"
+        className="inline-flex items-center justify-center w-full sm:w-auto border border-[#333] text-[#ddd] py-3.5 px-7 rounded-[12px] text-[1.1rem] font-semibold hover:border-[#ff802c] hover:text-[#ff802c] transition-colors"
       >
         Email us
       </a>
       <a
         href="tel:90006636"
-        className="inline-flex items-center justify-center w-full sm:w-auto border border-[#333] text-[#ddd] py-2.5 px-5 rounded-[10px] text-[0.95rem] font-medium hover:border-[#ff802c] hover:text-[#ff802c] transition-colors"
+        className="inline-flex items-center justify-center w-full sm:w-auto border border-[#333] text-[#ddd] py-3.5 px-7 rounded-[12px] text-[1.1rem] font-semibold hover:border-[#ff802c] hover:text-[#ff802c] transition-colors"
       >
         Contact
       </a>

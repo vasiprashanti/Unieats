@@ -14,7 +14,7 @@ function ProtectedVendor({ children }) {
   const { user, role, initializing } = useAuth();
   if (initializing) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white">
+      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-black">
         <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin" />
       </div>
     );
@@ -28,7 +28,7 @@ function GuestOnly() {
   const { user, role, initializing } = useAuth();
   if (initializing) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white">
+      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-black">
         <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin" />
       </div>
     );
@@ -42,17 +42,30 @@ import Orders from '../pages/Orders';
 import Menu from '../pages/Menu';
 import Profile from '../pages/Profile';
 import Register from '../pages/Register';
+import VendorLayout from '../components/layout/VendorLayout';
 
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/vendor/login" element={<><GuestOnly /> <Login /></>} />
       <Route path="/vendor/signup" element={<><GuestOnly /> <Signup /></>} />
-      <Route path="/vendor/register" element={<ProtectedVendor><Register /></ProtectedVendor>} />
-      <Route path="/vendor/dashboard" element={<ProtectedVendor><Dashboard /></ProtectedVendor>} />
-      <Route path="/vendor/orders" element={<ProtectedVendor><Orders /></ProtectedVendor>} />
-      <Route path="/vendor/menu" element={<ProtectedVendor><Menu /></ProtectedVendor>} />
-      <Route path="/vendor/profile" element={<ProtectedVendor><Profile /></ProtectedVendor>} />
+      <Route path="/vendor/register" element={<><GuestOnly /> <Register /></>} />
+
+      {/* Protected vendor area with layout */}
+      <Route
+        path="/vendor"
+        element={
+          <ProtectedVendor>
+            <VendorLayout />
+          </ProtectedVendor>
+        }
+      >
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="orders" element={<Orders />} />
+        <Route path="menu" element={<Menu />} />
+        <Route path="profile" element={<Profile />} />
+      </Route>
+
       <Route path="*" element={<Navigate to="/vendor/login" replace />} />
     </Routes>
   );
