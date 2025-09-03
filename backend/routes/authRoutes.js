@@ -1,6 +1,7 @@
 import express from 'express';
 import { check } from 'express-validator';
 import { verifyFirebaseToken } from '../middleware/authMiddleware.js';
+import { checkRole } from '../middleware/roleMiddleware.js';
 import { registerUser, getMe, verifyToken } from '../controllers/authController.js';
 import { getBasicAnalytics, getComprehensiveAnalytics } from '../controllers/analyticsController.js';
 import { monitorRealTimeOrders, exportOrdersToCSV } from '../controllers/orderController.js'; 
