@@ -81,6 +81,101 @@ export default function Signup() {
           <VendorSignupForm />
         </div>
       </div>
+
+      {/* How It Works */}
+      <section id="how-it-works" className="px-[10%] py-16 bg-white">
+        <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">How It Works</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow">
+            <div className="w-16 h-16 mx-auto mb-6 bg-[#ff6600]/10 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#ff6600] rounded text-white flex items-center justify-center text-sm font-bold">1</div>
+            </div>
+            <h3 className="text-xl font-semibold mb-4 text-[#333]">Sign up as a partner</h3>
+            <p className="text-[#555] text-[15px] leading-relaxed">Tell us about your restaurant and share the required documents for quick verification.</p>
+          </div>
+          <div className="text-center p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow">
+            <div className="w-16 h-16 mx-auto mb-6 bg-[#ff6600]/10 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#ff6600] rounded text-white flex items-center justify-center text-sm font-bold">2</div>
+            </div>
+            <h3 className="text-xl font-semibold mb-4 text-[#333]">Set up your menu</h3>
+            <p className="text-[#555] text-[15px] leading-relaxed">Add items, pricing, and availability. Update anytime with ease.</p>
+          </div>
+          <div className="text-center p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow">
+            <div className="w-16 h-16 mx-auto mb-6 bg-[#ff6600]/10 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#ff6600] rounded text-white flex items-center justify-center text-sm font-bold">3</div>
+            </div>
+            <h3 className="text-xl font-semibold mb-4 text-[#333]">Start receiving orders</h3>
+            <p className="text-[#555] text-[15px] leading-relaxed">Manage orders in real-time and track performance from your dashboard.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="px-[10%] py-16 bg-white border-t border-[#f0f0f0]">
+        <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Pricing</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
+            <h3 className="text-xl font-semibold text-[#333] mb-3">Starter</h3>
+            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Ideal for new partners getting started</p>
+            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                ZERO commission
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Basic analytics
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Email support
+              </li>
+            </ul>
+            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Get Started</button>
+          </div>
+          <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <span className="bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">Popular</span>
+            </div>
+            <h3 className="text-xl font-semibold text-[#333] mb-3">Pro</h3>
+            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">For growing restaurants</p>
+            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Priority listing
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Advanced analytics
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Dedicated support
+              </li>
+            </ul>
+            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Pro</button>
+          </div>
+          <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
+            <h3 className="text-xl font-semibold text-[#333] mb-3">Enterprise</h3>
+            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Custom solutions for chains</p>
+            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Custom integrations
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Multi-branch support
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Account manager
+              </li>
+            </ul>
+            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Contact Sales</button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
