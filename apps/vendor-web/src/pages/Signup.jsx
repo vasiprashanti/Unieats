@@ -63,7 +63,7 @@ export default function Signup() {
       <div className="flex flex-wrap gap-10 justify-between px-[10%] py-12" id="how-it-works">
         {/* Why join */}
         <div className="flex-1 min-w-[300px]">
-          <h2 className="text-[28px] mb-4 text-[#ff6600] tracking-wide font-semibold">TURN MENU INTO REVENUE</h2>
+          <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold">TURN MENU INTO REVENUE</h2>
           <p className="mb-6 text-[16px] text-[#555]">
             Expand your reach, boost your sales, and connect with thousands of food lovers through UniEats. We make it
             simple to grow your business online.
@@ -114,65 +114,109 @@ export default function Signup() {
       <section id="pricing" className="px-[10%] py-16 bg-white border-t border-[#f0f0f0]">
         <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          {/* Type A - Commission Based */}
           <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
-            <h3 className="text-xl font-semibold text-[#333] mb-3">Starter</h3>
-            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Ideal for new partners getting started</p>
+            <h3 className="text-xl font-semibold text-[#333] mb-3">Type A - Commission</h3>
+            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Pay-per-order model for flexible scaling</p>
+            <div className="mb-6">
+              <div className="text-2xl font-bold text-[#ff6600] mb-2">Min % Commission</div>
+              <div className="text-sm text-[#555]">On orders above ₹50</div>
+            </div>
             <ul className="text-[15px] text-[#333] space-y-3 mb-8">
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                ZERO commission
+                Unlimited orders per month
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Basic analytics
+                Complete analytics dashboard
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Email support
+                All vendor features included
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Priority listing by ratings
               </li>
             </ul>
-            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Get Started</button>
+            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Commission</button>
           </div>
+
+          {/* Type B - Subscription Based */}
           <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative">
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
               <span className="bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">Popular</span>
             </div>
-            <h3 className="text-xl font-semibold text-[#333] mb-3">Pro</h3>
-            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">For growing restaurants</p>
+            <h3 className="text-xl font-semibold text-[#333] mb-3">Type B - Subscription</h3>
+            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Fixed monthly fee with no commissions</p>
+            <div className="mb-6">
+              <div className="text-2xl font-bold text-[#ff6600] mb-2">Minimal Fee</div>
+              <div className="text-sm text-[#555]">Monthly or Annual plans</div>
+            </div>
             <ul className="text-[15px] text-[#333] space-y-3 mb-8">
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Priority listing
+                Unlimited orders per month
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Advanced analytics
+                Complete analytics dashboard
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Dedicated support
+                All vendor features included
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Priority listing by ratings
               </li>
             </ul>
-            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Pro</button>
+            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Subscription</button>
           </div>
+
+          {/* Type C - Hybrid Model */}
           <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
-            <h3 className="text-xl font-semibold text-[#333] mb-3">Enterprise</h3>
-            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Custom solutions for chains</p>
+            <h3 className="text-xl font-semibold text-[#333] mb-3">Type C - Hybrid</h3>
+            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Best of both worlds - subscription + commission</p>
+            <div className="mb-6">
+              <div className="text-2xl font-bold text-[#ff6600] mb-2">Subscription + Commission</div>
+              <div className="text-sm text-[#555]">Combined model</div>
+            </div>
             <ul className="text-[15px] text-[#333] space-y-3 mb-8">
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Custom integrations
+                Unlimited orders per month
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Multi-branch support
+                Complete analytics dashboard
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Account manager
+                All vendor features included
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
+                Priority listing by ratings
               </li>
             </ul>
-            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Contact Sales</button>
+            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Hybrid</button>
+          </div>
+        </div>
+        
+        {/* Additional Features */}
+        <div className="mt-16 text-center">
+          <h3 className="text-[24px] mb-8 text-[#ff6600] tracking-wide font-semibold">Additional Features Available</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="p-6 rounded-xl border border-[#eee] shadow-[0_4px_12px_rgba(0,0,0,0.05)] bg-white">
+              <h4 className="text-lg font-semibold text-[#333] mb-3">Promotional Banner Space</h4>
+              <p className="text-[15px] text-[#555]">Advertise your restaurant with premium banner placements on our platform to boost visibility and attract more customers.</p>
+            </div>
+            <div className="p-6 rounded-xl border border-[#eee] shadow-[0_4px_12px_rgba(0,0,0,0.05)] bg-white">
+              <h4 className="text-lg font-semibold text-[#333] mb-3">Priority Listing</h4>
+              <p className="text-[15px] text-[#555]">Get higher visibility in category listings based on genuine student ratings, ensuring fair and quality-driven recommendations.</p>
+            </div>
           </div>
         </div>
       </section>
