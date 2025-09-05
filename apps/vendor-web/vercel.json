@@ -4,6 +4,8 @@
     { "src": "package.json", "use": "@vercel/static-build" }
   ],
   "routes": [
+    { "handle": "filesystem" },
+    { "src": "/vendor/(.*)", "dest": "/vendor/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
