@@ -78,9 +78,10 @@ export default function OrdersTable({
                   onChange={(e) => onToggleSelectAll(e.target.checked)}
                 />
               </th>
-              <th className="p-3">Order ID {sortIndicator("code")}</th>
+              <th className="p-3">Order No {sortIndicator("code")}</th>
+              <th className="p-3">Item List</th>
+              <th className="p-3">Block No/Address</th>
               <th className="p-3">Customer {sortIndicator("customerName")}</th>
-              <th className="p-3">Items</th>
               <th className="p-3 whitespace-nowrap">Total {sortIndicator("total")}</th>
               <th className="p-3">Status {sortIndicator("status")}</th>
               <th className="p-3 whitespace-nowrap">Placed {sortIndicator("placedAt")}</th>
@@ -107,21 +108,41 @@ export default function OrdersTable({
                   </div>
                 </td>
                 <td className="p-3 align-top">
-                  <div className="leading-tight">
-                    <div className="font-medium">{o.customerName}</div>
-                    <div className="text-muted">{o.customerPhone}</div>
-                  </div>
-                </td>
-                <td className="p-3 align-top text-muted">
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     {o.items?.slice(0, 3).map((it, idx) => (
-                      <div key={idx}>
-                        {it.qty}x {it.name}
+                      <div key={idx} className="font-medium text-[hsl(var(--foreground))]">
+                        <span className="text-[#ff6600] font-semibold">{it.qty}x</span> {it.name}
                       </div>
                     ))}
                     {(o.items?.length || 0) > 3 && (
-                      <div>+ {o.items.length - 3} more</div>
+                      <div className="text-muted font-medium text-sm">+ {o.items.length - 3} more items</div>
                     )}
+                  </div>
+                </td>
+                <td className="p-3 align-top text-muted">
+                  <div className="leading-tight">
+                    <div className="text-sm">
+                      {(() => {
+                        const addr = o.customerAddress || o.address;
+                        if (!addr) return 'N/A';
+                        if (typeof addr === 'string') return addr;
+                        if (typeof addr === 'object') {
+                          const parts = [];
+                          if (addr.line1) parts.push(addr.line1);
+                          if (addr.line2) parts.push(addr.line2);
+                          if (addr.city) parts.push(addr.city);
+                          if (addr.block) parts.push(`Block ${addr.block}`);
+                          return parts.length > 0 ? parts.join(', ') : 'N/A';
+                        }
+                        return 'N/A';
+                      })()}
+                    </div>
+                  </div>
+                </td>
+                <td className="p-3 align-top">
+                  <div className="leading-tight">
+                    <div className="text-sm text-[hsl(var(--foreground))]">{o.customerName}</div>
+                    <div className="text-muted text-xs">{o.customerPhone}</div>
                   </div>
                 </td>
                 <td className="p-3 align-top font-semibold">₹{Number(o.total).toLocaleString()}</td>
@@ -186,7 +207,7 @@ export default function OrdersTable({
 
             {visibleOrders.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-10 text-center text-muted">No orders found.</td>
+                <td colSpan={9} className="p-10 text-center text-muted">No orders found.</td>
               </tr>
             )}
           </tbody>

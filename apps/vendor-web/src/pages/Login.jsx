@@ -80,10 +80,12 @@ export default function Login() {
 
         {/* Login form */}
         <div className="flex-1 min-w-[300px] bg-white p-8 rounded-xl shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow">
-          <h3 className="mb-6 text-[22px] text-[#333] font-semibold">Vendor Login</h3>
+          <h3 className="mb-6 text-[22px] text-[#333] font-semibold">Partner Login</h3>
           <VendorLoginForm />
         </div>
       </div>
+
+
     </div>
   );
 }
@@ -143,7 +145,7 @@ function VendorLoginForm() {
         {loading || submitting ? 'Loading...' : 'Login'}
       </PrimaryButton>
       <div className="text-center mt-4 text-sm text-[#555]">
-        New vendor? <Link to="/vendor/signup" className="text-[#ff6600] font-semibold">Register Your Business</Link>
+        New partner? <Link to="/vendor/signup" className="text-[#ff6600] font-semibold">Register as Partner</Link>
       </div>
     </form>
   );
