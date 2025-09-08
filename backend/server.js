@@ -30,6 +30,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(rateLimiter);
 
+
+
+// Health check or root endpoint
+app.get('/', (req, res) => {
+	res.json({ status: 'ok', message: 'Unieats backend API is running.' });
+});
+
 // API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
