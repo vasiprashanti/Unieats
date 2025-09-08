@@ -120,6 +120,7 @@ const Hero = () => {
       });
       if (res.ok) {
         alert('You will be notified soon!');
+        console.log(res);
         setShowForm(false);
       } else {
         alert('Signup failed. Please try again.');
