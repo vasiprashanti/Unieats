@@ -139,8 +139,8 @@ function LoginForm({ onSwitch }) {
   const hasErrors = Object.values(errors).some(error => error);
 
   // Helper function to clear errors on input change
-  const onChangeClear = (field, setter) => (e) => {
-    setter(e.target.value);
+  const onChangeClear = (field, setter) => (val) => {
+    setter(val);
     if (error) setError(null);
   };
 
@@ -158,14 +158,13 @@ function LoginForm({ onSwitch }) {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      
+      console.log(result);
       // Handle successful Google sign-in
       const user = result.user;
       // Optionally: POST to backend for user record sync
       console.log("Google sign-in successful:", user);
-      
-      // Navigate or handle success
-      navigate('/admin/dashboard'); // or wherever you want to redirect
+     
+      navigate('/admin/dashboard');
     } catch (error) {
       console.error("Google sign-in error:", error);
       setError(error.message || "Failed to sign in with Google");
@@ -190,7 +189,7 @@ function LoginForm({ onSwitch }) {
 
     try {
       await login(emailOrPhone, password);
-      navigate('/dashboard'); // or wherever you want to redirect after login
+      navigate('/admin/dashboard'); // or wherever you want to redirect after login
     } catch (err) {
       console.error("Login error:", err);
       setError(err.message || "Login failed");
@@ -314,7 +313,7 @@ function SignupForm({ onSwitch }) {
     setSubmitting(true);
     try {
       const res = await signup({ email, password, displayName: fullName });
-      navigate('/dashboard'); // or wherever you want to redirect after signup
+      navigate('/admin/dashboard'); // or wherever you want to redirect after signup
     } catch (err) {
       console.error("Signup error:", err);
       setError(err.message || "Signup failed");
@@ -346,7 +345,7 @@ function SignupForm({ onSwitch }) {
         type="email" 
         placeholder="Email" 
         value={email} 
-        onChange={onChangeClear('email', setEmail)} 
+        onChange={val => { setEmail(val); if (!touched.email) setTouched(t => ({ ...t, email: true })); if (error) setError(null); }} 
         onBlur={() => setTouched((t) => ({ ...t, email: true }))} 
         required 
         error={errors.email} 
