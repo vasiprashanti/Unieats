@@ -23,12 +23,44 @@ cloudinaryConfig();
 
 const app = express();
 
-app.use(cors({
-  origin: ['https://unieats.co', 'http://localhost:3000'],
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    
+    if (!origin) return callback(null, true);
+
+    const devOrigins = ["http://localhost:3000", "http://localhost:5173"];
+
+ 
+    if (devOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+      return callback(null, true);
+    }
+
+    if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
+  
+    return callback(new Error("Not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+};
+
+
+app.use(cors(corsOptions));
+
+
+app.options("*", cors(corsOptions));
+
+
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
