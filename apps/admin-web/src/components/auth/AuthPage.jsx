@@ -1,4 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Alert from "../Alert";
+import { useAuth } from "../../context/AuthContext";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../../config/firebase";
 
 // Reusable Auth Page with Carousel + Toggle Login/Signup
 // Props:
@@ -116,10 +121,8 @@ function LinkButton({ onClick, children }) {
   );
 }
 
-import Alert from "../Alert";
-import { useAuth } from "../../context/AuthContext";
-
 function LoginForm({ onSwitch }) {
+  const navigate = useNavigate();
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [touched, setTouched] = useState({ emailOrPhone: false, password: false });
@@ -127,43 +130,101 @@ function LoginForm({ onSwitch }) {
 
   const { login, loading, error, setError } = useAuth();
 
-  const isEmail = (v) => /.+@.+\..+/.test(v);
+  // Validation logic
   const errors = {
-    emailOrPhone:
-      touched.emailOrPhone && !emailOrPhone ? "Email is required" :
-      touched.emailOrPhone && emailOrPhone && !isEmail(emailOrPhone) ? "Enter a valid email (name@domain.com)" : "",
+    emailOrPhone: touched.emailOrPhone && !emailOrPhone ? "Email is required" : "",
     password: touched.password && !password ? "Password is required" : "",
   };
-  const hasErrors = Object.values(errors).some(Boolean);
 
-  const friendly = (code) => {
-    if (!code) return null;
-    const map = {
-      "auth/wrong-password": "Invalid email or password",
-      "auth/user-not-found": "Invalid email or password",
-      default: "Something went wrong. Please try again.",
-    };
-    return map[code] || map.default;
+  const hasErrors = Object.values(errors).some(error => error);
+
+  // Helper function to clear errors on input change
+  const onChangeClear = (field, setter) => (e) => {
+    setter(e.target.value);
+    if (error) setError(null);
   };
 
+  // Helper function to make error messages user-friendly
+  const friendly = (errorMsg) => {
+    if (!errorMsg) return "";
+    // Add your error message formatting logic here
+    return errorMsg;
+  };
+
+  // Google Sign-In handler
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      // Handle successful Google sign-in
+      const user = result.user;
+      // Optionally: POST to backend for user record sync
+      console.log("Google sign-in successful:", user);
+      
+      // Navigate or handle success
+      navigate('/admin/dashboard'); // or wherever you want to redirect
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setError(error.message || "Failed to sign in with Google");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Form submission handler
   const onSubmit = async (e) => {
     e.preventDefault();
+    
+    // Mark all fields as touched to show validation errors
     setTouched({ emailOrPhone: true, password: true });
-    if (hasErrors) return;
-    setSubmitting(true);
-    const res = await login({ email: emailOrPhone, password });
-    setSubmitting(false);
-  };
+    
+    if (hasErrors || !emailOrPhone || !password) {
+      return;
+    }
 
-  const onChangeClear = (key, setter) => (val) => {
-    setter(val);
-    if (!touched[key]) setTouched((t) => ({ ...t, [key]: true }));
-    if (error) setError(null);
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      await login(emailOrPhone, password);
+      navigate('/dashboard'); // or wherever you want to redirect after login
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err.message || "Login failed");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <form onSubmit={onSubmit} className="block">
-      <Alert type="error" message={friendly(error)} />
+      {error && <Alert type="error" message={friendly(error)} />}
+      
+      <button
+        type="button"
+        onClick={handleGoogleSignIn}
+        className="w-full flex items-center justify-center gap-2 py-2 mb-4 border border-[#ff6600] rounded-lg bg-white text-[#ff6600] font-semibold hover:bg-[#ff6600] hover:text-white transition-colors"
+        disabled={loading || submitting}
+      >
+        <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g clipPath="url(#clip0_17_40)">
+            <path d="M47.5 24.552c0-1.636-.146-3.2-.418-4.704H24.48v9.02h13.02c-.56 3.02-2.24 5.58-4.76 7.3v6.06h7.7c4.5-4.14 7.06-10.24 7.06-17.676z" fill="#4285F4"/>
+            <path d="M24.48 48c6.48 0 11.92-2.14 15.9-5.82l-7.7-6.06c-2.14 1.44-4.88 2.3-8.2 2.3-6.3 0-11.62-4.26-13.52-9.98H2.6v6.24C6.56 43.34 14.8 48 24.48 48z" fill="#34A853"/>
+            <path d="M10.96 28.44c-.5-1.44-.8-2.98-.8-4.44s.3-3 .8-4.44v-6.24H2.6A23.98 23.98 0 000 24c0 3.98.96 7.76 2.6 10.68l8.36-6.24z" fill="#FBBC05"/>
+            <path d="M24.48 9.52c3.54 0 6.68 1.22 9.16 3.62l6.84-6.84C36.4 2.14 30.96 0 24.48 0 14.8 0 6.56 4.66 2.6 13.32l8.36 6.24c1.9-5.72 7.22-9.98 13.52-9.98z" fill="#EA4335"/>
+          </g>
+          <defs>
+            <clipPath id="clip0_17_40">
+              <rect width="48" height="48" fill="white"/>
+            </clipPath>
+          </defs>
+        </svg>
+        Sign in with Google
+      </button>
+      
       <Field
         label="Email"
         placeholder="Email"
@@ -173,6 +234,7 @@ function LoginForm({ onSwitch }) {
         required
         error={errors.emailOrPhone}
       />
+      
       <Field
         label="Password"
         type="password"
@@ -184,9 +246,13 @@ function LoginForm({ onSwitch }) {
         enableToggle
         error={errors.password}
       />
+      
       <div className="text-right -mt-2 mb-2">
-        <button type="button" className="text-sm text-[#ff6600] hover:underline">Forgot password?</button>
+        <button type="button" className="text-sm text-[#ff6600] hover:underline">
+          Forgot password?
+        </button>
       </div>
+      
       <PrimaryButton type="submit" disabled={loading || submitting || hasErrors}>
         {loading || submitting ? (
           <span className="inline-flex items-center gap-2">
@@ -197,6 +263,7 @@ function LoginForm({ onSwitch }) {
           "Login"
         )}
       </PrimaryButton>
+      
       <SwitchText>
         Never ordered before? <LinkButton onClick={onSwitch}>Sign up here</LinkButton>
       </SwitchText>
@@ -205,6 +272,7 @@ function LoginForm({ onSwitch }) {
 }
 
 function SignupForm({ onSwitch }) {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -244,8 +312,15 @@ function SignupForm({ onSwitch }) {
     setTouched({ fullName: true, email: true, password: true, confirmPassword: true });
     if (hasErrors) return;
     setSubmitting(true);
-    const res = await signup({ email, password, displayName: fullName });
-    setSubmitting(false);
+    try {
+      const res = await signup({ email, password, displayName: fullName });
+      navigate('/dashboard'); // or wherever you want to redirect after signup
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError(err.message || "Signup failed");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const onChangeClear = (key, setter) => (val) => {
@@ -256,12 +331,55 @@ function SignupForm({ onSwitch }) {
 
   return (
     <form onSubmit={onSubmit} className="block">
-      <Alert type="error" message={friendly(error)} />
-      <Field label="Full Name" placeholder="Full Name" value={fullName} onChange={onChangeClear('fullName', setFullName)} onBlur={() => setTouched((t)=>({...t, fullName: true}))} required error={errors.fullName} />
-      <Field label="Email" type="email" placeholder="Email" value={email} onChange={onChangeClear('email', setEmail)} onBlur={() => setTouched((t)=>({...t, email: true}))} required error={errors.email} />
-      <Field label="Phone" type="tel" placeholder="Phone number" value={phone} onChange={setPhone} />
-      <Field label="Password" type="password" placeholder="Password" value={password} onChange={onChangeClear('password', setPassword)} onBlur={() => setTouched((t)=>({...t, password: true}))} required enableToggle error={errors.password} />
-      <Field label="Confirm Password" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={onChangeClear('confirmPassword', setConfirmPassword)} onBlur={() => setTouched((t)=>({...t, confirmPassword: true}))} required enableToggle error={errors.confirmPassword} />
+      {error && <Alert type="error" message={friendly(error)} />}
+      <Field 
+        label="Full Name" 
+        placeholder="Full Name" 
+        value={fullName} 
+        onChange={onChangeClear('fullName', setFullName)} 
+        onBlur={() => setTouched((t) => ({ ...t, fullName: true }))} 
+        required 
+        error={errors.fullName} 
+      />
+      <Field 
+        label="Email" 
+        type="email" 
+        placeholder="Email" 
+        value={email} 
+        onChange={onChangeClear('email', setEmail)} 
+        onBlur={() => setTouched((t) => ({ ...t, email: true }))} 
+        required 
+        error={errors.email} 
+      />
+      <Field 
+        label="Phone" 
+        type="tel" 
+        placeholder="Phone number" 
+        value={phone} 
+        onChange={setPhone} 
+      />
+      <Field 
+        label="Password" 
+        type="password" 
+        placeholder="Password" 
+        value={password} 
+        onChange={onChangeClear('password', setPassword)} 
+        onBlur={() => setTouched((t) => ({ ...t, password: true }))} 
+        required 
+        enableToggle 
+        error={errors.password} 
+      />
+      <Field 
+        label="Confirm Password" 
+        type="password" 
+        placeholder="Confirm Password" 
+        value={confirmPassword} 
+        onChange={onChangeClear('confirmPassword', setConfirmPassword)} 
+        onBlur={() => setTouched((t) => ({ ...t, confirmPassword: true }))} 
+        required 
+        enableToggle 
+        error={errors.confirmPassword} 
+      />
       <PrimaryButton type="submit" disabled={loading || submitting || hasErrors}>
         {loading || submitting ? (
           <span className="inline-flex items-center gap-2">
