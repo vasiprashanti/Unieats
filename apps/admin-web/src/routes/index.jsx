@@ -54,8 +54,7 @@ export default function AppRoutes() {
      
 
       {/* Protected admin routes with common layout */}
-      {/* <Route element={<ProtectedAdmin><AdminLayout /></ProtectedAdmin>}> */}
-      <Route>
+      <Route element={<ProtectedAdmin><AdminLayout /></ProtectedAdmin>}>
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/orders" element={<Orders />} />
         <Route path="/admin/users" element={<Users />} />

@@ -34,9 +34,9 @@ export default function Login() {
         <div className="flex items-center justify-between px-10 py-4">
           <h1 className="text-[24px] font-bold text-[#ff6600]">UniEats</h1>
           <nav className="flex items-center gap-6 text-[#333]">
-            <a href="#how-it-works" className="hover:text-[#ff6600] transition-colors">How It Works</a>
-            <a href="#pricing" className="hover:text-[#ff6600] transition-colors">Pricing</a>
-            <a href="#support" className="hover:text-[#ff6600] transition-colors">Support</a>
+            <Link to="/vendor/signup#how-it-works" className="hover:text-[#ff6600] transition-colors">How It Works</Link>
+            <Link to="/vendor/signup#pricing" className="hover:text-[#ff6600] transition-colors">Pricing</Link>
+            <Link to="/vendor/signup#support" className="hover:text-[#ff6600] transition-colors">Support</Link>
             <Link to="/vendor/signup" className="hover:text-[#ff6600] transition-colors">Sign up</Link>
           </nav>
         </div>

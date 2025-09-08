@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 // Vendor Sign-up page recreated from provided HTML design (UI-only)
 export default function Signup() {
+  const location = useLocation();
   const texts = useMemo(
     () => [
       "Grow your restaurant with Unieats!",
@@ -26,6 +27,30 @@ export default function Signup() {
     return () => clearInterval(id);
   }, [texts.length]);
 
+  // Handle hash-based navigation when coming from login page
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        setTimeout(() => {
+          scrollToSection(element);
+        }, 100);
+      }
+    }
+  }, [location.hash]);
+
+  // Smooth scroll with navbar offset
+  const scrollToSection = (element) => {
+    const navbarHeight = 80; // Approximate navbar height
+    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+    const offsetPosition = elementPosition - navbarHeight;
+    
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-white text-[#222]">
       {/* Navbar */}
@@ -33,9 +58,33 @@ export default function Signup() {
         <div className="flex items-center justify-between px-10 py-4">
           <h1 className="text-[24px] font-bold text-[#ff6600]">UniEats</h1>
           <nav className="flex items-center gap-6 text-[#333]">
-            <a href="#how-it-works" className="hover:text-[#ff6600] transition-colors">How It Works</a>
-            <a href="#pricing" className="hover:text-[#ff6600] transition-colors">Pricing</a>
-            <a href="#support" className="hover:text-[#ff6600] transition-colors">Support</a>
+            <button 
+              onClick={() => {
+                const element = document.getElementById('how-it-works');
+                if (element) scrollToSection(element);
+              }} 
+              className="hover:text-[#ff6600] transition-colors cursor-pointer"
+            >
+              How It Works
+            </button>
+            <button 
+              onClick={() => {
+                const element = document.getElementById('pricing');
+                if (element) scrollToSection(element);
+              }} 
+              className="hover:text-[#ff6600] transition-colors cursor-pointer"
+            >
+              Pricing
+            </button>
+            <button 
+              onClick={() => {
+                const element = document.getElementById('support');
+                if (element) scrollToSection(element);
+              }} 
+              className="hover:text-[#ff6600] transition-colors cursor-pointer"
+            >
+              Support
+            </button>
             <Link to="/vendor/login" className="hover:text-[#ff6600] transition-colors">Login</Link>
           </nav>
         </div>
@@ -60,7 +109,7 @@ export default function Signup() {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-wrap gap-10 justify-between px-[10%] py-12" id="how-it-works">
+      <div className="flex flex-wrap gap-10 justify-between px-[10%] py-12">
         {/* Why join */}
         <div className="flex-1 min-w-[300px]">
           <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold">TURN MENU INTO REVENUE</h2>
@@ -217,6 +266,52 @@ export default function Signup() {
               <h4 className="text-lg font-semibold text-[#333] mb-3">Priority Listing</h4>
               <p className="text-[15px] text-[#555]">Get higher visibility in category listings based on genuine student ratings, ensuring fair and quality-driven recommendations.</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Support Section */}
+      <section id="support" className="px-[10%] py-16 bg-gray-50">
+        <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Support & Help</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="text-center p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
+            <div className="w-16 h-16 mx-auto mb-6 bg-[#ff6600]/10 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#ff6600]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-4 text-[#333]">24/7 Support</h3>
+            <p className="text-[#555] text-[15px] leading-relaxed mb-6">Get help anytime with our dedicated support team via chat, email, or phone.</p>
+            <button className="px-6 py-2 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Contact Support</button>
+          </div>
+          
+          <div className="text-center p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
+            <div className="w-16 h-16 mx-auto mb-6 bg-[#ff6600]/10 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#ff6600]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10,9 9,9 8,9"/>
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-4 text-[#333]">Documentation</h3>
+            <p className="text-[#555] text-[15px] leading-relaxed mb-6">Access comprehensive guides, tutorials, and FAQs to help you get started quickly.</p>
+            <button className="px-6 py-2 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">View Docs</button>
+          </div>
+          
+          <div className="text-center p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
+            <div className="w-16 h-16 mx-auto mb-6 bg-[#ff6600]/10 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#ff6600]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-4 text-[#333]">Community</h3>
+            <p className="text-[#555] text-[15px] leading-relaxed mb-6">Connect with other restaurant partners, share experiences, and learn best practices.</p>
+            <button className="px-6 py-2 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Join Community</button>
           </div>
         </div>
       </section>
