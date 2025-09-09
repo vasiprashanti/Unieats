@@ -88,10 +88,15 @@ const IPhoneMockup = () => (
 
 const Header = () => (
   <header className="sticky top-0 z-10 flex justify-between items-center px-[5%] py-4 bg-[#121214] border-b border-[#111]">
-    <h1 className="text-[2.4rem] font-extrabold text-[#ff802c]">UniEats</h1>
+    <img 
+      src="/unilogo.jpg" 
+      alt="UniEats" 
+      className="h-10 w-auto object-contain"
+    />
     <nav className="flex items-center space-x-[30px] text-[#ff802c] font-semibold text-[1.1rem] md:text-[1.2rem]">
       <a href="#benefits" className="hover:text-white transition-colors">Perks</a>
       <a href="#contact" className="hover:text-white transition-colors">Contact</a>
+      <a href="/login" className="px-3 py-2 rounded-md text-sm font-medium text-muted hover:text-white hover:bg-accent transition-colors duration-200">Login</a>
     </nav>
   </header>
 );

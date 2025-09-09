@@ -1,15 +1,43 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 
 const Navbar = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const { user } = useAuth();
+  const { totalItems } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Search functionality
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const isActive = (path) => {
     return location.pathname === path;
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      // Navigate to restaurants page with search query
+      navigate(`/restaurants?search=${encodeURIComponent(searchTerm.trim())}`);
+      setIsSearchOpen(false);
+      setSearchTerm('');
+    }
+  };
+
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (!isSearchOpen) {
+      // Focus on search input after animation
+      setTimeout(() => {
+        const searchInput = document.getElementById('navbar-search');
+        if (searchInput) searchInput.focus();
+      }, 100);
+    }
   };
 
   const navLinks = [
@@ -19,14 +47,18 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg border-b border-base transition-all duration-300" 
+    <nav className="hidden md:block sticky top-0 z-50 backdrop-blur-lg border-b border-base transition-all duration-300" 
          style={{ backgroundColor: 'hsl(var(--background) / 0.9)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/home" className="flex-shrink-0">
             <div className="flex items-center">
-              <span className="text-2xl font-bold text-[#FF6B35]">UniEats</span>
+              <img 
+                src="/unilogo.jpg" 
+                alt="UniEats" 
+                className="h-10 w-auto object-contain"
+              />
             </div>
           </Link>
 
@@ -56,6 +88,46 @@ const Navbar = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
+            {/* Search Bar */}
+            <div className="relative">
+              {isSearchOpen ? (
+                <form onSubmit={handleSearchSubmit} className="flex items-center">
+                  <input
+                    id="navbar-search"
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search restaurants..."
+                    className="w-64 pl-4 pr-10 py-2 text-sm border border-base rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all duration-200"
+                    style={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      color: 'hsl(var(--foreground))',
+                      borderColor: 'hsl(var(--border))'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-muted hover:text-[hsl(var(--foreground))] transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </form>
+              ) : (
+                <button
+                  onClick={toggleSearch}
+                  className="p-2 rounded-lg transition-all duration-200 text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent"
+                  aria-label="Search restaurants"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -81,8 +153,11 @@ const Navbar = () => {
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6m-8 0V9a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h4" />
               </svg>
-              {/* Cart badge - you can implement cart count logic here */}
-              {/* <span className="absolute -top-1 -right-1 bg-[#FF6B35] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span> */}
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#ff6600] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] font-medium">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
             </Link>
 
             {/* User Menu */}
@@ -102,13 +177,9 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-                style={{ 
-                  backgroundColor: 'hsl(var(--primary))', 
-                  color: 'hsl(var(--primary-foreground))' 
-                }}
+                className="px-3 py-2 rounded-md text-sm font-medium text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent transition-colors duration-200"
               >
-                Sign In
+                Login
               </Link>
             )}
           </div>

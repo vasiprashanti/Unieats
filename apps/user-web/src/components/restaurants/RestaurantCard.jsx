@@ -1,11 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const RestaurantCard = ({ restaurant, isLarge = false }) => {
+const RestaurantCard = ({ restaurant, cardType = 'default' }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
     navigate(`/restaurants/${restaurant.id}`);
+  };
+
+  // Define different card types for Pinterest-like layout
+  const getCardClasses = () => {
+    switch (cardType) {
+      case 'large':
+        return 'col-span-1 md:col-span-2 h-80'; // Wide card
+      case 'tall':
+        return 'col-span-1 row-span-2 h-96'; // Tall card
+      case 'small':
+        return 'col-span-1 h-56'; // Compact card
+      case 'medium':
+        return 'col-span-1 h-64'; // Medium card
+      default:
+        return 'col-span-1 h-72'; // Default card
+    }
   };
 
   return (
@@ -14,7 +30,7 @@ const RestaurantCard = ({ restaurant, isLarge = false }) => {
       className={`
         relative bg-white rounded-2xl overflow-hidden cursor-pointer group
         transition-all duration-300 hover:shadow-xl hover:scale-[1.02]
-        ${isLarge ? 'col-span-1 md:col-span-2 h-64' : 'col-span-1 h-72'}
+        ${getCardClasses()}
       `}
     >
       {/* Background Image */}
@@ -41,12 +57,34 @@ const RestaurantCard = ({ restaurant, isLarge = false }) => {
 
       {/* Content overlay */}
       <div className="relative h-full flex flex-col justify-between p-6">
-        {/* Top section - Rating and badges */}
+        {/* Top section - Diet badges only */}
         <div className="flex justify-between items-start">
-          {/* Rating badge */}
-          <div className="bg-white/95 backdrop-blur-sm px-3 py-2 rounded-full flex items-center gap-1 shadow-sm">
-            <span className="text-[#FF6B35] text-sm">⭐</span>
-            <span className="text-gray-800 font-semibold text-sm">{restaurant.rating}</span>
+          {/* Diet Type Indicator */}
+          <div className="flex items-center gap-2">
+            {restaurant.dietType === 'veg' && (
+              <div className="bg-white/95 backdrop-blur-sm p-2 rounded-full shadow-sm">
+                <div className="w-3 h-3 border-2 border-green-600 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+                </div>
+              </div>
+            )}
+            {restaurant.dietType === 'non-veg' && (
+              <div className="bg-white/95 backdrop-blur-sm p-2 rounded-full shadow-sm">
+                <div className="w-3 h-3 border-2 border-red-600 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-red-600"></div>
+                </div>
+              </div>
+            )}
+            {restaurant.dietType === 'both' && (
+              <div className="bg-white/95 backdrop-blur-sm p-2 rounded-full shadow-sm flex items-center gap-0.5">
+                <div className="w-2.5 h-2.5 border border-green-600 flex items-center justify-center">
+                  <div className="w-1 h-1 bg-green-600 rounded-full"></div>
+                </div>
+                <div className="w-2.5 h-2.5 border border-red-600 flex items-center justify-center">
+                  <div className="w-1 h-1 bg-red-600"></div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Status badges */}
@@ -66,10 +104,17 @@ const RestaurantCard = ({ restaurant, isLarge = false }) => {
 
         {/* Bottom section - Restaurant info */}
         <div className="text-white">
-          <h3 className={`font-bold mb-1 ${isLarge ? 'text-2xl' : 'text-xl'}`}>
+          <h3 className={`font-bold mb-1 ${
+            cardType === 'large' ? 'text-2xl' : 
+            cardType === 'tall' ? 'text-xl' :
+            cardType === 'small' ? 'text-lg' : 'text-xl'
+          }`}>
             {restaurant.name}
           </h3>
-          <p className={`text-white/90 mb-3 ${isLarge ? 'text-base' : 'text-sm'}`}>
+          <p className={`text-white/90 mb-3 ${
+            cardType === 'large' ? 'text-base' : 
+            cardType === 'small' ? 'text-xs' : 'text-sm'
+          }`}>
             {restaurant.cuisine}
           </p>
           
