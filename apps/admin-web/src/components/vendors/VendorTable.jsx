@@ -17,7 +17,7 @@ function sortBy(items, key, dir = "asc") {
 export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortKey, setSortKey] = useState("date");
+  const [sortKey, setSortKey] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
 
   const [confirm, setConfirm] = useState({ open: false, id: null, action: null });
@@ -25,12 +25,18 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
 
   const filtered = useMemo(() => {
     let data = vendors || [];
-    // filter by status
-    if (statusFilter !== "all") data = data.filter(v => v.status === statusFilter);
-    // filter by query (name/email)
+    // filter by status (approvalStatus in DB)
+    if (statusFilter !== "all") {
+      data = data.filter(v => v.approvalStatus === statusFilter);
+    }
+    // filter by query (businessName/email)
     if (query.trim()) {
       const q = query.toLowerCase();
-      data = data.filter(v => v.name.toLowerCase().includes(q) || v.email.toLowerCase().includes(q));
+      data = data.filter(
+        v =>
+          v.businessName?.toLowerCase().includes(q) ||
+          v.email?.toLowerCase().includes(q)
+      );
     }
     // sort
     if (sortKey) data = sortBy(data, sortKey, sortDir);
@@ -39,7 +45,10 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
 
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(d => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
   };
 
   const startConfirm = (id, action) => setConfirm({ open: true, id, action });
@@ -59,10 +68,10 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
   const closeDocs = () => setDocView({ open: false, vendor: null });
 
   const columns = [
-    { key: "name", label: "Vendor Name" },
+    { key: "businessName", label: "Vendor Name" },
     { key: "email", label: "Email" },
-    { key: "status", label: "Status" },
-    { key: "date", label: "Date Registered" },
+    { key: "approvalStatus", label: "Status" },
+    { key: "createdAt", label: "Date Registered" },
     { key: "docs", label: "Documents" },
     { key: "actions", label: "Actions" },
   ];
@@ -99,7 +108,7 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
             <tr>
               {columns.map(col => (
                 <th key={col.key} className="text-left px-3 py-2 whitespace-nowrap">
-                  {col.key !== 'actions' && col.key !== 'docs' ? (
+                  {col.key !== "actions" && col.key !== "docs" ? (
                     <button
                       type="button"
                       onClick={() => toggleSort(col.key)}
@@ -107,7 +116,7 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
                     >
                       {col.label}
                       {sortKey === col.key && (
-                        <span className="text-xs">{sortDir === 'asc' ? '▲' : '▼'}</span>
+                        <span className="text-xs">{sortDir === "asc" ? "▲" : "▼"}</span>
                       )}
                     </button>
                   ) : (
@@ -119,46 +128,61 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
           </thead>
           <tbody>
             {filtered.map(v => (
-              <tr key={v.id} className="border-t border-base">
-                <td className="px-3 py-2">{v.name}</td>
-                <td className="px-3 py-2">{v.email}</td>
+              <tr key={v._id} className="border-t border-base">
+                <td className="px-3 py-2">{v.businessName}</td>
+                <td className="px-3 py-2">{v.email || "—"}</td>
                 <td className="px-3 py-2 capitalize">
                   {(() => {
                     const map = {
-                      pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100",
-                      approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
-                      rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100",
+                      pending:
+                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100",
+                      approved:
+                        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
+                      rejected:
+                        "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100",
                     };
-                    const cls = map[v.status] || "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100";
+                    const cls =
+                      map[v.approvalStatus] ||
+                      "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100";
                     return (
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}>
-                        {v.status}
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}
+                      >
+                        {v.approvalStatus}
                       </span>
                     );
                   })()}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap">{v.date}</td>
-                <td className="px-3 py-2">
-                  <button type="button" className="text-[hsl(var(--primary))] hover:underline" onClick={() => openDocs(v)}>View</button>
+                <td className="px-3 py-2 whitespace-nowrap">
+                  {new Date(v.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-3 py-2">
-                  {v.status === 'pending' ? (
+                  <button
+                    type="button"
+                    className="text-[hsl(var(--primary))] hover:underline"
+                    onClick={() => openDocs(v)}
+                  >
+                    View
+                  </button>
+                </td>
+                <td className="px-3 py-2">
+                  {v.approvalStatus === "pending" ? (
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => startConfirm(v.id, 'approve')}
-                        disabled={busyId === v.id}
+                        onClick={() => startConfirm(v._id, "approve")}
+                        disabled={busyId === v._id}
                         className="px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
                       >
-                        {busyId === v.id ? '...' : 'Approve'}
+                        {busyId === v._id ? "..." : "Approve"}
                       </button>
                       <button
                         type="button"
-                        onClick={() => startConfirm(v.id, 'reject')}
-                        disabled={busyId === v.id}
+                        onClick={() => startConfirm(v._id, "reject")}
+                        disabled={busyId === v._id}
                         className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
                       >
-                        {busyId === v.id ? '...' : 'Reject'}
+                        {busyId === v._id ? "..." : "Reject"}
                       </button>
                     </div>
                   ) : (
@@ -169,7 +193,12 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td className="px-3 py-8 text-center text-muted" colSpan={columns.length}>No vendors found.</td>
+                <td
+                  className="px-3 py-8 text-center text-muted"
+                  colSpan={columns.length}
+                >
+                  No vendors found.
+                </td>
               </tr>
             )}
           </tbody>
@@ -179,9 +208,13 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
       {/* Confirm modal */}
       <Modal
         open={confirm.open}
-        title={confirm.action === 'approve' ? 'Approve Vendor' : 'Reject Vendor'}
-        description={confirm.action === 'approve' ? 'Are you sure you want to approve this vendor?' : 'Are you sure you want to reject this vendor?'}
-        confirmText={confirm.action === 'approve' ? 'Approve' : 'Reject'}
+        title={confirm.action === "approve" ? "Approve Vendor" : "Reject Vendor"}
+        description={
+          confirm.action === "approve"
+            ? "Are you sure you want to approve this vendor?"
+            : "Are you sure you want to reject this vendor?"
+        }
+        confirmText={confirm.action === "approve" ? "Approve" : "Reject"}
         cancelText="Cancel"
         onConfirm={proceedConfirm}
         onCancel={closeConfirm}
@@ -192,7 +225,7 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
       <DocumentViewer
         open={docView.open}
         onClose={closeDocs}
-        vendorName={docView.vendor?.name}
+        vendorName={docView.vendor?.businessName}
         documents={docView.vendor?.documents}
       />
     </div>
