@@ -7,7 +7,9 @@ const checkRole = (...allowedRoles) => {
       // If the user object doesn't exist or their role is not in the allowed list,
       // send a 'Forbidden' error.
       return res.status(403).json({
-        message: `Forbidden: Access requires one of the following roles: ${allowedRoles.join(', ')}`,
+        message: `Forbidden: Access requires one of the following roles: ${allowedRoles.join(
+          ", "
+        )}`,
       });
     }
 

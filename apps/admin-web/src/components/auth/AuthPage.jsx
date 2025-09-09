@@ -158,12 +158,33 @@ function LoginForm({ onSwitch }) {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      console.log(result);
-      // Handle successful Google sign-in
       const user = result.user;
-      // Optionally: POST to backend for user record sync
       console.log("Google sign-in successful:", user);
-     
+
+      // Get Firebase ID token
+      let backendUser = null;
+      try {
+        const idToken = await user.getIdToken();
+        console.log("token--",idToken);
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/me`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+        });
+        if (res.ok) {
+          backendUser = await res.json();
+          // Store backend user in localStorage
+          localStorage.setItem('unieats_admin_user', JSON.stringify(backendUser));
+          console.log('Backend user data (Google sign-in):', backendUser);
+        } else {
+          console.error('Backend getMe error (Google sign-in):', res.status);
+        }
+      } catch (err) {
+        console.error('Backend getMe error (Google sign-in):', err);
+      }
+
       navigate('/admin/dashboard');
     } catch (error) {
       console.error("Google sign-in error:", error);
@@ -176,19 +197,21 @@ function LoginForm({ onSwitch }) {
   // Form submission handler
   const onSubmit = async (e) => {
     e.preventDefault();
-    
     // Mark all fields as touched to show validation errors
     setTouched({ emailOrPhone: true, password: true });
-    
     if (hasErrors || !emailOrPhone || !password) {
       return;
     }
-
     setSubmitting(true);
     setError(null);
-
     try {
-      await login(emailOrPhone, password);
+      // Pass as object for destructuring in AuthContext
+      const result = await login({ email: emailOrPhone, password });
+      if (result && result.backendUser) {
+        // Store backend user in localStorage
+        localStorage.setItem('unieats_admin_user', JSON.stringify(result.backendUser));
+        console.log('Backend user data (from AuthPage):', result.backendUser);
+      }
       navigate('/admin/dashboard'); // or wherever you want to redirect after login
     } catch (err) {
       console.error("Login error:", err);

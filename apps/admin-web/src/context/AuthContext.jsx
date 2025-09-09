@@ -25,8 +25,10 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
+      // Firebase login
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      return { success: true, user: userCredential.user };
+
+      return { success: true, user: userCredential.user, backendUser };
     } catch (error) {
       setError(error.code);
       return { success: false, error: error.code };

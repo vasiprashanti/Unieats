@@ -1,9 +1,8 @@
-import admin from 'firebase-admin';
+import admin from "firebase-admin";
 
 import dotenv from "dotenv";
 
 dotenv.config();
-
 
 const serviceAccount = {
   type: process.env.FIREBASE_TYPE,
@@ -24,7 +23,7 @@ const initializeFirebaseAdmin = () => {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
-    console.log('Firebase Admin SDK initialized successfully.');
+    console.log("Firebase Admin SDK initialized successfully.");
   } catch (error) {
     console.error(`Firebase Admin SDK initialization error: ${error.message}`);
     process.exit(1);

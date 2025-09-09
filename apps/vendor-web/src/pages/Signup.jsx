@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-// Vendor Sign-up page recreated from provided HTML design (UI-only)
+// Vendor Sign-up page with multi-step form
 export default function Signup() {
   const location = useLocation();
   const texts = useMemo(
@@ -124,9 +124,9 @@ export default function Signup() {
           </ul>
         </div>
 
-        {/* Sign-up form (UI only; no backend wiring yet) */}
+        {/* Sign-up form - Multi-step wizard */}
         <div className="flex-1 min-w-[300px] bg-white p-8 rounded-xl shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow">
-          <h3 className="mb-6 text-[22px] text-[#333] font-semibold">Sign Up as a Partner</h3>
+          <h3 className="mb-6 text-[22px] text-[#333] font-semibold">Partner Registration</h3>
           <VendorSignupForm />
         </div>
       </div>
@@ -319,6 +319,7 @@ export default function Signup() {
   );
 }
 
+// Reusable Input Component
 function Input({ type = "text", placeholder, required, value, onChange }) {
   return (
     <input
@@ -332,36 +333,407 @@ function Input({ type = "text", placeholder, required, value, onChange }) {
   );
 }
 
-function PrimaryButton({ children, type = "button" }) {
+// Reusable Button Component
+function PrimaryButton({ children, type = "button", className = "" }) {
   return (
     <button
       type={type}
-      className="w-full px-4 py-3 text-white font-bold rounded-lg bg-[#ff6600] hover:bg-[#e65c00] transition-colors"
+      className={`flex-1 px-4 py-3 text-white font-bold rounded-lg bg-[#ff6600] hover:bg-[#e65c00] transition-colors ${className}`}
     >
       {children}
     </button>
   );
 }
 
+// Multi-Step Form Component
 function VendorSignupForm() {
-  const [restaurantName, setRestaurantName] = useState("");
-  const [ownerName, setOwnerName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 4;
 
-  const onSubmit = (e) => {
-    e.preventDefault();
-    // UI-only for now
-    alert("Thanks! We\u2019ll review your details and get back soon.");
+  // Form data state
+  const [formData, setFormData] = useState({
+    // Step 1: Basic Information
+    businessName: "",
+    phone: "",
+    
+    // Step 2: Business Address
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    
+    // Step 3: Cuisine & Operating Hours
+    cuisineType: [],
+    operatingHours: [],
+    
+    // Step 4: Documents
+    businessLicense: null,
+    foodSafetyCertificate: null,
+  });
+
+  const updateFormData = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const nextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+ const onSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const data = new FormData();
+
+    // Append text fields only
+    data.append("businessName", formData.businessName);
+    data.append("phone", formData.phone);
+    data.append("street", formData.street);
+    data.append("city", formData.city);
+    data.append("state", formData.state);
+    data.append("zipCode", formData.zipCode);
+    data.append("cuisineType", JSON.stringify(formData.cuisineType));
+    data.append("operatingHours", JSON.stringify(formData.operatingHours));
+
+    // Append files
+    if (formData.businessLicense) {
+      data.append("businessLicense", formData.businessLicense); // actual File object
+    }
+    if (formData.foodSafetyCertificate) {
+      data.append("foodSafetyCertificate", formData.foodSafetyCertificate); // actual File object
+    }
+
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/v1/vendors/register`,
+      {
+        method: "POST",
+        body: data,
+      }
+    );
+
+    const result = await response.json();
+    console.log("API Response:", result);
+
+    if (response.ok) {
+      alert("Vendor registered successfully!");
+    } else {
+      alert(result.message || "Vendor registration failed.");
+    }
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    alert("An error occurred. Please try again.");
+  }
+};
+
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return <Step1 formData={formData} updateFormData={updateFormData} onNext={nextStep} />;
+      case 2:
+        return <Step2 formData={formData} updateFormData={updateFormData} onNext={nextStep} onPrev={prevStep} />;
+      case 3:
+        return <Step3 formData={formData} updateFormData={updateFormData} onNext={nextStep} onPrev={prevStep} />;
+      case 4:
+        return <Step4 formData={formData} updateFormData={updateFormData} onSubmit={onSubmit} onPrev={prevStep} />;
+      default:
+        return null;
+    }
   };
 
   return (
-    <form onSubmit={onSubmit} className="block">
-      <Input placeholder="Restaurant Name" value={restaurantName} onChange={setRestaurantName} required />
-      <Input placeholder="Owner's Name" value={ownerName} onChange={setOwnerName} required />
-      <Input type="email" placeholder="Email Address" value={email} onChange={setEmail} required />
-      <Input type="tel" placeholder="Phone Number" value={phone} onChange={setPhone} required />
-      <PrimaryButton type="submit">Join Now</PrimaryButton>
+    <div className="block">
+      {/* Progress Bar */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-2">
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <div
+              key={i + 1}
+              className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
+                i + 1 <= currentStep
+                  ? 'bg-[#ff6600] text-white'
+                  : 'bg-gray-200 text-gray-500'
+              }`}
+            >
+              {i + 1}
+            </div>
+          ))}
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-[#ff6600] h-2 rounded-full transition-all duration-300"
+            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>Basic Info</span>
+          <span>Address</span>
+          <span>Details</span>
+          <span>Documents</span>
+        </div>
+      </div>
+
+      {/* Step Content */}
+      {renderStep()}
+    </div>
+  );
+}
+
+// Step 1: Basic Information
+function Step1({ formData, updateFormData, onNext }) {
+  const handleNext = (e) => {
+    e.preventDefault();
+    if (formData.businessName && formData.phone) {
+      onNext();
+    }
+  };
+
+  return (
+    <form onSubmit={handleNext}>
+      <h4 className="text-lg font-semibold text-[#333] mb-4">Basic Information</h4>
+      
+      <Input
+        placeholder="Business/Restaurant Name"
+        value={formData.businessName}
+        onChange={(value) => updateFormData('businessName', value)}
+        required
+      />
+      
+      <Input
+        type="tel"
+        placeholder="Business Phone Number"
+        value={formData.phone}
+        onChange={(value) => updateFormData('phone', value)}
+        required
+      />
+
+      <PrimaryButton type="submit">Continue</PrimaryButton>
+    </form>
+  );
+}
+
+// Step 2: Business Address
+function Step2({ formData, updateFormData, onNext, onPrev }) {
+  const handleNext = (e) => {
+    e.preventDefault();
+    if (formData.street && formData.city && formData.state && formData.zipCode) {
+      onNext();
+    }
+  };
+
+  return (
+    <form onSubmit={handleNext}>
+      <h4 className="text-lg font-semibold text-[#333] mb-4">Business Address</h4>
+      
+      <Input
+        placeholder="Street Address"
+        value={formData.street}
+        onChange={(value) => updateFormData('street', value)}
+        required
+      />
+      
+      <div className="flex gap-2">
+        <Input
+          placeholder="City"
+          value={formData.city}
+          onChange={(value) => updateFormData('city', value)}
+          required
+        />
+        <Input
+          placeholder="State"
+          value={formData.state}
+          onChange={(value) => updateFormData('state', value)}
+          required
+        />
+      </div>
+      
+      <Input
+        placeholder="ZIP Code"
+        value={formData.zipCode}
+        onChange={(value) => updateFormData('zipCode', value)}
+        required
+      />
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          className="flex-1 px-4 py-3 text-[#ff6600] font-bold rounded-lg border-2 border-[#ff6600] hover:bg-[#ff6600] hover:text-white transition-colors"
+        >
+          Back
+        </button>
+        <PrimaryButton type="submit">Continue</PrimaryButton>
+      </div>
+    </form>
+  );
+}
+
+// Step 3: Cuisine Types & Operating Hours
+function Step3({ formData, updateFormData, onNext, onPrev }) {
+  const cuisineOptions = [
+    'Indian', 'Chinese', 'Italian', 'Mexican', 'Thai', 'Continental',
+    'Fast Food', 'Desserts', 'Beverages', 'North Indian', 'South Indian', 'Street Food'
+  ];
+
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  const handleCuisineChange = (cuisine) => {
+    const newCuisines = formData.cuisineType.includes(cuisine)
+      ? formData.cuisineType.filter(c => c !== cuisine)
+      : [...formData.cuisineType, cuisine];
+    updateFormData('cuisineType', newCuisines);
+  };
+
+  const handleOperatingHoursChange = (day, field, value) => {
+    const existingHours = formData.operatingHours.find(h => h.day === day);
+    if (existingHours) {
+      const updatedHours = formData.operatingHours.map(h =>
+        h.day === day ? { ...h, [field]: value } : h
+      );
+      updateFormData('operatingHours', updatedHours);
+    } else {
+      const newHours = [...formData.operatingHours, { day, [field]: value }];
+      updateFormData('operatingHours', newHours);
+    }
+  };
+
+  const handleNext = (e) => {
+    e.preventDefault();
+    if (formData.cuisineType.length > 0) {
+      onNext();
+    }
+  };
+
+  return (
+    <form onSubmit={handleNext}>
+      <h4 className="text-lg font-semibold text-[#333] mb-4">Cuisine & Operating Hours</h4>
+      
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-[#333] mb-3">
+          Cuisine Types (Select at least one) *
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {cuisineOptions.map(cuisine => (
+            <label key={cuisine} className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.cuisineType.includes(cuisine)}
+                onChange={() => handleCuisineChange(cuisine)}
+                className="mr-2 text-[#ff6600] focus:ring-[#ff6600]"
+              />
+              <span className="text-sm text-[#333]">{cuisine}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-[#333] mb-3">
+          Operating Hours (Optional)
+        </label>
+        <div className="space-y-2 max-h-40 overflow-y-auto">
+          {days.map(day => {
+            const dayHours = formData.operatingHours.find(h => h.day === day) || {};
+            return (
+              <div key={day} className="flex items-center gap-2 text-sm">
+                <span className="w-20 text-[#333]">{day.slice(0, 3)}</span>
+                <input
+                  type="time"
+                  value={dayHours.open || ''}
+                  onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)}
+                  className="px-2 py-1 border border-[#ddd] rounded text-xs"
+                />
+                <span className="text-[#666]">to</span>
+                <input
+                  type="time"
+                  value={dayHours.close || ''}
+                  onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)}
+                  className="px-2 py-1 border border-[#ddd] rounded text-xs"
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          className="flex-1 px-4 py-3 text-[#ff6600] font-bold rounded-lg border-2 border-[#ff6600] hover:bg-[#ff6600] hover:text-white transition-colors"
+        >
+          Back
+        </button>
+        <PrimaryButton type="submit">Continue</PrimaryButton>
+      </div>
+    </form>
+  );
+}
+
+// Step 4: Document Upload
+function Step4({ formData, updateFormData, onSubmit, onPrev }) {
+  const handleFileChange = (field, file) => {
+    updateFormData(field, file);
+  };
+
+  return (
+    <form onSubmit={onSubmit}>
+      <h4 className="text-lg font-semibold text-[#333] mb-4">Required Documents</h4>
+      
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-[#333] mb-2">
+          Business License *
+        </label>
+        <input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={(e) => handleFileChange('businessLicense', e.target.files[0])}
+          className="w-full px-3 py-2 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#ff6600] text-sm"
+          required
+        />
+        <p className="text-xs text-[#666] mt-1">Upload PDF, JPG, or PNG (Max 5MB)</p>
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-[#333] mb-2">
+          Food Safety Certificate (FSSAI) *
+        </label>
+        <input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={(e) => handleFileChange('foodSafetyCertificate', e.target.files[0])}
+          className="w-full px-3 py-2 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#ff6600] text-sm"
+          required
+        />
+        <p className="text-xs text-[#666] mt-1">Upload PDF, JPG, or PNG (Max 5MB)</p>
+      </div>
+
+      <div className="bg-[#fff3e0] border border-[#ffcc80] rounded-lg p-4 mb-6">
+        <h5 className="text-sm font-semibold text-[#ef6c00] mb-2">Review Process</h5>
+        <p className="text-xs text-[#bf360c]">
+          After submission, our team will review your application within 2-3 business days. 
+          You'll receive an email notification once your account is approved.
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          className="flex-1 px-4 py-3 text-[#ff6600] font-bold rounded-lg border-2 border-[#ff6600] hover:bg-[#ff6600] hover:text-white transition-colors"
+        >
+          Back
+        </button>
+        <PrimaryButton type="submit">Submit Application</PrimaryButton>
+      </div>
     </form>
   );
 }
