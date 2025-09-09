@@ -19,7 +19,7 @@ import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 connectDB();
-initializeFirebaseAdmin();
+// initializeFirebaseAdmin();
 cloudinaryConfig();
 
 const app = express();
