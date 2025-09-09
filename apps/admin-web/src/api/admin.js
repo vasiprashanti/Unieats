@@ -29,7 +29,7 @@ async function request(path, { method = 'GET', headers = {}, body } = {}) {
 
 // Vendors
 export function patchVendorApproval(id, status) {
-  return request(`/api/v1/admin/vendors/${id}/approval`, {
+  return request(`${VITE_API_BASE_URL}/api/v1/admin/vendors/${id}/approval`, {
     method: 'PATCH',
     body: { status },
   });
