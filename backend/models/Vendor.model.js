@@ -2,12 +2,6 @@ import mongoose from 'mongoose';
 
 const vendorSchema = new mongoose.Schema({
     // Link to the User model of the owner
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User',
-        index: true,
-    },
     businessName: {
         type: String,
         required: [true, 'Business name is required.'],
@@ -15,10 +9,10 @@ const vendorSchema = new mongoose.Schema({
         unique: true,
     },
     businessAddress: {
-        street: { type: String, required: true },
-        city: { type: String, required: true },
-        state: { type: String, required: true },
-        zipCode: { type: String, required: true },
+        street: { type: String},
+        city: { type: String },
+        state: { type: String},
+        zipCode: { type: String },
     },
     phone: {
         type: String,
