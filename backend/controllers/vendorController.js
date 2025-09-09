@@ -3,15 +3,10 @@ import { cloudinary } from '../config/cloudinary.js';
 
 const registerVendor = async (req, res) => {
     // The user must be logged in to register as a vendor
-    const ownerId = req.user._id;
+    
 
     try {
-        // Check if user already owns a vendor profile
-        const existingVendor = await Vendor.findOne({ owner: ownerId });
-        if (existingVendor) {
-            return res.status(400).json({ message: 'You have already registered a vendor profile.' });
-        }
-
+        
         // Handle file uploads to Cloudinary
         if (!req.files || !req.files.businessLicense || !req.files.foodSafetyCertificate) {
             return res.status(400).json({ message: 'Both business license and food safety certificate are required.' });
@@ -37,7 +32,6 @@ const registerVendor = async (req, res) => {
 
         const newVendor = new Vendor({
             ...req.body,
-            owner: ownerId,
             documents: {
                 businessLicense: licenseResult,
                 foodSafetyCertificate: certificateResult,

@@ -44,11 +44,9 @@ const registerUser = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     // The user's firebaseUid is attached to req.user by the middleware
-    const firebaseUid = req.user.uid;
-
+    const firebaseUid = req.user.firebaseUid;
     // Find the user in your MongoDB by their firebaseUid
     const user = await User.findOne({ firebaseUid }).select('-password'); // .select('-password') is good practice
-
     if (!user) {
       return res.status(404).json({ message: 'User not found in our database.' });
     }

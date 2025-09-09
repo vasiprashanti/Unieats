@@ -106,10 +106,28 @@ const Hero = () => {
     setTimeout(() => nameInputRef.current?.focus(), 0);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('You will be notified soon!');
-    setShowForm(false);
+    const form = e.target;
+    const name = form[0].value;
+    const email = form[1].value;
+    const phone = form[2].value;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/prelaunch/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone })
+      });
+      if (res.ok) {
+        alert('You will be notified soon!');
+        console.log(res);
+        setShowForm(false);
+      } else {
+        alert('Signup failed. Please try again.');
+      }
+    } catch (err) {
+      alert('Network error. Please try again.');
+    }
   };
 
   return (

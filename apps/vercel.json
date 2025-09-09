@@ -1,7 +1,16 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/user/index.html" },
-    { "source": "/admin/:path*", "destination": "/admin/index.html" },
-    { "source": "/vendor/:path*", "destination": "/vendor/index.html" }
+  "version": 2,
+  "builds": [
+    { "src": "admin-web/package.json", "use": "@vercel/static-build" },
+    { "src": "user-web/package.json", "use": "@vercel/static-build" },
+    { "src": "vendor-web/package.json", "use": "@vercel/static-build" }
+  ],
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/admin/assets/(.*)", "dest": "/admin-web/dist/assets/$1" },
+    { "src": "/admin/(.*)", "dest": "/admin-web/dist/index.html" },
+    { "src": "/vendor/assets/(.*)", "dest": "/vendor-web/dist/assets/$1" },
+    { "src": "/vendor/(.*)", "dest": "/vendor-web/dist/index.html" },
+    { "src": "/(.*)", "dest": "/user-web/dist/index.html" }
   ]
 }

@@ -12,8 +12,8 @@ const adminOnly = [verifyFirebaseToken, checkRole('admin')];
 router.get('/dashboard', ...adminOnly, getAdminDashboard);
 
 // Vendor Management
-router.get('/vendors', ...adminOnly, getVendors);
-router.patch('/vendors/:id/approval', ...adminOnly, updateVendorApproval);
+router.get('/vendors', getVendors);
+router.patch('/vendors/:id/approval',  updateVendorApproval);
 
 // Settings Routes
 router.get('/settings', ...adminOnly, getSettings);
