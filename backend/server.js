@@ -26,19 +26,22 @@ const app = express();
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or Postman)
+    // Allow requests with no origin (like mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
 
-    // Define allowed origins
+    // ✅ Allowed origins (local + prod)
     const allowedOrigins = [
       "http://localhost:3000",
       "http://localhost:5173",
       "http://localhost:3001",
       "http://127.0.0.1:3000",
       "http://127.0.0.1:5173",
+      "https://admin.unieats.co",
+      "https://vendor.unieats.co",
+      "https://user.unieats.co",
     ];
 
-    // Check for localhost variations
+    // Allow localhost with any port
     if (
       /^http:\/\/localhost:\d+$/.test(origin) ||
       /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)
@@ -46,25 +49,22 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    // Check for Vercel domains
+    // Allow Vercel preview deployments
     if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
       return callback(null, true);
     }
 
-    // Check for Netlify domains
+    // Allow Netlify preview deployments
     if (/^https:\/\/.*\.netlify\.app$/.test(origin)) {
       return callback(null, true);
     }
 
-    // Check if origin is in allowed list
+    // Allow listed domains
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    // For development, you might want to allow all origins temporarily
-    // Uncomment the line below for debugging (remove in production)
-    // return callback(null, true);
-
+    // ❌ Otherwise block
     console.log(`CORS blocked origin: ${origin}`);
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
@@ -81,6 +81,7 @@ const corsOptions = {
   optionsSuccessStatus: 200,
   preflightContinue: false,
 };
+
 
 // Apply CORS middleware
 app.use(cors(corsOptions));
