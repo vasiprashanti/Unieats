@@ -8,7 +8,6 @@ import initializeFirebaseAdmin from './config/firebaseAdmin.js';
 import { cloudinaryConfig } from './config/cloudinary.js';
 import rateLimiter from './middleware/rateLimiter.js';
 // import errorHandler from './middleware/errorHandler.js';
-
 // Import Routes
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -23,55 +22,81 @@ cloudinaryConfig();
 
 const app = express();
 
-
 const corsOptions = {
   origin: function (origin, callback) {
-    
+    // Allow requests with no origin (like mobile apps or Postman)
     if (!origin) return callback(null, true);
-
-    const devOrigins = ["http://localhost:3000", "http://localhost:5173"];
-
- 
-    if (devOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
     
-    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+    // Define allowed origins
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:3001",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:5173"
+    ];
+    
+    // Check for localhost variations
+    if (/^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) {
       return callback(null, true);
     }
-
+    
+    // Check for Vercel domains
     if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
       return callback(null, true);
     }
-
-  
-    return callback(new Error("Not allowed by CORS"));
+    
+    // Check for Netlify domains
+    if (/^https:\/\/.*\.netlify\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // For development, you might want to allow all origins temporarily
+    // Uncomment the line below for debugging (remove in production)
+    // return callback(null, true);
+    
+    console.log(`CORS blocked origin: ${origin}`);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"],
-  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+  allowedHeaders: [
+    "Content-Type", 
+    "Authorization", 
+    "X-Requested-With",
+    "Accept",
+    "Origin"
+  ],
+  exposedHeaders: ["Content-Length", "X-Foo", "X-Bar"],
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 };
 
-
+// Apply CORS middleware
 app.use(cors(corsOptions));
 
-
+// Handle preflight requests explicitly
 app.options("*", cors(corsOptions));
 
+// Security middleware
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
-app.use(helmet());
 app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(rateLimiter);
-
-
 
 // Health check or root endpoint
 app.get('/', (req, res) => {
-	res.json({ status: 'ok', message: 'Unieats backend API is running.' });
+  res.json({ status: 'ok', message: 'Unieats backend API is running.' });
 });
 
 // API Routes
@@ -79,9 +104,20 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/vendors', vendorRoutes);
 app.use('/api/v1/content', contentRoutes);
-app.use('/api/v1/prelaunch', preLaunchUserRoutes); 
+app.use('/api/v1/prelaunch', preLaunchUserRoutes);
 
-
+// Error handling for CORS
+app.use((err, req, res, next) => {
+  if (err.message.includes('Not allowed by CORS')) {
+    res.status(403).json({
+      error: 'CORS Error',
+      message: 'Origin not allowed',
+      origin: req.headers.origin
+    });
+  } else {
+    next(err);
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server is running in ${process.env.NODE_ENV} mode on port ${PORT}`));
