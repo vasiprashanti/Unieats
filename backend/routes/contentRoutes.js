@@ -1,8 +1,7 @@
 
 import express from 'express';
 import { createContent, getAllContent, getContentById, updateContent, deleteContent } from '../controllers/contentController.js';
-import { verifyFirebaseToken } from '../middleware/authMiddleware.js';
-import { checkRole } from '../middleware/roleMiddleware.js';
+import { verifyFirebaseToken, checkRole } from '../middleware/authMiddleware.js';
 import { uploadImage } from '../middleware/fileUpload.js';
 import { cacheMiddleware } from '../middleware/cacheMiddleware.js';
 

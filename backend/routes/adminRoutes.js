@@ -2,9 +2,9 @@ import express from 'express';
 import { check } from 'express-validator';
 import { getAdminDashboard, getVendors, updateVendorApproval } from '../controllers/adminController.js';
 import { getSettings, updateSettings } from '../controllers/settingsController.js';
-import { getBasicAnalytics } from '../controllers/analyticsController.js';
-import { verifyFirebaseToken } from '../middleware/authMiddleware.js';
-import { checkRole } from '../middleware/roleMiddleware.js';
+import { getBasicAnalytics } from '../controllers/adminAnalyticsController.js';
+import { verifyFirebaseToken, checkRole } from '../middleware/authMiddleware.js';
+import { monitorRealTimeOrders, exportOrdersToCSV } from '../controllers/adminOrderController.js';
 
 const router = express.Router();
 const adminOnly = [verifyFirebaseToken, checkRole('admin')];
@@ -27,5 +27,28 @@ router.post(
     updateSettings
 );
 router.get('/analytics', ...adminOnly, getBasicAnalytics);
+
+
+//  Admin Order Management Routes 
+
+// @route   GET /api/v1/admin/orders/monitor
+// @desc    Get a real-time feed of all active orders on the platform
+// @access  Private (Admin Only)
+router.get(
+    '/orders/monitor',
+    verifyFirebaseToken,
+    checkRole('admin'),
+    monitorRealTimeOrders
+);
+
+// @route   GET /api/v1/admin/orders/export
+// @desc    Export all order data to a CSV file
+// @access  Private (Admin Only)
+router.get(
+    '/orders/export',
+    verifyFirebaseToken,
+    checkRole('admin'),
+    exportOrdersToCSV
+);
 
 export default router;

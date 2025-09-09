@@ -6,6 +6,8 @@ import morgan from 'morgan';
 import connectDB from './config/db.js';
 import initializeFirebaseAdmin from './config/firebaseAdmin.js';
 import { cloudinaryConfig } from './config/cloudinary.js';
+import { Server } from 'socket.io';
+import http from 'http';
 // import rateLimiter from './middleware/rateLimiter.js';
 // import errorHandler from './middleware/errorHandler.js';
 
@@ -22,13 +24,21 @@ initializeFirebaseAdmin();
 cloudinaryConfig();
 
 const app = express();
+const server = http.createServer(app);
+
+const io = new Server(server, {
+    cors: {
+        origin: "*", // In production, restrict this to your frontend URL
+        methods: ["GET", "POST"]
+    }
+});
 
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(rateLimiter);
+// app.use(rateLimiter);
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
@@ -37,7 +47,25 @@ app.use('/api/v1/vendors', vendorRoutes);
 app.use('/api/v1/content', contentRoutes);
 app.use('/api/v1/prelaunch', prelaunchRoutes); 
 
-app.use(errorHandler);
+// app.use(errorHandler);
+
+// Make the 'io' instance available to all routes by attaching it to the app
+app.set('socketio', io);
+
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+
+    // When a user or vendor connects, they should join a room named after their own ID.
+    // This allows us to send them targeted, private notifications.
+    socket.on('join_room', (id) => {
+        socket.join(id);
+        console.log(`Socket ${socket.id} joined room ${id}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server is running in ${process.env.NODE_ENV} mode on port ${PORT}`));

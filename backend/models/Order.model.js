@@ -28,10 +28,24 @@ const orderSchema = new mongoose.Schema({
         paymentId: String,
         status: String,
     },
+    rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+    },
+    acceptedAt: { type: Date },
+    readyAt: { type: Date },
 }, { timestamps: true });
 
 // Compound index for efficient monitoring queries
 orderSchema.index({ status: 1, createdAt: -1 });
+
+orderSchema.pre('save', function(next) {
+    if (this.isNew) {
+        this.statusHistory.push({ status: this.status, timestamp: new Date() });
+    }
+    next();
+});
 
 const Order = mongoose.model('Order', orderSchema);
 export default Order;

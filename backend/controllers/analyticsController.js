@@ -1,71 +1,61 @@
-import User from '../models/User.model.js';
-import Vendor from '../models/Vendor.model.js';
 import Order from '../models/Order.model.js';
+import Vendor from '../models/Vendor.model.js';
+import mongoose from 'mongoose';
 
-const getBasicAnalytics = async (req, res) => {
+const getVendorAnalytics = async (req, res) => {
     try {
-        const totalUsers = await User.countDocuments({ role: 'user' });
-        const totalVendors = await Vendor.countDocuments();
-        const approvedVendors = await Vendor.countDocuments({ approvalStatus: 'approved' });
-        // const totalOrders = await Order.countDocuments(); // Placeholder for when you have an Order model
+        const vendorProfile = await Vendor.findOne({ owner: req.user._id });
+        if (!vendorProfile) {
+            return res.status(403).json({ message: "Vendor profile not found." });
+        }
 
-        res.status(200).json({
-            success: true,
-            data: {
-                totalUsers,
-                totalVendors,
-                approvedVendors,
-                pendingVendors: totalVendors - approvedVendors,
-                // totalOrders,
+        const pipeline = [
+            {
+                $match: {
+                    vendor: new mongoose.Types.ObjectId(vendorProfile._id),
+                    status: 'delivered',
+                    acceptedAt: { $exists: true },
+                    readyAt: { $exists: true }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: '$totalAmount' },
+                    totalOrders: { $sum: 1 },
+                    averageRating: { $avg: '$rating' },
+                    averagePrepTimeInMillis: { 
+                        $avg: { $subtract: ['$readyAt', '$acceptedAt'] } 
+                    }
+                }
             }
-        });
+        ];
+
+        const analyticsResult = await Order.aggregate(pipeline);
+        
+        const data = analyticsResult[0] || { 
+            totalRevenue: 0, totalOrders: 0, averageRating: 0, averagePrepTimeInMillis: 0 
+        };
+        
+        const platformCommission = data.totalRevenue * vendorProfile.commissionRate;
+        const vendorEarnings = data.totalRevenue - platformCommission;
+        const averagePrepTimeInMinutes = data.averagePrepTimeInMillis / (1000 * 60);
+
+        const report = {
+            totalRevenue: data.totalRevenue.toFixed(2),
+            totalOrders: data.totalOrders,
+            averageRating: data.averageRating ? data.averageRating.toFixed(2) : 'N/A',
+            averagePrepTimeInMinutes: averagePrepTimeInMinutes.toFixed(2),
+            platformCommission: platformCommission.toFixed(2),
+            vendorEarnings: vendorEarnings.toFixed(2),
+        };
+
+        res.status(200).json({ analytics: report });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server Error' });
+        console.error("Error fetching vendor analytics:", error);
+        res.status(500).json({ message: "Server error while fetching analytics." });
     }
 };
 
-// --- Comprehensive Analytics ---
-const getComprehensiveAnalytics = async (req, res) => {
-    try {
-        // 1. Revenue Metrics
-        const revenueData = await Order.aggregate([
-            { $match: { status: 'delivered' } },
-            { $group: { _id: null, totalRevenue: { $sum: '$totalPrice' } } }
-        ]);
-        const totalRevenue = revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
-
-        // 2. Order Status Counts
-        const orderStatusCounts = await Order.aggregate([
-            { $group: { _id: '$status', count: { $sum: 1 } } }
-        ]);
-
-        // 3. New User Signups (last 7 days)
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        const newUsersCount = await User.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
-
-        // 4. Top 5 Vendors by Order Count
-        const topVendors = await Order.aggregate([
-            { $group: { _id: '$vendor', orderCount: { $sum: 1 } } },
-            { $sort: { orderCount: -1 } },
-            { $limit: 5 },
-            { $lookup: { from: 'vendors', localField: '_id', foreignField: '_id', as: 'vendorDetails' } },
-            { $unwind: '$vendorDetails' },
-            { $project: { _id: 0, vendorName: '$vendorDetails.businessName', orderCount: 1 } }
-        ]);
-
-        res.status(200).json({
-            success: true,
-            data: {
-                totalRevenue,
-                orderStatusCounts,
-                newUsersLast7Days: newUsersCount,
-                topVendors,
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server Error' });
-    }
-};
-
-export { getBasicAnalytics, getComprehensiveAnalytics };
+export { getVendorAnalytics };
