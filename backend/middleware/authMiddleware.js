@@ -1,15 +1,17 @@
-import admin from 'firebase-admin';
-import User from '../models/User.model.js'; // Import our User model
+import admin from "firebase-admin";
+import User from "../models/User.model.js"; // Import our User model
 
 const verifyFirebaseToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided.' });
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(401)
+      .json({ message: "Unauthorized: No token provided." });
   }
 
-  const idToken = authHeader.split('Bearer ')[1];
-  console.log("Backend",idToken);
+  const idToken = authHeader.split("Bearer ")[1];
+  console.log("Backend", idToken);
 
   try {
     // 1. Verify the token with Firebase
@@ -20,7 +22,9 @@ const verifyFirebaseToken = async (req, res, next) => {
 
     // 3. If the user doesn't exist in our DB, they can't proceed
     if (!user) {
-      return res.status(401).json({ message: 'Unauthorized: User not found in database.' });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not found in database." });
     }
 
     // 4. Attach OUR user object (with the role) to the request
@@ -28,11 +32,13 @@ const verifyFirebaseToken = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Error verifying Firebase ID token:', error);
-    if (error.code === 'auth/id-token-expired') {
-        return res.status(401).json({ message: 'Unauthorized: Token has expired.' });
+    console.error("Error verifying Firebase ID token:", error);
+    if (error.code === "auth/id-token-expired") {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: Token has expired." });
     }
-    return res.status(403).json({ message: 'Forbidden: Invalid token.' });
+    return res.status(403).json({ message: "Forbidden: Invalid token." });
   }
 };
 
