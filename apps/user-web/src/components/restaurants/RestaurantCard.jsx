@@ -1,26 +1,40 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const RestaurantCard = ({ restaurant, cardType = 'default' }) => {
+const RestaurantCard = ({ restaurant, mobileCardType = 'default', desktopCardType = 'default' }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
     navigate(`/restaurants/${restaurant.id}`);
   };
 
-  // Define different card types for Pinterest-like layout
-  const getCardClasses = () => {
-    switch (cardType) {
-      case 'large':
-        return 'col-span-1 md:col-span-2 h-80'; // Wide card
+  // Define mobile card heights (Pinterest 2-column style)
+  const getMobileCardClasses = () => {
+    switch (mobileCardType) {
       case 'tall':
-        return 'col-span-1 row-span-2 h-96'; // Tall card
+        return 'h-80'; // Tall card for Pinterest effect
       case 'small':
-        return 'col-span-1 h-56'; // Compact card
+        return 'h-48'; // Compact card
       case 'medium':
-        return 'col-span-1 h-64'; // Medium card
+        return 'h-64'; // Medium card
       default:
-        return 'col-span-1 h-72'; // Default card
+        return 'h-56'; // Default card
+    }
+  };
+
+  // Define desktop card classes (responsive grid style)
+  const getDesktopCardClasses = () => {
+    switch (desktopCardType) {
+      case 'large':
+        return 'md:col-span-2 md:h-80'; // Wide card
+      case 'tall':
+        return 'md:h-96'; // Tall card
+      case 'small':
+        return 'md:h-56'; // Compact card
+      case 'medium':
+        return 'md:h-64'; // Medium card
+      default:
+        return 'md:h-72'; // Default card
     }
   };
 
@@ -30,7 +44,7 @@ const RestaurantCard = ({ restaurant, cardType = 'default' }) => {
       className={`
         relative bg-white rounded-2xl overflow-hidden cursor-pointer group
         transition-all duration-300 hover:shadow-xl hover:scale-[1.02]
-        ${getCardClasses()}
+        col-span-1 ${getMobileCardClasses()} ${getDesktopCardClasses()}
       `}
     >
       {/* Background Image */}
@@ -105,15 +119,24 @@ const RestaurantCard = ({ restaurant, cardType = 'default' }) => {
         {/* Bottom section - Restaurant info */}
         <div className="text-white">
           <h3 className={`font-bold mb-1 ${
-            cardType === 'large' ? 'text-2xl' : 
-            cardType === 'tall' ? 'text-xl' :
-            cardType === 'small' ? 'text-lg' : 'text-xl'
+            // Mobile sizing based on mobileCardType
+            mobileCardType === 'tall' ? 'text-base' :
+            mobileCardType === 'small' ? 'text-sm' : 'text-sm'
+          } ${
+            // Desktop sizing based on desktopCardType
+            desktopCardType === 'large' ? 'md:text-2xl' : 
+            desktopCardType === 'tall' ? 'md:text-xl' :
+            desktopCardType === 'small' ? 'md:text-lg' : 'md:text-xl'
           }`}>
             {restaurant.name}
           </h3>
           <p className={`text-white/90 mb-3 ${
-            cardType === 'large' ? 'text-base' : 
-            cardType === 'small' ? 'text-xs' : 'text-sm'
+            // Mobile sizing
+            mobileCardType === 'small' ? 'text-xs' : 'text-xs'
+          } ${
+            // Desktop sizing
+            desktopCardType === 'large' ? 'md:text-base' : 
+            desktopCardType === 'small' ? 'md:text-xs' : 'md:text-sm'
           }`}>
             {restaurant.cuisine}
           </p>

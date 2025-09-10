@@ -128,57 +128,59 @@ export default function RestaurantMenu() {
       <Navbar />
       <MobileHeader title={menuData.restaurant.name} showLogo={false} />
       
-      {/* Restaurant Header */}
-      <div className="relative h-64 md:h-80 overflow-hidden">
-        <img
-          src={menuData.restaurant.image}
-          alt={menuData.restaurant.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-        
-        {/* Back Button */}
-        <button
-          onClick={handleBackClick}
-          className="absolute top-4 left-4 w-10 h-10 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+      {/* Restaurant Header - Rounded Container */}
+      <div className="px-4 pt-4 md:px-6 md:pt-6">
+        <div className="relative h-64 md:h-80 overflow-hidden rounded-3xl shadow-lg">
+          <img
+            src={menuData.restaurant.image}
+            alt={menuData.restaurant.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent rounded-3xl" />
+          
+          {/* Back Button */}
+          <button
+            onClick={handleBackClick}
+            className="absolute top-4 left-4 w-10 h-10 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
 
-        {/* Cart Button - Hidden on mobile (bottom nav handles cart) */}
-        <button
-          onClick={() => navigate('/cart')}
-          className="hidden md:flex absolute top-4 right-4 bg-[#ff6600] text-white px-4 py-2 rounded-lg items-center space-x-2 hover:bg-[#e55a00] transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6m-8 0V9a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h4" />
-          </svg>
-          <span>{totalItems}</span>
-        </button>
-        
-        {/* Restaurant Info Overlay */}
-        <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6 text-white">
-          <h1 className="text-2xl md:text-4xl font-bold mb-2">{menuData.restaurant.name}</h1>
-          <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm">
-            <div className="flex items-center space-x-1">
-              <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-              </svg>
-              <span>{menuData.restaurant.rating}</span>
-              <span className="hidden sm:inline">({menuData.restaurant.reviewCount}+ reviews)</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12,6 12,12 16,14"/>
-              </svg>
-              <span>{menuData.restaurant.deliveryTime}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span>Open Now</span>
+          {/* Cart Button - Hidden on mobile (bottom nav handles cart) */}
+          <button
+            onClick={() => navigate('/cart')}
+            className="hidden md:flex absolute top-4 right-4 bg-[#ff6600] text-white px-4 py-2 rounded-lg items-center space-x-2 hover:bg-[#e55a00] transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6m-8 0V9a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h4" />
+            </svg>
+            <span>{totalItems}</span>
+          </button>
+          
+          {/* Restaurant Info Overlay */}
+          <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6 text-white">
+            <h1 className="text-2xl md:text-4xl font-bold mb-2">{menuData.restaurant.name}</h1>
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm">
+              <div className="flex items-center space-x-1">
+                <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                </svg>
+                <span>{menuData.restaurant.rating}</span>
+                <span className="hidden sm:inline">({menuData.restaurant.reviewCount}+ reviews)</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12,6 12,12 16,14"/>
+                </svg>
+                <span>{menuData.restaurant.deliveryTime}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span>Open Now</span>
+              </div>
             </div>
           </div>
         </div>

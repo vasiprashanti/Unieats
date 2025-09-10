@@ -5,13 +5,8 @@ const FilterPills = ({ activeFilter, onFilterChange, filters, onSortChange, acti
   const { isDarkMode } = useTheme();
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   
-  const filterOptions = [
-    {
-      id: 'all',
-      label: 'All',
-      icon: null
-    }
-  ];
+  // Removed "All" button as requested
+  const filterOptions = [];
 
   const sortOptions = [
     { id: 'relevance', label: 'Relevance' },
@@ -28,18 +23,18 @@ const FilterPills = ({ activeFilter, onFilterChange, filters, onSortChange, acti
   };
 
   return (
-    <div className="flex flex-wrap gap-3 justify-center">
-      {/* Original Filter Pills */}
-      {filterOptions.map((filter) => (
+    <div className="flex flex-wrap gap-3 justify-between items-center">
+      {/* Left side - Veg/Non-Veg filters (smaller) */}
+      <div className="flex gap-2">
+        {/* Veg Filter - Smaller */}
         <button
-          key={filter.id}
-          onClick={() => onFilterChange(filter.id)}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 ${
-            activeFilter === filter.id
+          onClick={() => onDietFilterChange(activeDietFilter === 'veg' ? 'all' : 'veg')}
+          className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+            activeDietFilter === 'veg'
               ? 'shadow-lg transform scale-105'
               : 'border border-base hover:shadow-md'
           }`}
-          style={activeFilter === filter.id ? {
+          style={activeDietFilter === 'veg' ? {
             backgroundColor: 'hsl(var(--primary))',
             color: 'hsl(var(--primary-foreground))'
           } : {
@@ -47,18 +42,40 @@ const FilterPills = ({ activeFilter, onFilterChange, filters, onSortChange, acti
             color: 'hsl(var(--foreground))'
           }}
         >
-          {filter.icon && (
-            <span className="text-sm">{filter.icon}</span>
-          )}
-          <span className="text-sm font-medium">{filter.label}</span>
+          <div className="w-3 h-3 border border-green-600 flex items-center justify-center">
+            <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+          </div>
+          <span className="text-xs font-medium">Veg</span>
         </button>
-      ))}
 
-      {/* Sort By Dropdown */}
+        {/* Non-Veg Filter - Smaller */}
+        <button
+          onClick={() => onDietFilterChange(activeDietFilter === 'non-veg' ? 'all' : 'non-veg')}
+          className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+            activeDietFilter === 'non-veg'
+              ? 'shadow-lg transform scale-105'
+              : 'border border-base hover:shadow-md'
+          }`}
+          style={activeDietFilter === 'non-veg' ? {
+            backgroundColor: 'hsl(var(--primary))',
+            color: 'hsl(var(--primary-foreground))'
+          } : {
+            backgroundColor: 'hsl(var(--card))',
+            color: 'hsl(var(--foreground))'
+          }}
+        >
+          <div className="w-3 h-3 border border-red-600 flex items-center justify-center">
+            <div className="w-1.5 h-1.5 bg-red-600"></div>
+          </div>
+          <span className="text-xs font-medium">Non-Veg</span>
+        </button>
+      </div>
+
+      {/* Right side - Sort By Dropdown */}
       <div className="relative">
         <button
           onClick={() => setShowSortDropdown(!showSortDropdown)}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-200 border border-base hover:shadow-md`}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 border border-base hover:shadow-md`}
           style={{
             backgroundColor: 'hsl(var(--card))',
             color: 'hsl(var(--foreground))'
@@ -75,7 +92,7 @@ const FilterPills = ({ activeFilter, onFilterChange, filters, onSortChange, acti
 
         {/* Dropdown Menu */}
         {showSortDropdown && (
-          <div className="absolute top-full left-0 mt-2 w-48 z-[9999] rounded-lg border shadow-lg"
+          <div className="absolute top-full right-0 mt-2 w-48 z-[9999] rounded-lg border shadow-lg"
                style={{ 
                  backgroundColor: 'hsl(var(--card))',
                  borderColor: 'hsl(var(--border))'
@@ -104,50 +121,6 @@ const FilterPills = ({ activeFilter, onFilterChange, filters, onSortChange, acti
           </div>
         )}
       </div>
-
-      {/* Veg Filter */}
-      <button
-        onClick={() => onDietFilterChange(activeDietFilter === 'veg' ? 'all' : 'veg')}
-        className={`inline-flex items-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
-          activeDietFilter === 'veg'
-            ? 'shadow-lg transform scale-105'
-            : 'border border-base hover:shadow-md'
-        }`}
-        style={activeDietFilter === 'veg' ? {
-          backgroundColor: 'hsl(var(--primary))',
-          color: 'hsl(var(--primary-foreground))'
-        } : {
-          backgroundColor: 'hsl(var(--card))',
-          color: 'hsl(var(--foreground))'
-        }}
-      >
-        <div className="w-4 h-4 border-2 border-green-600 flex items-center justify-center">
-          <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-        </div>
-        <span className="text-sm font-medium">Veg</span>
-      </button>
-
-      {/* Non-Veg Filter */}
-      <button
-        onClick={() => onDietFilterChange(activeDietFilter === 'non-veg' ? 'all' : 'non-veg')}
-        className={`inline-flex items-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
-          activeDietFilter === 'non-veg'
-            ? 'shadow-lg transform scale-105'
-            : 'border border-base hover:shadow-md'
-        }`}
-        style={activeDietFilter === 'non-veg' ? {
-          backgroundColor: 'hsl(var(--primary))',
-          color: 'hsl(var(--primary-foreground))'
-        } : {
-          backgroundColor: 'hsl(var(--card))',
-          color: 'hsl(var(--foreground))'
-        }}
-      >
-        <div className="w-4 h-4 border-2 border-red-600 flex items-center justify-center">
-          <div className="w-2 h-2 bg-red-600"></div>
-        </div>
-        <span className="text-sm font-medium">Non-Veg</span>
-      </button>
     </div>
   );
 };

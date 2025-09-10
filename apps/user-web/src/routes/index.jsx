@@ -70,7 +70,7 @@ export default function AppRoutes() {
         <Route path="/checkout" element={<ProtectedUser><Checkout /></ProtectedUser>} />
         <Route path="/orders" element={<ProtectedUser><Orders /></ProtectedUser>} />
         <Route path="/orders/:id" element={<ProtectedUser><OrderTracking /></ProtectedUser>} />
-        <Route path="/profile" element={<ProtectedUser><Profile /></ProtectedUser>} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/support" element={<ProtectedUser><Support /></ProtectedUser>} />
 
         <Route path="*" element={<Navigate to="/home" replace />} />

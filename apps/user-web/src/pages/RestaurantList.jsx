@@ -167,13 +167,31 @@ export default function RestaurantList() {
           </div>
         ) : (
           <>
-            {/* Restaurant Masonry Grid */}
+            {/* Restaurant Grid - Pinterest 2-column for mobile, responsive for desktop */}
             {restaurants.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-auto">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 auto-rows-auto">
                 {restaurants.map((restaurant, index) => {
-                  // Create Pinterest-like varied layout pattern
-                  const getCardType = () => {
-                    const patterns = [
+                  // Different patterns for mobile vs desktop
+                  const getMobileCardType = () => {
+                    const mobilePatterns = [
+                      'tall',     // 0: tall card for Pinterest effect
+                      'default',  // 1: normal
+                      'medium',   // 2: medium height
+                      'tall',     // 3: tall card
+                      'default',  // 4: normal
+                      'small',    // 5: compact
+                      'medium',   // 6: medium height
+                      'default',  // 7: normal
+                      'tall',     // 8: tall card
+                      'small',    // 9: compact
+                      'default',  // 10: normal
+                      'medium',   // 11: medium height
+                    ];
+                    return mobilePatterns[index % mobilePatterns.length];
+                  };
+
+                  const getDesktopCardType = () => {
+                    const desktopPatterns = [
                       'large',    // 0: wide card
                       'default',  // 1: normal
                       'tall',     // 2: tall card
@@ -187,14 +205,15 @@ export default function RestaurantList() {
                       'tall',     // 10: tall card
                       'medium',   // 11: medium
                     ];
-                    return patterns[index % patterns.length];
+                    return desktopPatterns[index % desktopPatterns.length];
                   };
 
                   return (
                     <RestaurantCard
                       key={restaurant.id}
                       restaurant={restaurant}
-                      cardType={getCardType()}
+                      mobileCardType={getMobileCardType()}
+                      desktopCardType={getDesktopCardType()}
                     />
                   );
                 })}
