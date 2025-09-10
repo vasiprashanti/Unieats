@@ -16,6 +16,7 @@ import menuRoutes from "./routes/menuRoutes.js";
 import contentRoutes from "./routes/contentRoutes.js";
 import preLaunchUserRoutes from "./routes/preLaunchUserRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import devAuth from "./middleware/devAuth.js";
 
 dotenv.config();
 connectDB();
@@ -100,6 +101,11 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(rateLimiter);
+
+// Skip authentication in development - Only for local testing
+// if (process.env.SKIP_AUTH === "true") {
+//   app.use(devAuth);
+// }
 
 // Health check or root endpoint
 app.get("/", (req, res) => {
