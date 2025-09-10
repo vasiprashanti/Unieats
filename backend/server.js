@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import connectDB from "./config/db.js";
-// import initializeFirebaseAdmin from "./config/firebaseAdmin.js";
+import initializeFirebaseAdmin from "./config/firebaseAdmin.js";
 import { cloudinaryConfig } from "./config/cloudinary.js";
 import rateLimiter from "./middleware/rateLimiter.js";
 // import errorHandler from './middleware/errorHandler.js';
@@ -19,7 +19,7 @@ import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 connectDB();
-// initializeFirebaseAdmin();
+initializeFirebaseAdmin();
 cloudinaryConfig();
 
 const app = express();
@@ -81,7 +81,6 @@ const corsOptions = {
   optionsSuccessStatus: 200,
   preflightContinue: false,
 };
-
 
 // Apply CORS middleware
 app.use(cors(corsOptions));

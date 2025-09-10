@@ -2,7 +2,7 @@ import express from "express";
 import { check, validationResult } from "express-validator";
 import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
 import {
-  getMe,
+  // getMe,
   updateMe,
   addAddress,
   updateAddress,
@@ -16,7 +16,7 @@ const userRouter = express.Router();
 
 // === PROFILE ROUTES ===
 // GET current user's profile
-userRouter.get("/me", verifyFirebaseToken, getMe);
+// userRouter.get("/me", verifyFirebaseToken, getMe);
 
 // UPDATE current user's profile
 userRouter.put("/me", verifyFirebaseToken, updateMe);

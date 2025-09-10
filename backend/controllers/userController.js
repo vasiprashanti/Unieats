@@ -1,38 +1,38 @@
 import User from "../models/User.model.js";
 
 // GET USER PROFILE CONTROLLER
-const getMe = async (req, res) => {
-  try {
-    // The middleware may attach either the full user object or the decoded token.
-    // Prefer our stored user's firebaseUid, fall back to token uid if present.
-    const firebaseUid = req.user?.firebaseUid || req.user?.uid;
+// const getMe = async (req, res) => {
+//   try {
+//     // The middleware may attach either the full user object or the decoded token.
+//     // Prefer our stored user's firebaseUid, fall back to token uid if present.
+//     const firebaseUid = req.user?.firebaseUid || req.user?.uid;
 
-    if (!firebaseUid) {
-      return res.status(401).json({ message: "Unauthorized: missing user." });
-    }
+//     if (!firebaseUid) {
+//       return res.status(401).json({ message: "Unauthorized: missing user." });
+//     }
 
-    // Find the user and populate favorites (restaurants) with useful public fields
-    const user = await User.findOne({ firebaseUid })
-      .select("-password -__v")
-      .populate({
-        path: "favorites",
-        // pick common vendor fields; if a field doesn't exist it's harmless
-        select: "businessName cuisine location isOpen logo averageRating",
-      });
+//     // Find the user and populate favorites (restaurants) with useful public fields
+//     const user = await User.findOne({ firebaseUid })
+//       .select("-password -__v")
+//       .populate({
+//         path: "favorites",
+//         // pick common vendor fields; if a field doesn't exist it's harmless
+//         select: "businessName cuisine location isOpen logo averageRating",
+//       });
 
-    if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found in our database." });
-    }
+//     if (!user) {
+//       return res
+//         .status(404)
+//         .json({ message: "User not found in our database." });
+//     }
 
-    // Return structured response including populated favorites
-    res.status(200).json({ success: true, data: user });
-  } catch (error) {
-    console.error("Error fetching user profile:", error);
-    res.status(500).json({ message: "Server error." });
-  }
-};
+//     // Return structured response including populated favorites
+//     res.status(200).json({ success: true, data: user });
+//   } catch (error) {
+//     console.error("Error fetching user profile:", error);
+//     res.status(500).json({ message: "Server error." });
+//   }
+// };
 
 // UPDATE current user's profile
 const updateMe = async (req, res) => {
@@ -332,7 +332,7 @@ const toggleFavorite = async (req, res) => {
 };
 
 export {
-  getMe,
+  // getMe,
   updateMe,
   addAddress,
   updateAddress,

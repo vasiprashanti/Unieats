@@ -3,6 +3,7 @@ import { check } from "express-validator";
 import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
 import { checkRole } from "../middleware/roleMiddleware.js";
 import {
+  getMe,
   registerUser,
   verifyToken,
 } from "../controllers/authController.js";
@@ -32,6 +33,8 @@ router.post(
   ],
   registerUser
 );
+
+router.get("/me", verifyFirebaseToken, getMe);
 
 // @route   GET /api/v1/auth/verify
 // @desc    Verify a token is still valid
