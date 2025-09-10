@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import connectDB from "./config/db.js";
-// import initializeFirebaseAdmin from "./config/firebaseAdmin.js";
+import initializeFirebaseAdmin from "./config/firebaseAdmin.js";
 import { cloudinaryConfig } from "./config/cloudinary.js";
 import rateLimiter from "./middleware/rateLimiter.js";
 // import errorHandler from './middleware/errorHandler.js';
@@ -16,10 +16,11 @@ import menuRoutes from "./routes/menuRoutes.js";
 import contentRoutes from "./routes/contentRoutes.js";
 import preLaunchUserRoutes from "./routes/preLaunchUserRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import devAuth from "./middleware/devAuth.js";
 
 dotenv.config();
 connectDB();
-// initializeFirebaseAdmin();
+initializeFirebaseAdmin();
 cloudinaryConfig();
 
 const app = express();
@@ -82,7 +83,6 @@ const corsOptions = {
   preflightContinue: false,
 };
 
-
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
@@ -101,6 +101,11 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(rateLimiter);
+
+// Skip authentication in development - Only for local testing
+// if (process.env.SKIP_AUTH === "true") {
+//   app.use(devAuth);
+// }
 
 // Health check or root endpoint
 app.get("/", (req, res) => {

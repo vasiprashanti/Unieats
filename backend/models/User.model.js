@@ -25,11 +25,16 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
     name: { type: String, required: true, trim: true },
+    phone: { type: String, trim: true },
     role: {
       type: String,
       enum: ["user", "vendor", "admin"],
       default: "user",
       index: true,
+    },
+    includeNotification: {
+      type: Boolean,
+      default: true,
     },
     addresses: [addressSchema],
     paymentMethods: [paymentMethodSchema],

@@ -1,55 +1,33 @@
-import User from "../models/User.model.js";
-
-// GET USER PROFILE CONTROLLER
-const getMe = async (req, res) => {
+// TOGGLE includeNotification preference
+const toggleNotificationPreference = async (req, res) => {
   try {
-    // The middleware may attach either the full user object or the decoded token.
-    // Prefer our stored user's firebaseUid, fall back to token uid if present.
-    const firebaseUid = req.user?.firebaseUid || req.user?.uid;
-
-    if (!firebaseUid) {
-      return res.status(401).json({ message: "Unauthorized: missing user." });
-    }
-
-    // Find the user and populate favorites (restaurants) with useful public fields
-    const user = await User.findOne({ firebaseUid })
-      .select("-password -__v")
-      .populate({
-        path: "favorites",
-        // pick common vendor fields; if a field doesn't exist it's harmless
-        select: "businessName cuisine location isOpen logo averageRating",
-      });
-
+    const firebaseUid = req.user.firebaseUid;
+    const user = await User.findOne({ firebaseUid });
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found in our database." });
+      return res.status(404).json({ message: "User not found." });
     }
-
-    // Return structured response including populated favorites
-    res.status(200).json({ success: true, data: user });
+    // Toggle or set explicitly
+    if (typeof req.body.value === "boolean") {
+      user.includeNotification = req.body.value;
+    } else {
+      user.includeNotification = !user.includeNotification;
+    }
+    await user.save();
+    res.status(200).json({
+      message: "Notification preference updated.",
+      includeNotification: user.includeNotification,
+    });
   } catch (error) {
-    console.error("Error fetching user profile:", error);
+    console.error("Error updating notification preference:", error);
     res.status(500).json({ message: "Server error." });
   }
 };
+import User from "../models/User.model.js";
 
 // UPDATE current user's profile
 const updateMe = async (req, res) => {
   try {
-    // basic validation
-    const { name, email } = req.body;
-    const errors = [];
-    if (name !== undefined && String(name).trim().length < 2) {
-      errors.push({
-        field: "name",
-        message: "Name must be at least 2 characters long",
-      });
-    }
-    if (email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.push({ field: "email", message: "Valid email is required" });
-    }
-    if (errors.length) return res.status(400).json({ errors });
+    // Validation is handled in the route middleware
 
     const firebaseUid = req.user.firebaseUid;
     const user = await User.findOne({ firebaseUid });
@@ -57,19 +35,16 @@ const updateMe = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    // Only allow updating certain fields
-    const allowedFields = [
-      "name",
-      "email",
-      "addresses",
-      "paymentMethods",
-      "favorites",
-    ];
-    allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        user[field] = req.body[field];
-      }
-    });
+    // Only allow updating name, email, and phone
+    if (req.body.name !== undefined) {
+      user.name = req.body.name;
+    }
+    if (req.body.email !== undefined) {
+      user.email = req.body.email;
+    }
+    if (req.body.phone !== undefined) {
+      user.phone = req.body.phone;
+    }
 
     await user.save();
 
@@ -79,10 +54,7 @@ const updateMe = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
-        addresses: user.addresses,
-        paymentMethods: user.paymentMethods,
-        favorites: user.favorites,
+        phone: user.phone,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
@@ -97,14 +69,7 @@ const updateMe = async (req, res) => {
 const addAddress = async (req, res) => {
   try {
     const { street, city, state, zipCode, isDefault } = req.body;
-    const errors = [];
-    if (!street)
-      errors.push({ field: "street", message: "Street is required" });
-    if (!city) errors.push({ field: "city", message: "City is required" });
-    if (!state) errors.push({ field: "state", message: "State is required" });
-    if (!zipCode || zipCode.length < 5)
-      errors.push({ field: "zipCode", message: "Valid zipCode is required" });
-    if (errors.length) return res.status(400).json({ errors });
+    // Validation is handled in the route middleware
 
     const firebaseUid = req.user.firebaseUid;
     const user = await User.findOne({ firebaseUid });
@@ -148,19 +113,7 @@ const addAddress = async (req, res) => {
 const updateAddress = async (req, res) => {
   try {
     const { street, city, state, zipCode, isDefault } = req.body;
-    const errors = [];
-    if (street !== undefined && String(street).trim() === "")
-      errors.push({ field: "street", message: "Street cannot be empty" });
-    if (city !== undefined && String(city).trim() === "")
-      errors.push({ field: "city", message: "City cannot be empty" });
-    if (state !== undefined && String(state).trim() === "")
-      errors.push({ field: "state", message: "State cannot be empty" });
-    if (
-      zipCode !== undefined &&
-      (String(zipCode).length < 5 || String(zipCode).length > 10)
-    )
-      errors.push({ field: "zipCode", message: "Valid zipCode is required" });
-    if (errors.length) return res.status(400).json({ errors });
+    // Validation is handled in the route middleware
 
     const firebaseUid = req.user.firebaseUid;
     const user = await User.findOne({ firebaseUid });
@@ -332,7 +285,6 @@ const toggleFavorite = async (req, res) => {
 };
 
 export {
-  getMe,
   updateMe,
   addAddress,
   updateAddress,
@@ -340,4 +292,5 @@ export {
   getAddresses,
   setDefaultAddress,
   toggleFavorite,
+  toggleNotificationPreference,
 };
