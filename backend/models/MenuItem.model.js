@@ -55,9 +55,26 @@ const menuItemSchema = new mongoose.Schema(
     },
     prepTime: { type: Number }, // in minutes
     tags: [{ type: String }],
+    // Rating system
+    ratings: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        order: String,
+        value: { type: Number, min: 1, max: 5 },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
   },
   { timestamps: true }
 );
+
+// Add text index for search functionality
+menuItemSchema.index({
+  name: "text",
+  description: "text",
+  tags: "text",
+});
 
 // Models
 const MenuCategory = mongoose.model("MenuCategory", menuCategorySchema);

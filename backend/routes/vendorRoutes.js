@@ -6,13 +6,21 @@ import {
 } from "../controllers/vendorController.js";
 import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
 import { uploadDocuments, uploadImage } from "../middleware/fileUpload.js";
+import { cacheMiddleware } from "../middleware/cacheMiddleware.js";
 
 const router = express.Router();
 
 // GET all vendors (restaurants)
-router.get("/restaurants", getAllVendors);
+router.get("/restaurants", verifyFirebaseToken, getAllVendors); // Will support search via query param
 // GET vendor (restaurant) details + menu
-router.get("/restaurants/:id", getVendorDetails);
+
+// GET vendor (restaurant) details + menu (cached)
+router.get(
+  "/restaurants/:id",
+  verifyFirebaseToken,
+  cacheMiddleware,
+  getVendorDetails
+);
 
 // @route   POST /api/v1/vendors/register
 // @desc    Register a new vendor profile

@@ -56,5 +56,12 @@ const vendorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Add text index for search (name, cuisineType, businessAddress.city)
+vendorSchema.index({
+  businessName: "text",
+  cuisineType: "text",
+  "businessAddress.city": "text",
+});
+
 const Vendor = mongoose.model("Vendor", vendorSchema);
 export default Vendor;

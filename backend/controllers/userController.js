@@ -1,28 +1,6 @@
-// TOGGLE includeNotification preference
-const toggleNotificationPreference = async (req, res) => {
-  try {
-    const firebaseUid = req.user.firebaseUid;
-    const user = await User.findOne({ firebaseUid });
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-    // Toggle or set explicitly
-    if (typeof req.body.value === "boolean") {
-      user.includeNotification = req.body.value;
-    } else {
-      user.includeNotification = !user.includeNotification;
-    }
-    await user.save();
-    res.status(200).json({
-      message: "Notification preference updated.",
-      includeNotification: user.includeNotification,
-    });
-  } catch (error) {
-    console.error("Error updating notification preference:", error);
-    res.status(500).json({ message: "Server error." });
-  }
-};
 import User from "../models/User.model.js";
+import Order from "../models/Order.model.js";
+import MenuItem from "../models/MenuItem.model.js";
 
 // UPDATE current user's profile
 const updateMe = async (req, res) => {
@@ -284,6 +262,91 @@ const toggleFavorite = async (req, res) => {
   }
 };
 
+// TOGGLE includeNotification preference
+const toggleNotificationPreference = async (req, res) => {
+  try {
+    const firebaseUid = req.user.firebaseUid;
+    const user = await User.findOne({ firebaseUid });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    // Toggle or set explicitly
+    if (typeof req.body.value === "boolean") {
+      user.includeNotification = req.body.value;
+    } else {
+      user.includeNotification = !user.includeNotification;
+    }
+    await user.save();
+    res.status(200).json({
+      message: "Notification preference updated.",
+      includeNotification: user.includeNotification,
+    });
+  } catch (error) {
+    console.error("Error updating notification preference:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+// --- RATE MENU ITEM ---
+const rateMenuItem = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { itemId } = req.params;
+    const { rating, orderId } = req.body; // rating: 1-5
+    if (!rating || rating < 1 || rating > 5) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Rating must be between 1 and 5." });
+    }
+    // Check if order is delivered and contains the item
+    const order = await Order.findOne({
+      _id: orderId,
+      user: userId,
+      status: "delivered",
+      "items.menuItem": itemId,
+    });
+    if (!order) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You can only rate items you have received in a delivered order.",
+      });
+    }
+    // Check if user already rated this item for this order
+    const menuItem = await MenuItem.findById(itemId);
+    if (!menuItem) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Menu item not found." });
+    }
+    if (!menuItem.ratings) menuItem.ratings = [];
+    const alreadyRated = menuItem.ratings.find(
+      (r) =>
+        r.user.toString() === userId.toString() &&
+        r.order.toString() === orderId.toString()
+    );
+    if (alreadyRated) {
+      return res.status(409).json({
+        success: false,
+        message: "You have already rated this item for this order.",
+      });
+    }
+    // Add rating
+    menuItem.ratings.push({ user: userId, order: orderId, value: rating });
+    // Update average rating
+    const values = menuItem.ratings.map((r) => r.value);
+    menuItem.averageRating = values.reduce((a, b) => a + b, 0) / values.length;
+    await menuItem.save();
+    res.status(200).json({
+      success: true,
+      message: "Rating submitted.",
+      averageRating: menuItem.averageRating,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 export {
   updateMe,
   addAddress,
@@ -293,4 +356,5 @@ export {
   setDefaultAddress,
   toggleFavorite,
   toggleNotificationPreference,
+  rateMenuItem,
 };

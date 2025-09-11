@@ -10,6 +10,8 @@ import {
   getAddresses,
   setDefaultAddress,
   toggleFavorite,
+  toggleNotificationPreference,
+  rateMenuItem,
 } from "../controllers/userController.js";
 
 const userRouter = express.Router();
@@ -90,5 +92,17 @@ userRouter.patch(
 // === FAVORITES ROUTES ===
 // TOGGLE favorite restaurant
 userRouter.patch("/favorites/:vendorId", verifyFirebaseToken, toggleFavorite);
+
+// === NOTIFICATION PREFERENCES ===
+// TOGGLE notification preference
+userRouter.patch(
+  "/notifications/toggle",
+  verifyFirebaseToken,
+  toggleNotificationPreference
+);
+
+// === MENU ITEM RATING ===
+// RATE a menu item after delivery
+userRouter.post("/menu/:itemId/rate", verifyFirebaseToken, rateMenuItem);
 
 export default userRouter;
