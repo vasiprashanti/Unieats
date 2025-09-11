@@ -12,27 +12,31 @@ const RestaurantCard = ({ restaurant, mobileCardType = 'default', desktopCardTyp
   const getMobileCardClasses = () => {
     switch (mobileCardType) {
       case 'tall':
-        return 'h-80'; // Tall card for Pinterest effect
+        return 'h-96'; // Very tall card for Pinterest effect
       case 'small':
-        return 'h-48'; // Compact card
+        return 'h-40'; // Compact card
       case 'medium':
-        return 'h-64'; // Medium card
+        return 'h-72'; // Medium card
+      case 'extra-tall':
+        return 'h-[28rem]'; // Extra tall card
       default:
-        return 'h-56'; // Default card
+        return 'h-60'; // Default card
     }
   };
 
-  // Define desktop card classes (responsive grid style)
+  // Define desktop card classes (masonry style)
   const getDesktopCardClasses = () => {
     switch (desktopCardType) {
       case 'large':
-        return 'md:col-span-2 md:h-80'; // Wide card
+        return 'md:h-96'; // Large card
       case 'tall':
-        return 'md:h-96'; // Tall card
+        return 'md:h-[28rem]'; // Very tall card
       case 'small':
-        return 'md:h-56'; // Compact card
+        return 'md:h-48'; // Compact card
       case 'medium':
-        return 'md:h-64'; // Medium card
+        return 'md:h-80'; // Medium card
+      case 'extra-tall':
+        return 'md:h-[32rem]'; // Extra tall card
       default:
         return 'md:h-72'; // Default card
     }
@@ -44,7 +48,7 @@ const RestaurantCard = ({ restaurant, mobileCardType = 'default', desktopCardTyp
       className={`
         relative bg-white rounded-2xl overflow-hidden cursor-pointer group
         transition-all duration-300 hover:shadow-xl hover:scale-[1.02]
-        col-span-1 ${getMobileCardClasses()} ${getDesktopCardClasses()}
+        break-inside-avoid mb-2 md:mb-3 ${getMobileCardClasses()} ${getDesktopCardClasses()}
       `}
     >
       {/* Background Image */}

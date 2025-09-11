@@ -103,7 +103,7 @@ export default function RestaurantList() {
       </div>
 
       {/* Restaurants Section - Brought Up */}
-      <div className="max-w-6xl mx-auto px-4 pb-16 -mt-4">
+      <div className="max-w-6xl mx-auto px-4 pb-16">
         {/* Search Results Header or Default Header */}
         {filters.search ? (
           <div className="mb-6">
@@ -167,43 +167,43 @@ export default function RestaurantList() {
           </div>
         ) : (
           <>
-            {/* Restaurant Grid - Pinterest 2-column for mobile, responsive for desktop */}
+            {/* Restaurant Grid - Pinterest Masonry Layout */}
             {restaurants.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 auto-rows-auto">
+              <div className="columns-2 md:columns-3 lg:columns-4 gap-2 md:gap-3">
                 {restaurants.map((restaurant, index) => {
                   // Different patterns for mobile vs desktop
                   const getMobileCardType = () => {
                     const mobilePatterns = [
-                      'tall',     // 0: tall card for Pinterest effect
-                      'default',  // 1: normal
-                      'medium',   // 2: medium height
-                      'tall',     // 3: tall card
-                      'default',  // 4: normal
-                      'small',    // 5: compact
-                      'medium',   // 6: medium height
-                      'default',  // 7: normal
-                      'tall',     // 8: tall card
-                      'small',    // 9: compact
-                      'default',  // 10: normal
-                      'medium',   // 11: medium height
+                      'extra-tall', // 0: extra tall for Pinterest effect
+                      'small',      // 1: compact
+                      'medium',     // 2: medium height
+                      'default',    // 3: normal
+                      'tall',       // 4: tall card
+                      'small',      // 5: compact
+                      'default',    // 6: normal
+                      'medium',     // 7: medium height
+                      'extra-tall', // 8: extra tall card
+                      'small',      // 9: compact
+                      'tall',       // 10: tall card
+                      'default',    // 11: normal
                     ];
                     return mobilePatterns[index % mobilePatterns.length];
                   };
 
                   const getDesktopCardType = () => {
                     const desktopPatterns = [
-                      'large',    // 0: wide card
-                      'default',  // 1: normal
-                      'tall',     // 2: tall card
-                      'small',    // 3: compact
-                      'default',  // 4: normal
-                      'medium',   // 5: medium
-                      'default',  // 6: normal
-                      'large',    // 7: wide card
-                      'small',    // 8: compact
-                      'default',  // 9: normal
-                      'tall',     // 10: tall card
-                      'medium',   // 11: medium
+                      'extra-tall', // 0: extra tall card
+                      'small',      // 1: compact
+                      'large',      // 2: large card
+                      'default',    // 3: normal
+                      'tall',       // 4: tall card
+                      'small',      // 5: compact
+                      'medium',     // 6: medium
+                      'default',    // 7: normal
+                      'extra-tall', // 8: extra tall card
+                      'small',      // 9: compact
+                      'large',      // 10: large card
+                      'medium',     // 11: medium
                     ];
                     return desktopPatterns[index % desktopPatterns.length];
                   };

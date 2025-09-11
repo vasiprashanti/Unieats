@@ -32,7 +32,9 @@ const BottomNav = () => {
       path: '/cart',
       icon: (isActive) => (
         <svg className="w-4 h-4" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 0 : 2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6m-8 0V9a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h4" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 0 : 2} d="M3 7h18l-2 8H7L5 3H2"/>
+          <circle cx="9" cy="20" r="1"/>
+          <circle cx="20" cy="20" r="1"/>
         </svg>
       ),
       badge: totalItems
