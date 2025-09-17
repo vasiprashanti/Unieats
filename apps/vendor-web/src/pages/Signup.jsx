@@ -159,100 +159,60 @@ export default function Signup() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="px-[10%] py-16 bg-white border-t border-[#f0f0f0]">
-        <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Pricing</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Commission Based */}
-          <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">Popular</span>
-            </div>
-            <h3 className="text-xl font-semibold text-[#333] mb-3">Commission Based</h3>
-            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Pay-per-order model for flexible scaling</p>
-            <div className="mb-6">
-              <div className="text-2xl font-bold text-[#ff6600] mb-2">Min % Commission</div>
-              <div className="text-sm text-[#555]">On orders above ₹50</div>
-            </div>
-            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Unlimited orders per month
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Complete analytics dashboard
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                All vendor features included
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Priority listing by ratings
-              </li>
-            </ul>
-            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Commission</button>
-          </div>
+     import React from 'react';
 
-          {/* Subscription Based */}
-          <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
-            <h3 className="text-xl font-semibold text-[#333] mb-3">Subscription Based</h3>
-            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Fixed monthly fee with no commissions</p>
-            <div className="mb-6">
-              <div className="text-2xl font-bold text-[#ff6600] mb-2">Minimal Fee</div>
-              <div className="text-sm text-[#555]">Monthly or Annual plans</div>
-            </div>
-            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Unlimited orders per month
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Complete analytics dashboard
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                All vendor features included
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Priority listing by ratings
-              </li>
-            </ul>
-            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Subscription</button>
-          </div>
+export default function Pricing() {
+  return (
+    <section id="pricing" className="px-[10%] py-16 bg-white border-t border-[#f0f0f0]">
+      <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Pricing</h2>
 
-          {/* Hybrid Model */}
-          <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
-            <h3 className="text-xl font-semibold text-[#333] mb-3">Hybrid Model</h3>
-            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Best of both worlds - subscription + commission</p>
-            <div className="mb-6">
-              <div className="text-2xl font-bold text-[#ff6600] mb-2">Subscription + Commission</div>
-              <div className="text-sm text-[#555]">Combined model</div>
-            </div>
-            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Unlimited orders per month
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Complete analytics dashboard
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                All vendor features included
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Priority listing by ratings
-              </li>
-            </ul>
-            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Hybrid</button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+
+        {/* Freemium (Most Popular) */}
+        <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative">
+          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+            <span className="bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">Most Popular</span>
           </div>
+          <h3 className="text-xl font-semibold text-[#333] mb-3">Freemium</h3>
+          <ul className="text-[15px] text-[#333] space-y-3 mb-8">
+            <li>Free for first 5 vendors only</li>
+            <li>No commission, no subscription</li>
+            <li>Restaurant listed in Top 5</li>
+            <li>2 free ad banners</li>
+          </ul>
+          <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Grab Freemium</button>
         </div>
+
+        {/* Commission Based */}
+        <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
+          <h3 className="text-xl font-semibold text-[#333] mb-3">Commission Based</h3>
+          <ul className="text-[15px] text-[#333] space-y-3 mb-8">
+            <li>Pay per order, no fixed fee</li>
+            <li>Unlimited orders</li>
+            <li>Analytics dashboard</li>
+            <li>All vendor features</li>
+            <li>Priority listing by ratings</li>
+          </ul>
+          <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Commission</button>
+        </div>
+
+        {/* Subscription Based */}
+        <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
+          <h3 className="text-xl font-semibold text-[#333] mb-3">Subscription Based</h3>
+          <ul className="text-[15px] text-[#333] space-y-3 mb-8">
+            <li>Flat minimal monthly/annual fee</li>
+            <li>Zero commission on orders</li>
+            <li>Unlimited orders</li>
+            <li>Analytics dashboard</li>
+            <li>All vendor features + priority listing</li>
+          </ul>
+          <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Subscription</button>
+        </div>
+
+      </div>
+    </section>
+  );
+}
         
         {/* Additional Features */}
         <div className="mt-16 text-center">
