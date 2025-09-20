@@ -251,8 +251,8 @@ const FaqItem = ({ question, answer }) => {
 const Faq = () => (
   <section id="faq" className="py-16 px-[5%]">
     <div className="text-left mb-8">
-      <p className="text-white text-[1.3rem] md:text-[2rem] font-semibold">Questions?</p>
-      <h2 className="text-[#ff802c] text-[2.8rem] md:text-[3.2rem] font-extrabold leading-tight">We've got answers</h2>
+      <p className="text-white text-[1.3rem] md:text-[2rem] font-semibold">Confused?</p>
+      <h2 className="text-[#ff802c] text-[2.8rem] md:text-[3.2rem] font-extrabold leading-tight">Let’s spill the tea</h2>
     </div>
     <div className="w-full space-y-3">
       <FaqItem question="When will UniEats launch?" answer="Taking orders from September last week – get ready!
