@@ -183,30 +183,39 @@ export default function Pricing() {
           <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Grab Freemium</button>
         </div>
 
-        {/* Commission Based */}
-        <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
-          <h3 className="text-xl font-semibold text-[#333] mb-3">Commission Based</h3>
-          <ul className="text-[15px] text-[#333] space-y-3 mb-8">
-            <li>Pay per order, no fixed fee</li>
-            <li>Unlimited orders</li>
-            <li>Analytics dashboard</li>
-            <li>All vendor features</li>
-            <li>Priority listing by ratings</li>
+       {/* Commission-Based Plan */}
+        <div className="relative bg-white border border-[#f0f0f0] p-8 rounded-xl shadow hover:shadow-lg transition">
+          <span className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm">
+            Popular
+          </span>
+          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Commission-Based Plan</h3>
+          <p className="text-[#555] mb-6">Pay % commission only on orders above ₹50.</p>
+          <ul className="space-y-3 text-[15px] text-[#333]">
+            <li>Unlimited orders per month</li>
+            <li>Add, manage, and customize your menu easily</li>
+            <li>Accept online orders via app or website</li>
+            <li>Real-time sales and customer analytics</li>
+            <li>Single admin access (mobile, tablet, PC)</li>
           </ul>
-          <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Commission</button>
+          <button className="mt-8 w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
+            Choose Commission
+          </button>
         </div>
 
-        {/* Subscription Based */}
-        <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
-          <h3 className="text-xl font-semibold text-[#333] mb-3">Subscription Based</h3>
-          <ul className="text-[15px] text-[#333] space-y-3 mb-8">
-            <li>Flat minimal monthly/annual fee</li>
-            <li>Zero commission on orders</li>
-            <li>Unlimited orders</li>
-            <li>Analytics dashboard</li>
-            <li>All vendor features + priority listing</li>
+         {/* Subscription-Based Plan */}
+        <div className="bg-white border border-[#f0f0f0] p-8 rounded-xl shadow hover:shadow-lg transition">
+          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Subscription-Based Plan</h3>
+          <p className="text-[#555] mb-6">Fixed monthly or annual fee.</p>
+          <ul className="space-y-3 text-[15px] text-[#333]">
+            <li>Limited orders per month</li>
+            <li>Easy menu management and customization</li>
+            <li>Accept online orders seamlessly</li>
+            <li>Full analytics dashboard</li>
+            <li>Single admin access (mobile, tablet, PC)</li>
           </ul>
-          <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Subscription</button>
+          <button className="mt-8 w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
+            Choose Subscription
+          </button>
         </div>
 
       </div>
