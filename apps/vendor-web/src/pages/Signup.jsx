@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 
 // Vendor Sign-up page with multi-step form
 export default function Signup() {
-  const location = useLocation();
   const texts = useMemo(
     () => [
       "Grow your restaurant with Unieats!",
@@ -26,18 +24,6 @@ export default function Signup() {
     }, 2500);
     return () => clearInterval(id);
   }, [texts.length]);
-
-  // Handle hash-based navigation when coming from login page
-  useEffect(() => {
-    if (location.hash) {
-      const element = document.getElementById(location.hash.substring(1));
-      if (element) {
-        setTimeout(() => {
-          scrollToSection(element);
-        }, 100);
-      }
-    }
-  }, [location.hash]);
 
   // Smooth scroll with navbar offset
   const scrollToSection = (element) => {
@@ -85,7 +71,7 @@ export default function Signup() {
             >
               Support
             </button>
-            <Link to="/vendor/login" className="hover:text-[#ff6600] transition-colors">Login</Link>
+            <button className="hover:text-[#ff6600] transition-colors">Login</button>
           </nav>
         </div>
       </div>
@@ -94,8 +80,7 @@ export default function Signup() {
       <div className="relative z-0 h-[320px] flex items-center justify-center text-center overflow-hidden">
         {/* Background with blur + dim */}
         <div
-          className="absolute inset-0 z-0 bg-center bg-cover transform scale-105 filter blur-sm"
-          style={{ backgroundImage: "url('/vendor-login.jpg')" }}
+          className="absolute inset-0 z-0 bg-center bg-cover transform scale-105 filter blur-sm bg-gradient-to-r from-orange-400 to-red-500"
         />
         <div className="absolute inset-0 z-0 bg-black/40" />
         <h2
@@ -159,69 +144,61 @@ export default function Signup() {
         </div>
       </section>
 
-     import React from 'react';
+      {/* Pricing Section */}
+      <section id="pricing" className="px-[10%] py-16 bg-white border-t border-[#f0f0f0]">
+        <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Pricing</h2>
 
-export default function Pricing() {
-  return (
-    <section id="pricing" className="px-[10%] py-16 bg-white border-t border-[#f0f0f0]">
-      <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Pricing</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-
-        {/* Freemium (Most Popular) */}
-        <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative">
-          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-            <span className="bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">Most Popular</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          {/* Freemium (Most Popular) */}
+          <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <span className="bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">Most Popular</span>
+            </div>
+            <h3 className="text-xl font-semibold text-[#333] mb-3">Freemium</h3>
+            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
+              <li>Free for first 5 vendors only</li>
+              <li>No commission, no subscription</li>
+              <li>Restaurant listed in Top 5</li>
+              <li>2 free ad banners</li>
+            </ul>
+            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Grab Freemium</button>
           </div>
-          <h3 className="text-xl font-semibold text-[#333] mb-3">Freemium</h3>
-          <ul className="text-[15px] text-[#333] space-y-3 mb-8">
-            <li>Free for first 5 vendors only</li>
-            <li>No commission, no subscription</li>
-            <li>Restaurant listed in Top 5</li>
-            <li>2 free ad banners</li>
-          </ul>
-          <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Grab Freemium</button>
-        </div>
 
-       {/* Commission-Based Plan */}
-        <div className="relative bg-white border border-[#f0f0f0] p-8 rounded-xl shadow hover:shadow-lg transition">
-          <span className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm">
-            Popular
-          </span>
-          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Commission-Based Plan</h3>
-          <p className="text-[#555] mb-6">Pay % commission only on orders above ₹50.</p>
-          <ul className="space-y-3 text-[15px] text-[#333]">
-            <li>Unlimited orders per month</li>
-            <li>Add, manage, and customize your menu easily</li>
-            <li>Accept online orders via app or website</li>
-            <li>Real-time sales and customer analytics</li>
-            <li>Single admin access (mobile, tablet, PC)</li>
-          </ul>
-          <button className="mt-8 w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
-            Choose Commission
-          </button>
-        </div>
+          {/* Commission-Based Plan */}
+          <div className="relative bg-white border border-[#f0f0f0] p-8 rounded-xl shadow hover:shadow-lg transition">
+            <span className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm">
+              Popular
+            </span>
+            <h3 className="text-[20px] font-semibold text-[#222] mb-3">Commission-Based Plan</h3>
+            <p className="text-[#555] mb-6">Pay % commission only on orders above ₹50.</p>
+            <ul className="space-y-3 text-[15px] text-[#333]">
+              <li>Unlimited orders per month</li>
+              <li>Add, manage, and customize your menu easily</li>
+              <li>Accept online orders via app or website</li>
+              <li>Real-time sales and customer analytics</li>
+              <li>Single admin access (mobile, tablet, PC)</li>
+            </ul>
+            <button className="mt-8 w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
+              Choose Commission
+            </button>
+          </div>
 
-         {/* Subscription-Based Plan */}
-        <div className="bg-white border border-[#f0f0f0] p-8 rounded-xl shadow hover:shadow-lg transition">
-          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Subscription-Based Plan</h3>
-          <p className="text-[#555] mb-6">Fixed monthly or annual fee.</p>
-          <ul className="space-y-3 text-[15px] text-[#333]">
-            <li>Limited orders per month</li>
-            <li>Easy menu management and customization</li>
-            <li>Accept online orders seamlessly</li>
-            <li>Full analytics dashboard</li>
-            <li>Single admin access (mobile, tablet, PC)</li>
-          </ul>
-          <button className="mt-8 w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
-            Choose Subscription
-          </button>
+          {/* Subscription-Based Plan */}
+          <div className="bg-white border border-[#f0f0f0] p-8 rounded-xl shadow hover:shadow-lg transition">
+            <h3 className="text-[20px] font-semibold text-[#222] mb-3">Subscription-Based Plan</h3>
+            <p className="text-[#555] mb-6">Fixed monthly or annual fee.</p>
+            <ul className="space-y-3 text-[15px] text-[#333]">
+              <li>Limited orders per month</li>
+              <li>Easy menu management and customization</li>
+              <li>Accept online orders seamlessly</li>
+              <li>Full analytics dashboard</li>
+              <li>Single admin access (mobile, tablet, PC)</li>
+            </ul>
+            <button className="mt-8 w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
+              Choose Subscription
+            </button>
+          </div>
         </div>
-
-      </div>
-    </section>
-  );
-}
         
         {/* Additional Features */}
         <div className="mt-16 text-center">
@@ -356,52 +333,61 @@ function VendorSignupForm() {
     }
   };
 
- const onSubmit = async (e) => {
-  e.preventDefault();
+  const onSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    const data = new FormData();
+    try {
+      const data = new FormData();
 
-    // Append text fields only
-    data.append("businessName", formData.businessName);
-    data.append("phone", formData.phone);
-    data.append("street", formData.street);
-    data.append("city", formData.city);
-    data.append("state", formData.state);
-    data.append("zipCode", formData.zipCode);
-    data.append("cuisineType", JSON.stringify(formData.cuisineType));
-    data.append("operatingHours", JSON.stringify(formData.operatingHours));
+      // Append text fields only
+      data.append("businessName", formData.businessName);
+      data.append("phone", formData.phone);
+      data.append("street", formData.street);
+      data.append("city", formData.city);
+      data.append("state", formData.state);
+      data.append("zipCode", formData.zipCode);
+      data.append("cuisineType", JSON.stringify(formData.cuisineType));
+      data.append("operatingHours", JSON.stringify(formData.operatingHours));
 
-    // Append files
-    if (formData.businessLicense) {
-      data.append("businessLicense", formData.businessLicense); // actual File object
-    }
-    if (formData.foodSafetyCertificate) {
-      data.append("foodSafetyCertificate", formData.foodSafetyCertificate); // actual File object
-    }
+      // Append files
+      if (formData.businessLicense) {
+        data.append("businessLicense", formData.businessLicense);
+      }
+      if (formData.foodSafetyCertificate) {
+        data.append("foodSafetyCertificate", formData.foodSafetyCertificate);
+      }
 
-    const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/api/v1/vendors/register`,
-      {
+      // Mock API call since we can't use environment variables in artifacts
+      const response = await fetch("/api/v1/vendors/register", {
         method: "POST",
         body: data,
+      });
+
+      if (response.ok) {
+        alert("Vendor registered successfully!");
+        // Reset form
+        setFormData({
+          businessName: "",
+          phone: "",
+          street: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          cuisineType: [],
+          operatingHours: [],
+          businessLicense: null,
+          foodSafetyCertificate: null,
+        });
+        setCurrentStep(1);
+      } else {
+        const result = await response.json();
+        alert(result.message || "Vendor registration failed.");
       }
-    );
-
-    const result = await response.json();
-    console.log("API Response:", result);
-
-    if (response.ok) {
-      alert("Vendor registered successfully!");
-    } else {
-      alert(result.message || "Vendor registration failed.");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("An error occurred. Please try again.");
     }
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    alert("An error occurred. Please try again.");
-  }
-};
-
+  };
 
   const renderStep = () => {
     switch (currentStep) {
@@ -591,118 +577,4 @@ function Step3({ formData, updateFormData, onNext, onPrev }) {
         </label>
         <div className="grid grid-cols-2 gap-2">
           {cuisineOptions.map(cuisine => (
-            <label key={cuisine} className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.cuisineType.includes(cuisine)}
-                onChange={() => handleCuisineChange(cuisine)}
-                className="mr-2 text-[#ff6600] focus:ring-[#ff6600]"
-              />
-              <span className="text-sm text-[#333]">{cuisine}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-[#333] mb-3">
-          Operating Hours (Optional)
-        </label>
-        <div className="space-y-2 max-h-40 overflow-y-auto">
-          {days.map(day => {
-            const dayHours = formData.operatingHours.find(h => h.day === day) || {};
-            return (
-              <div key={day} className="flex items-center gap-2 text-sm">
-                <span className="w-20 text-[#333]">{day.slice(0, 3)}</span>
-                <input
-                  type="time"
-                  value={dayHours.open || ''}
-                  onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)}
-                  className="px-2 py-1 border border-[#ddd] rounded text-xs"
-                />
-                <span className="text-[#666]">to</span>
-                <input
-                  type="time"
-                  value={dayHours.close || ''}
-                  onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)}
-                  className="px-2 py-1 border border-[#ddd] rounded text-xs"
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onPrev}
-          className="flex-1 px-4 py-3 text-[#ff6600] font-bold rounded-lg border-2 border-[#ff6600] hover:bg-[#ff6600] hover:text-white transition-colors"
-        >
-          Back
-        </button>
-        <PrimaryButton type="submit">Continue</PrimaryButton>
-      </div>
-    </form>
-  );
-}
-
-// Step 4: Document Upload
-function Step4({ formData, updateFormData, onSubmit, onPrev }) {
-  const handleFileChange = (field, file) => {
-    updateFormData(field, file);
-  };
-
-  return (
-    <form onSubmit={onSubmit}>
-      <h4 className="text-lg font-semibold text-[#333] mb-4">Required Documents</h4>
-      
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-[#333] mb-2">
-          Business License *
-        </label>
-        <input
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          onChange={(e) => handleFileChange('businessLicense', e.target.files[0])}
-          className="w-full px-3 py-2 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#ff6600] text-sm"
-          required
-        />
-        <p className="text-xs text-[#666] mt-1">Upload PDF, JPG, or PNG (Max 5MB)</p>
-      </div>
-
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-[#333] mb-2">
-          Food Safety Certificate (FSSAI) *
-        </label>
-        <input
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          onChange={(e) => handleFileChange('foodSafetyCertificate', e.target.files[0])}
-          className="w-full px-3 py-2 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#ff6600] text-sm"
-          required
-        />
-        <p className="text-xs text-[#666] mt-1">Upload PDF, JPG, or PNG (Max 5MB)</p>
-      </div>
-
-      <div className="bg-[#fff3e0] border border-[#ffcc80] rounded-lg p-4 mb-6">
-        <h5 className="text-sm font-semibold text-[#ef6c00] mb-2">Review Process</h5>
-        <p className="text-xs text-[#bf360c]">
-          After submission, our team will review your application within 2-3 business days. 
-          You'll receive an email notification once your account is approved.
-        </p>
-      </div>
-
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onPrev}
-          className="flex-1 px-4 py-3 text-[#ff6600] font-bold rounded-lg border-2 border-[#ff6600] hover:bg-[#ff6600] hover:text-white transition-colors"
-        >
-          Back
-        </button>
-        <PrimaryButton type="submit">Submit Application</PrimaryButton>
-      </div>
-    </form>
-  );
-}
+            <label key={cuisine} className="flex items-center
