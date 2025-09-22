@@ -124,7 +124,7 @@ const Hero = () => {
         body: JSON.stringify({ name, email, phone })
       });
       if (res.ok) {
-        alert('You will be notified soon!');
+        alert('Entry received! Check Insta for weekly winner');
         console.log(res);
         setShowForm(false);
       } else {
