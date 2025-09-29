@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
   const [mode, setMode] = useState(initialMode);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -134,7 +134,7 @@ function LoginForm({ onSwitch }) {
   const [submitting, setSubmitting] = useState(false);
 
   const { login, loading, error, setError } = useAuth();
-
+ const navigate=useNavigate();
   const isEmail = (v) => /.+@.+\..+/.test(v);
   const errors = {
     emailOrPhone:
@@ -185,6 +185,7 @@ function LoginForm({ onSwitch }) {
       console.log("Verification successful:", data.user);
       // You can save the user info in state or context
     }
+    navigate('/restaurants')
   } catch (error) {
     console.error("Error during login/verification:", error);
   } finally {
@@ -316,6 +317,7 @@ function SignupForm({ onSwitch }) {
 
     const data = await apiRes.json();
     console.log("Backend response:", data);
+    navigate('/login');
 
     if (!apiRes.ok) {
       setError(data.message || "Backend registration failed");
