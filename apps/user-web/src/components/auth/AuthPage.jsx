@@ -252,7 +252,7 @@ function SignupForm({ onSwitch }) {
   const [submitting, setSubmitting] = useState(false);
 
   const { signup, loading, error, setError } = useAuth();
-
+ const navigate=useNavigate();
   const friendly = (code) => {
     if (!code) return null;
     const map = {
