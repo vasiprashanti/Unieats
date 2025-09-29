@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile,signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase"; // make sure you initialized Firebase
 // Role defaults to 'user' in this app
 const AuthContext = createContext(null);
@@ -24,18 +24,37 @@ export function AuthProvider({ children, initialRole = 'user' }) {
     return () => { active = false; };
   }, []);
 
-  const login = useCallback(async ({ email, password }) => {
-    setLoading(true); setError(null);
-    try {
-      await new Promise(r => setTimeout(r, 400));
-      setUser({ uid: 'demo', email, displayName: 'User', role: 'user' });
-      setRole('user');
-      return { ok: true };
-    } catch (e) {
-      setError('auth/wrong-password');
-      return { ok: false, code: 'auth/wrong-password' };
-    } finally { setLoading(false); }
-  }, []);
+
+const login = useCallback(async ({ email, password }) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    // Authenticate with Firebase
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+    // Extract user info
+    const firebaseUser = userCredential.user;
+
+    setUser({
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      displayName: firebaseUser.displayName,
+      role: "user", // You could fetch role from backend instead of hardcoding
+    });
+
+    setRole("user");
+
+    return { ok: true, user: firebaseUser };
+  } catch (e) {
+    console.error("Firebase login error:", e);
+    setError(e.code || "auth/wrong-password");
+    return { ok: false, code: e.code };
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
 
 
 const signup = useCallback(async ({ email, password, displayName }) => {
