@@ -3,10 +3,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import DropdownMenu, { DropdownItem, DropdownDivider } from '../ui/DropdownMenu';
 
 const Navbar = () => {
   const { isDarkMode, toggleTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { totalItems } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
@@ -37,6 +38,15 @@ const Navbar = () => {
         const searchInput = document.getElementById('navbar-search');
         if (searchInput) searchInput.focus();
       }, 100);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/home');
+    } catch (error) {
+      console.error('Error during logout:', error);
     }
   };
 
@@ -164,18 +174,53 @@ const Navbar = () => {
 
             {/* User Menu */}
             {user ? (
-              <div className="relative">
-                <Link
-                  to="/profile"
-                  className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent"
-                >
-                  <div className="w-8 h-8 bg-[#FF6B35] rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">
-                      {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
-                    </span>
+              <DropdownMenu
+                trigger={
+                  <div className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent">
+                    <div className="w-8 h-8 bg-[#FF6B35] rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">
+                        {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
+                      </span>
+                    </div>
+                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
-                </Link>
-              </div>
+                }
+              >
+                <DropdownItem
+                  to="/orders"
+                  icon={
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  }
+                >
+                  Past Orders
+                </DropdownItem>
+                <DropdownItem
+                  to="/profile"
+                  icon={
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  }
+                >
+                  Account Settings
+                </DropdownItem>
+                <DropdownDivider />
+                <DropdownItem
+                  onClick={handleLogout}
+                  variant="danger"
+                  icon={
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  }
+                >
+                  Logout
+                </DropdownItem>
+              </DropdownMenu>
             ) : (
               <Link
                 to="/login"
