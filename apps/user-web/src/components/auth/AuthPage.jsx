@@ -317,13 +317,13 @@ function SignupForm({ onSwitch }) {
 
     const data = await apiRes.json();
     console.log("Backend response:", data);
-    navigate('/login');
 
     if (!apiRes.ok) {
       setError(data.message || "Backend registration failed");
     } else {
       console.log("User registered successfully in backend!");
     }
+    alert("Signed Up Successfully Please Login Now!!")
   } catch (err) {
     console.error("Error during registration:", err);
     setError("auth/unknown-error");
