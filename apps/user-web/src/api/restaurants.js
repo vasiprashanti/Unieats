@@ -1,172 +1,89 @@
-// Mock data for development - replace with actual API calls
-const mockRestaurants = [
-  {
-    id: 1,
-    name: "Campus Pizza Corner",
-    cuisine: "Italian",
-    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=600&fit=crop",
-    rating: 4.5,
-    deliveryTime: "20-30 min",
-    avgPrice: "₹25",
-    costForTwo: 250,
-    isOpen: true,
-    isNew: false,
-    isTrending: false,
-    dietType: "both", // veg, non-veg, both
-    popularity: 85,
-    tags: ["popular"]
-  },
-  {
-    id: 2,
-    name: "Burger Junction",
-    cuisine: "American",
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&h=600&fit=crop",
-    rating: 4.2,
-    deliveryTime: "15-25 min",
-    avgPrice: "₹20",
-    costForTwo: 200,
-    isOpen: true,
-    isNew: true,
-    isTrending: false,
-    dietType: "non-veg",
-    popularity: 72,
-    tags: ["fast-delivery"]
-  },
-  {
-    id: 3,
-    name: "Spice Garden",
-    cuisine: "Indian",
-    image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&h=600&fit=crop",
-    rating: 4.7,
-    deliveryTime: "25-35 min",
-    avgPrice: "₹30",
-    costForTwo: 300,
-    isOpen: false,
-    isNew: false,
-    isTrending: true,
-    dietType: "veg",
-    popularity: 92,
-    tags: ["top-rated"]
-  },
-  {
-    id: 4,
-    name: "Dragon Wok",
-    cuisine: "Chinese",
-    image: "https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=800&h=600&fit=crop",
-    rating: 4.3,
-    deliveryTime: "20-30 min",
-    avgPrice: "₹25",
-    costForTwo: 250,
-    isOpen: true,
-    isNew: false,
-    isTrending: false,
-    dietType: "both",
-    popularity: 68,
-    tags: []
-  },
-  {
-    id: 5,
-    name: "Healthy Bites",
-    cuisine: "Healthy",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&h=600&fit=crop",
-    rating: 4.6,
-    deliveryTime: "15-20 min",
-    avgPrice: "₹35",
-    costForTwo: 350,
-    isOpen: true,
-    isNew: false,
-    isTrending: true,
-    dietType: "veg",
-    popularity: 89,
-    tags: ["fast-delivery", "top-rated"]
-  },
-  {
-    id: 6,
-    name: "Coffee Central",
-    cuisine: "Beverages",
-    image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&h=600&fit=crop",
-    rating: 4.4,
-    deliveryTime: "10-15 min",
-    avgPrice: "₹15",
-    costForTwo: 150,
-    isOpen: true,
-    isNew: false,
-    isTrending: false,
-    dietType: "both",
-    popularity: 75,
-    tags: ["fast-delivery"]
-  }
-];
+import axios from "axios";
+import { getAuth } from "firebase/auth";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const getRestaurants = async (filters = {}) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  let filteredRestaurants = [...mockRestaurants];
-  
-  // Apply filters
-  if (filters.search) {
-    const searchTerm = filters.search.toLowerCase();
-    filteredRestaurants = filteredRestaurants.filter(restaurant =>
-      restaurant.name.toLowerCase().includes(searchTerm) ||
-      restaurant.cuisine.toLowerCase().includes(searchTerm)
-    );
-  }
-  
-  // Removed old filter logic for isOpen, fastDelivery, and topRated
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
 
-  // Apply diet filter
-  if (filters.dietType && filters.dietType !== 'all') {
-    filteredRestaurants = filteredRestaurants.filter(restaurant => {
-      if (filters.dietType === 'veg') {
-        return restaurant.dietType === 'veg' || restaurant.dietType === 'both';
-      } else if (filters.dietType === 'non-veg') {
-        return restaurant.dietType === 'non-veg' || restaurant.dietType === 'both';
-      }
-      return true;
-    });
-  }
-
-  // Apply sorting
-  if (filters.sortBy) {
-    switch (filters.sortBy) {
-      case 'rating':
-        filteredRestaurants.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'deliveryTime':
-        filteredRestaurants.sort((a, b) => {
-          const aTime = parseInt(a.deliveryTime.split('-')[1]);
-          const bTime = parseInt(b.deliveryTime.split('-')[1]);
-          return aTime - bTime;
-        });
-        break;
-      case 'costLowToHigh':
-        filteredRestaurants.sort((a, b) => a.costForTwo - b.costForTwo);
-        break;
-      case 'costHighToLow':
-        filteredRestaurants.sort((a, b) => b.costForTwo - a.costForTwo);
-        break;
-      case 'popularity':
-        filteredRestaurants.sort((a, b) => b.popularity - a.popularity);
-        break;
-      case 'relevance':
-      default:
-        // Default relevance sorting - mix of rating, popularity, and whether it's trending
-        filteredRestaurants.sort((a, b) => {
-          const aScore = a.rating * 20 + a.popularity * 0.5 + (a.isTrending ? 20 : 0);
-          const bScore = b.rating * 20 + b.popularity * 0.5 + (b.isTrending ? 20 : 0);
-          return bScore - aScore;
-        });
-        break;
+    if (!user) {
+      throw new Error("User not authenticated");
     }
+
+    // 🔑 Get fresh Firebase ID token
+    const token = await user.getIdToken();
+
+    // Build query params
+    const params = {};
+    if (filters.search) params.search = filters.search;
+    if (filters.page) params.page = filters.page;
+    if (filters.limit) params.limit = filters.limit;
+
+    // Call backend with token
+    const res = await axios.get(`${API_BASE_URL}/api/v1/vendors/restaurants`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params,
+    });
+    console.log("aslll-",res);
+    let restaurants = res.data.data || [];
+
+    // 🔹 Apply frontend-only filters
+    if (filters.dietType && filters.dietType !== "all") {
+      restaurants = restaurants.filter((restaurant) => {
+        if (filters.dietType === "veg") {
+          return restaurant.dietType === "veg" || restaurant.dietType === "both";
+        } else if (filters.dietType === "non-veg") {
+          return (
+            restaurant.dietType === "non-veg" || restaurant.dietType === "both"
+          );
+        }
+        return true;
+      });
+    }
+
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case "rating":
+          restaurants.sort((a, b) => b.rating - a.rating);
+          break;
+        case "deliveryTime":
+          restaurants.sort((a, b) => {
+            const aTime = parseInt(a.deliveryTime?.split("-")[1] || 0);
+            const bTime = parseInt(b.deliveryTime?.split("-")[1] || 0);
+            return aTime - bTime;
+          });
+          break;
+        case "costLowToHigh":
+          restaurants.sort((a, b) => a.costForTwo - b.costForTwo);
+          break;
+        case "costHighToLow":
+          restaurants.sort((a, b) => b.costForTwo - a.costForTwo);
+          break;
+        default:
+          break;
+      }
+    }
+    console.log("dataaa-",restaurants);
+    return {
+      success: true,
+      data: restaurants,
+      total: res.data.totalPages * (filters.limit || 10),
+      currentPage: res.data.currentPage,
+    };
+  } catch (error) {
+    console.error("Error fetching restaurants:", error);
+    return {
+      success: false,
+      data: [],
+      total: 0,
+      currentPage: 1,
+    };
   }
-  
-  return {
-    success: true,
-    data: filteredRestaurants,
-    total: filteredRestaurants.length
-  };
 };
+
 
 export const getRestaurantById = async (id) => {
   await new Promise(resolve => setTimeout(resolve, 300));
