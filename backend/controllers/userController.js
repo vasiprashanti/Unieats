@@ -287,66 +287,6 @@ const toggleNotificationPreference = async (req, res) => {
   }
 };
 
-// --- RATE MENU ITEM ---
-const rateMenuItem = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { itemId } = req.params;
-    const { rating, orderId } = req.body; // rating: 1-5
-    if (!rating || rating < 1 || rating > 5) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Rating must be between 1 and 5." });
-    }
-    // Check if order is delivered and contains the item
-    const order = await Order.findOne({
-      _id: orderId,
-      user: userId,
-      status: "delivered",
-      "items.menuItem": itemId,
-    });
-    if (!order) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "You can only rate items you have received in a delivered order.",
-      });
-    }
-    // Check if user already rated this item for this order
-    const menuItem = await MenuItem.findById(itemId);
-    if (!menuItem) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Menu item not found." });
-    }
-    if (!menuItem.ratings) menuItem.ratings = [];
-    const alreadyRated = menuItem.ratings.find(
-      (r) =>
-        r.user.toString() === userId.toString() &&
-        r.order.toString() === orderId.toString()
-    );
-    if (alreadyRated) {
-      return res.status(409).json({
-        success: false,
-        message: "You have already rated this item for this order.",
-      });
-    }
-    // Add rating
-    menuItem.ratings.push({ user: userId, order: orderId, value: rating });
-    // Update average rating
-    const values = menuItem.ratings.map((r) => r.value);
-    menuItem.averageRating = values.reduce((a, b) => a + b, 0) / values.length;
-    await menuItem.save();
-    res.status(200).json({
-      success: true,
-      message: "Rating submitted.",
-      averageRating: menuItem.averageRating,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
-
 export {
   updateMe,
   addAddress,
@@ -356,5 +296,4 @@ export {
   setDefaultAddress,
   toggleFavorite,
   toggleNotificationPreference,
-  rateMenuItem,
 };
