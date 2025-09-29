@@ -233,18 +233,69 @@ function SignupForm({ onSwitch }) {
   };
 
   const onSubmit = async (e) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      setError('auth/password-mismatch');
+  e.preventDefault();
+
+  if (password !== confirmPassword) {
+    setError("auth/password-mismatch");
+    return;
+  }
+
+  console.log("Form submitted with values:", {
+    email,
+    password,
+    confirmPassword,
+    fullName,
+  });
+
+  setSubmitting(true);
+
+  try {
+    // Step 1: Sign up user with Firebase
+    const res = await signup({ email, password, displayName: fullName });
+    console.log("Firebase signup result:", res);
+
+    if (!res?.ok) {
+      setError("auth/firebase-signup-failed");
+      setSubmitting(false);
       return;
     }
-    setSubmitting(true);
-    const res = await signup({ email, password, displayName: fullName });
-    if (!res?.ok) {
-      // show error via Alert
+    console.log("ideee-",res);
+    // Extract Firebase UID (depends on your signup implementation)
+    const user = res.user;
+    const firebaseUid = user?.uid;
+
+    if (!firebaseUid) {
+      throw new Error("Firebase UID not found");
     }
+
+    // Step 2: Call your backend API to register user in MongoDB
+    const apiRes = await fetch("http://localhost:5000/api/v1/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: fullName,
+        email,
+        firebaseUid,
+      }),
+    });
+
+    const data = await apiRes.json();
+    console.log("Backend response:", data);
+
+    if (!apiRes.ok) {
+      setError(data.message || "Backend registration failed");
+    } else {
+      console.log("User registered successfully in backend!");
+    }
+  } catch (err) {
+    console.error("Error during registration:", err);
+    setError("auth/unknown-error");
+  } finally {
     setSubmitting(false);
-  };
+  }
+};
 
   const onChangeClear = (setter) => (val) => {
     setter(val);
