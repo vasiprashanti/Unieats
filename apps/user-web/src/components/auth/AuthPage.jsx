@@ -269,17 +269,21 @@ function SignupForm({ onSwitch }) {
     }
 
     // Step 2: Call your backend API to register user in MongoDB
-    const apiRes = await fetch("http://localhost:5000/api/v1/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: fullName,
-        email,
-        firebaseUid,
-      }),
-    });
+    const apiRes = await fetch(
+  `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: fullName,
+      email,
+      firebaseUid,
+    }),
+  }
+    );
+
 
     const data = await apiRes.json();
     console.log("Backend response:", data);
