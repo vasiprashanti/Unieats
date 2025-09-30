@@ -3,41 +3,63 @@ import { validationResult } from 'express-validator';
 
 // REGISTRATION CONTROLLER 
 const registerUser = async (req, res) => {
-  // Check for validation errors first
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+    const {
+        firebaseUid,
+        email,
+        phone,
+        name, // { first, last }
+        yearOfStudy,
+        accommodation,
+        hostelDetails, // { block, room }
+        offCampusAddress // { addressLine1, landmark }
+    } = req.body;
 
-  // Destructure the required fields from the request body
-  const { name, email, firebaseUid } = req.body;
-
-  try {
-    // Check if a user with this email or firebaseUid already exists
-    let user = await User.findOne({ $or: [{ email }, { firebaseUid }] });
-    if (user) {
-      return res.status(400).json({ message: 'User already exists.' });
+    // Basic validation
+    if (!firebaseUid || !email || !phone || !name || !yearOfStudy || !accommodation) {
+        return res.status(400).json({ message: 'Missing required fields for registration.' });
     }
 
-    // Create a new user instance from the model
-    user = new User({
-      name,
-      email,
-      firebaseUid,
-    });
+    try {
+        // Check if user already exists
+        let user = await User.findOne({ $or: [{ email }, { firebaseUid }] });
+        if (user) {
+            return res.status(400).json({ message: 'User already exists.' });
+        }
 
-    // Save the new user to the database
-    await user.save();
+        // Build the new user object based on the schema
+        const newUserPayload = {
+            firebaseUid,
+            email,
+            phone,
+            name,
+            yearOfStudy,
+            accommodation,
+        };
 
-    // Send back a success response
-    res.status(201).json({
-      message: 'User registered successfully!',
-      user: { id: user._id, name: user.name, email: user.email },
-    });
-  } catch (error) {
-    console.error('Error during registration:', error);
-    res.status(500).json({ message: 'Server error during registration.' });
-  }
+        // Conditionally add address details
+        if (accommodation === 'Hosteller') {
+            newUserPayload.hostelDetails = hostelDetails;
+        } else if (accommodation === 'Non-Hosteller') {
+            newUserPayload.offCampusAddress = offCampusAddress;
+        }
+
+        user = new User(newUserPayload);
+        await user.save();
+
+        res.status(201).json({
+            message: 'User registered successfully!',
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            },
+        });
+
+    } catch (error) {
+        console.error('Error during user registration:', error);
+        res.status(500).json({ message: 'Server error during registration.' });
+    }
 };
 
 // GET USER PROFILE CONTROLLER

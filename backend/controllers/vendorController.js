@@ -1,10 +1,9 @@
 import Vendor from '../models/Vendor.model.js';
+import Order from '../models/Order.model.js';
 import { cloudinary } from '../config/cloudinary.js';
 
 const registerVendor = async (req, res) => {
     // The user must be logged in to register as a vendor
-    
-
     try {
         
         // Handle file uploads to Cloudinary
@@ -102,4 +101,60 @@ const updateVendorProfile = async (req, res) => {
     }
 };
 
-export { registerVendor, updateVendorProfile, getVendorProfile };
+const updateOrderStatus = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { status: newStatus } = req.body;
+
+        // Security: Find the vendor profile for the logged-in user
+        const vendorProfile = await Vendor.findOne({ owner: req.user._id });
+        if (!vendorProfile) {
+            return res.status(403).json({ message: "Vendor profile not found." });
+        }
+
+        const order = await Order.findById(orderId).populate('user', '_id');
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        // CRITICAL Security Check: Ensure the order belongs to the logged-in vendor
+        if (order.vendor.toString() !== vendorProfile._id.toString()) {
+            return res.status(403).json({ message: 'You are not authorized to update this order.' });
+        }
+        
+        // --- Order Status Transition Validation (State Machine) ---
+        const currentStatus = order.status;
+        const allowedTransitions = {
+            pending: ['preparing', 'cancelled'],
+            preparing: ['ready'],
+            ready: ['out_for_delivery', 'delivered'],
+            out_for_delivery: ['delivered'],
+            delivered: [], // Cannot change after delivery
+            cancelled: [], // Cannot change after cancellation
+        };
+
+        if (!allowedTransitions[currentStatus] || !allowedTransitions[currentStatus].includes(newStatus)) {
+            return res.status(400).json({ message: `Invalid status transition from ${currentStatus} to ${newStatus}.` });
+        }
+
+        order.status = newStatus;
+        // The pre-save hook on the Order model will automatically update the statusHistory
+        
+        const updatedOrder = await order.save();
+
+        // --- DAY 18: Socket.io Broadcasting for Status Changes ---
+        const io = req.app.get('socketio');
+        // Notify the vendor's own dashboard
+        io.to(vendorProfile._id.toString()).emit('order_update', updatedOrder);
+        // Notify the user who placed the order
+        io.to(order.user._id.toString()).emit('order_update', updatedOrder);
+        
+        res.status(200).json({ message: 'Order status updated successfully!', order: updatedOrder });
+
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        res.status(500).json({ message: "Server error while updating status." });
+    }
+};
+
+export { registerVendor, updateVendorProfile, getVendorProfile, updateOrderStatus};

@@ -14,20 +14,24 @@ const orderSchema = new mongoose.Schema({
     totalPrice: { type: Number, required: true },
     status: {
         type: String,
-        enum: ['pending', 'accepted', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'],
-        default: 'pending',
+        enum: ['payment_pending', 'pending', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'],
+        default: 'payment_pending',
         index: true, // Heavily indexed for filtering and monitoring
     },
+    
     deliveryAddress: {
         street: { type: String, required: true },
         city: { type: String, required: true },
         state: { type: String, required: true },
         zipCode: { type: String, required: true },
     },
+
     paymentDetails: {
-        paymentId: String,
-        status: String,
+        method: { type: String, enum: ['UPI', 'COD'], default: 'UPI' },
+        transactionId: { type: String },
+        status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending'}
     },
+
     rating: {
         type: Number,
         min: 1,
