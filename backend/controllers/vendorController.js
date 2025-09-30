@@ -127,7 +127,7 @@ const getVendorDetails = async (req, res) => {
     // Get menu items for this vendor
     const menuItems = await MenuItem.find({
       vendor: vendor._id,
-      isActive: true,
+      isAvailable: true,
     })
       .select(
         "_id name description price image category isAvailable averageRating"
