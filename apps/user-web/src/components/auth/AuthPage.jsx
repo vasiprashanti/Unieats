@@ -1,44 +1,6 @@
-import React, { useEffect, useMemo, useState, useContext, createContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
 
-// --- Mock AuthContext to resolve dependency errors ---
-// In your actual app, you will remove this and import your real AuthContext.
-const MockAuthContext = createContext(null);
-const MockAuthProvider = ({ children }) => {
-    const [error, setError] = useState(null);
-    const login = async () => { console.log("Mock login"); return { ok: true, user: { getIdToken: async () => 'mock-token' } }; };
-    const signup = async () => { console.log("Mock signup"); return { ok: true, user: { uid: 'mock-uid' } }; };
-    const value = { login, signup, loading: false, error, setError };
-    return <MockAuthContext.Provider value={value}>{children}</MockAuthContext.Provider>;
-};
-const useAuth = () => {
-    const ctx = useContext(MockAuthContext);
-    if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
-    return ctx;
-};
-// --- End Mock AuthContext ---
-
-
-// --- Placeholder Components to resolve import errors ---
-const Navbar = () => <header className="bg-white p-4 shadow-md sticky top-0 z-50 text-center font-bold">Navbar</header>;
-const MobileHeader = () => null; // Assuming this is for mobile-specific header, can be empty for now.
-const Alert = ({ type, message }) => {
-    if (!message) return null;
-    const colors = {
-        error: "bg-red-100 border-red-400 text-red-700",
-        success: "bg-green-100 border-green-400 text-green-700",
-    };
-    return (
-        <div className={`border px-4 py-3 rounded relative mb-4 ${colors[type] || "bg-gray-100 border-gray-400 text-gray-700"}`} role="alert">
-            <span className="block sm:inline">{message}</span>
-        </div>
-    );
-};
-// --- End Placeholder Components ---
-
-
-// --- Main AuthPage Component (From Raunak's UI) ---
-function AuthPageComponent({ initialMode = "login" }) {
+export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
   const [mode, setMode] = useState(initialMode);
   const toggleMode = () => setMode((m) => (m === "login" ? "signup" : "login"));
 
@@ -100,7 +62,6 @@ function LoginForm({ onSwitch }) {
   const [submitting, setSubmitting] = useState(false);
 
   const { login, loading, error, setError } = useAuth();
-  const navigate = useNavigate();
 
   const isEmail = (v) => /.+@.+\..+/.test(v);
   const errors = {
@@ -126,32 +87,8 @@ function LoginForm({ onSwitch }) {
     setTouched({ emailOrPhone: true, password: true });
     if (hasErrors) return;
     setSubmitting(true);
-    try {
-      const res = await login({ email: emailOrPhone, password });
-      if (res && res.user) {
-        const idToken = await res.user.getIdToken();
-        const verifyRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/verify`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${idToken}`,
-          },
-        });
-        const data = await verifyRes.json();
-        if (!verifyRes.ok) {
-           throw new Error(data.message || "Verification failed");
-        }
-        console.log("Verification successful:", data.user);
-        navigate('/restaurants');
-      } else {
-        throw new Error("Login failed, user not returned.");
-      }
-    } catch (err) {
-      console.error("Error during login/verification:", err);
-      setError(err.code || 'auth/unknown-error');
-    } finally {
-      setSubmitting(false);
-    }
+    const res = await login({ email: emailOrPhone, password });
+    setSubmitting(false);
   };
 
   const onChangeClear = (key, setter) => (val) => {
@@ -203,7 +140,7 @@ function SignupForm({ onSwitch }) {
   });
   const [submitting, setSubmitting] = useState(false);
   const { signup, loading, error, setError } = useAuth();
-
+ const navigate=useNavigate();
   const friendly = (code) => {
     if (!code) return null;
     const map = {
@@ -233,47 +170,77 @@ function SignupForm({ onSwitch }) {
 
   // onSubmit with Srikar's backend registration logic
   const onSubmit = async (e) => {
-    e.preventDefault();
-    const { password, confirmPassword, accommodation, hostelBlock, hostelRoom, addressLine1, landmark, firstName, lastName, emailOrPhone, yearOfStudy } = formData;
-    if (password !== confirmPassword) {
-      setError("auth/password-mismatch");
+  e.preventDefault();
+
+  if (password !== confirmPassword) {
+    setError("auth/password-mismatch");
+    return;
+  }
+
+  console.log("Form submitted with values:", {
+    email,
+    password,
+    confirmPassword,
+    fullName,
+  });
+
+  setSubmitting(true);
+
+  try {
+    // Step 1: Sign up user with Firebase
+    const res = await signup({ email, password, displayName: fullName });
+    console.log("Firebase signup result:", res);
+
+    if (!res?.ok) {
+      setError("auth/firebase-signup-failed");
+      setSubmitting(false);
       return;
     }
-    setSubmitting(true);
-    try {
-      const fullName = `${firstName} ${lastName}`;
-      const email = emailOrPhone.includes("@") ? emailOrPhone : "";
-      
-      const res = await signup({ email, password, displayName: fullName });
-      if (!res?.user?.uid) throw new Error("Firebase UID not found after signup.");
+    console.log("ideee-",res);
+    // Extract Firebase UID (depends on your signup implementation)
+    const user = res.user;
+    const firebaseUid = user?.uid;
 
-      const apiRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: fullName,
-          email: email,
-          phone: !email ? emailOrPhone : "",
-          firebaseUid: res.user.uid,
-          yearOfStudy,
-          accommodation,
-          address: accommodation === "hosteller" 
-            ? { type: "hostel", block: hostelBlock, room: hostelRoom }
-            : { type: "non-hostel", line1: addressLine1, landmark }
-        }),
-      });
-      
-      const data = await apiRes.json();
-      if (!apiRes.ok) throw new Error(data.message || "Backend registration failed");
-      
-      alert("Signed Up Successfully! Please Login Now.");
-      onSwitch(); // Switch to login mode
-    } catch (err) {
-      console.error("Error during registration:", err);
-      setError(err.code || err.message || "auth/unknown-error");
-    } finally {
-      setSubmitting(false);
+    if (!firebaseUid) {
+      throw new Error("Firebase UID not found");
     }
+
+    // Step 2: Call your backend API to register user in MongoDB
+    const apiRes = await fetch(
+  `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: fullName,
+      email,
+      firebaseUid,
+    }),
+  }
+    );
+
+
+    const data = await apiRes.json();
+    console.log("Backend response:", data);
+
+    if (!apiRes.ok) {
+      setError(data.message || "Backend registration failed");
+    } else {
+      console.log("User registered successfully in backend!");
+    }
+  } catch (err) {
+    console.error("Error during registration:", err);
+    setError("auth/unknown-error");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+  const onChangeClear = (setter) => (val) => {
+    setter(val);
+    if (error) setError(null);
   };
 
   return (

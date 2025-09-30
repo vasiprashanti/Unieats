@@ -11,7 +11,6 @@ import {
   setDefaultAddress,
   toggleFavorite,
   toggleNotificationPreference,
-  rateMenuItem,
 } from "../controllers/userController.js";
 
 const userRouter = express.Router();
@@ -100,9 +99,5 @@ userRouter.patch(
   verifyFirebaseToken,
   toggleNotificationPreference
 );
-
-// === MENU ITEM RATING ===
-// RATE a menu item after delivery
-userRouter.post("/menu/:itemId/rate", verifyFirebaseToken, rateMenuItem);
 
 export default userRouter;

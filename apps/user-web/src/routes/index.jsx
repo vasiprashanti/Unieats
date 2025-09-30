@@ -25,18 +25,6 @@ function ProtectedUser({ children }) {
   return children;
 }
 
-function GuestOnly() {
-  const { user, role, initializing } = useAuth();
-  if (initializing) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white">
-        <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin" />
-      </div>
-    );
-  }
-  if (user) return <Navigate to={roleHome(role)} replace />;
-  return null;
-}
 
 import Home from '../pages/Home';
 import RestaurantList from '../pages/RestaurantList';
@@ -57,8 +45,8 @@ export default function AppRoutes() {
   return (
     <>
       <Routes>
-        <Route path="/login" element={<><GuestOnly /> <Login /></>} />
-        <Route path="/signup" element={<><GuestOnly /> <Signup /></>} />
+        <Route path="/login" element= {<Login />}/>
+        <Route path="/signup" element={<> <Signup /></>} />
 
         {/* Public browsing routes */}
         <Route path="/home" element={<Home />} />

@@ -51,6 +51,11 @@ const orderSchema = new mongoose.Schema(
       paymentId: String,
       status: String,
     },
+    // Track if ratings have been submitted for this order
+    isRated: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

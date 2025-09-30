@@ -27,6 +27,7 @@ router.get(
 // @access  Private (requires user to be logged in)
 router.post(
   "/register",
+  verifyFirebaseToken,
   uploadDocuments.fields([
     // Handle multiple file fields
     { name: "businessLicense", maxCount: 1 },

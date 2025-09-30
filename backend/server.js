@@ -17,6 +17,7 @@ import contentRoutes from "./routes/contentRoutes.js";
 import preLaunchUserRoutes from "./routes/preLaunchUserRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import devAuth from "./middleware/devAuth.js";
+import orderRouter from "./routes/orderRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -32,20 +33,19 @@ const corsOptions = {
 
     // ✅ Allowed origins (local + prod)
     const allowedOrigins = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-      
-        // Production domains
-        "https://unieats.co",
-        "https://admin.unieats.co",
-        "https://vendor.unieats.co",
-        "https://user.unieats.co",
-        "https://admin.unietas.co",
-    ];
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:3001",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:5173",
 
+      // Production domains
+      "https://unieats.co",
+      "https://admin.unieats.co",
+      "https://vendor.unieats.co",
+      "https://user.unieats.co",
+      "https://admin.unietas.co",
+    ];
 
     // Allow localhost with any port
     if (
@@ -125,6 +125,7 @@ app.use("/api/v1/vendors/menu", menuRoutes);
 app.use("/api/v1/content", contentRoutes);
 app.use("/api/v1/prelaunch", preLaunchUserRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/orders", orderRouter);
 
 // Error handling for CORS
 app.use((err, req, res, next) => {
