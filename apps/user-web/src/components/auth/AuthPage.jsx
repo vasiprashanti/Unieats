@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { AuthProvider } from "../../context/AuthContext";
+import Navbar from "../Navigation/Navbar";
+import MobileHeader from "../Navigation/MobileHeader";
+import Alert from "../Alert";
 
-export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
+function AuthPageComponent({ initialMode = "login", roleLabel = "" }) {
   const [mode, setMode] = useState(initialMode);
   const toggleMode = () => setMode((m) => (m === "login" ? "signup" : "login"));
 
@@ -44,12 +50,12 @@ export default function AuthPage({ initialMode = "login", roleLabel = "" }) {
   );
 }
 
-// Final export wrapped with the Mock Provider
+// Final export wrapped with the Auth Provider
 export default function AuthPage({ initialMode = "login" }) {
     return (
-        <MockAuthProvider>
+        <AuthProvider>
             <AuthPageComponent initialMode={initialMode} />
-        </MockAuthProvider>
+        </AuthProvider>
     );
 }
 
@@ -171,6 +177,10 @@ function SignupForm({ onSwitch }) {
   // onSubmit with Srikar's backend registration logic
   const onSubmit = async (e) => {
   e.preventDefault();
+  
+  const { emailOrPhone, firstName, lastName, password, confirmPassword } = formData;
+  const fullName = `${firstName} ${lastName}`;
+  const email = emailOrPhone; // Assuming emailOrPhone contains email
 
   if (password !== confirmPassword) {
     setError("auth/password-mismatch");
@@ -229,6 +239,7 @@ function SignupForm({ onSwitch }) {
       setError(data.message || "Backend registration failed");
     } else {
       console.log("User registered successfully in backend!");
+      navigate('/'); // Navigate to home after successful signup
     }
   } catch (err) {
     console.error("Error during registration:", err);
@@ -341,11 +352,12 @@ function SelectField({ label, value, onChange, options, error, required }) {
     );
 }
 
-function PrimaryButton({ children, type = "button", disabled = false }) {
+function PrimaryButton({ children, type = "button", disabled = false, onClick }) {
     return (
         <button
             type={type}
             disabled={disabled}
+            onClick={onClick}
             className={`w-full py-3.5 rounded-xl text-[15px] font-bold transition-all duration-100 ${disabled ? "bg-gradient-to-r from-orange-500/50 to-orange-400/50 text-white cursor-not-allowed" : "bg-gradient-to-r from-orange-500 to-orange-400 text-white hover:-translate-y-0.5 active:translate-y-0 shadow-lg hover:shadow-xl"}`}
             style={{ boxShadow: disabled ? 'none' : '0 8px 20px rgba(255,106,0,0.15)' }}
         >
