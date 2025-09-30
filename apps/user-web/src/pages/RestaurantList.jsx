@@ -4,6 +4,7 @@ import { getRestaurants } from '../api/restaurants';
 import FilterPills from '../components/restaurants/FilterPills';
 import RestaurantCard from '../components/restaurants/RestaurantCard';
 import Navbar from '../components/Navigation/Navbar';
+import MobileHeader from '../components/Navigation/MobileHeader';
 import { useTheme } from '../context/ThemeContext';
 
 export default function RestaurantList() {
@@ -68,14 +69,14 @@ export default function RestaurantList() {
   };
 
   return (
-    <div className="min-h-screen transition-colors duration-300" 
-         style={{ backgroundColor: 'hsl(var(--background))' }}>
+    <div className="min-h-screen transition-colors duration-300 bg-white">
       <Navbar />
+      <MobileHeader />
       
       {/* Compact Hero Section */}
-      <div className="relative">
+      <div className="relative pt-20 md:pt-20">
         {/* Background pattern */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))]/5 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent" />
         
         <div className="relative max-w-6xl mx-auto px-4 pt-6 pb-8">
           {/* Main Headline - Compact */}

@@ -102,10 +102,10 @@ export default function RestaurantMenu() {
 
   if (error) {
     return (
-      <div className="min-h-screen transition-colors duration-300" 
-           style={{ backgroundColor: 'hsl(var(--background))' }}>
+      <div className="min-h-screen transition-colors duration-300 bg-white">
         <Navbar />
-        <div className="flex items-center justify-center h-96">
+        <MobileHeader />
+        <div className="flex items-center justify-center h-96 pt-20 md:pt-20">
           <div className="text-center">
             <p className="text-red-500 mb-4">Failed to load menu: {error}</p>
             <button

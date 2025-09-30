@@ -52,29 +52,30 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Home', path: '/home' },
-    { name: 'Orders', path: '/orders', protected: true },
+    { name: 'Eats', path: '/restaurants' },
+    { name: 'Cart', path: '/cart' },
     { name: 'Profile', path: '/profile', protected: true }
   ];
 
   return (
-    <nav className="hidden md:block sticky top-0 z-50 backdrop-blur-lg border-b border-base transition-all duration-300" 
-         style={{ backgroundColor: 'hsl(var(--background) / 0.9)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="hidden md:flex fixed top-0 left-1/2 transform -translate-x-1/2 z-50 bg-white/92 backdrop-blur-md border border-black/5 rounded-2xl shadow-lg transition-all duration-300 mt-0 w-[90%] max-w-[1100px]" 
+         style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+      <div className="w-full px-5 py-2">
+        <div className="flex justify-between items-center h-12">
           {/* Logo */}
           <Link to="/home" className="flex-shrink-0">
             <div className="flex items-center">
               <img 
                 src="/unilogo.jpg" 
                 alt="UniEats" 
-                className="h-10 w-auto object-contain"
+                className="h-10 w-auto object-contain cursor-pointer"
               />
             </div>
           </Link>
 
           {/* Navigation Links */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8">
+            <div className="flex items-center space-x-6">
               {navLinks.map((link) => {
                 // Skip protected routes if user is not logged in
                 if (link.protected && !user) return null;
@@ -83,11 +84,7 @@ const Navbar = () => {
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                      isActive(link.path)
-                        ? 'text-[hsl(var(--primary))] bg-accent'
-                        : 'text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent'
-                    }`}
+                    className="text-base font-normal text-[#ff8641] hover:text-[#ff7d46] hover:scale-110 transition-all duration-200"
                   >
                     {link.name}
                   </Link>

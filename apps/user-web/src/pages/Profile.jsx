@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navigation/Navbar';
+import MobileHeader from '../components/Navigation/MobileHeader';
 import ProfileDetails from '../components/profile/ProfileDetails';
 import SavedAddresses from '../components/profile/SavedAddresses';
 import PaymentMethods from '../components/profile/PaymentMethods';
@@ -144,9 +145,10 @@ export default function Profile() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <Navbar />
-        <div className="max-w-4xl mx-auto p-6">
+        <MobileHeader />
+        <div className="max-w-4xl mx-auto p-6 pt-20 md:pt-20">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <p className="text-red-800 font-medium">{error}</p>
             <button

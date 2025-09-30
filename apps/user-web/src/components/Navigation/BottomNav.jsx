@@ -13,17 +13,26 @@ const BottomNav = () => {
       name: 'Home',
       path: '/home',
       icon: (isActive) => (
-        <svg className="w-4 h-4" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 0 : 2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
         </svg>
       )
     },
     {
-      name: 'Restaurants',
-      path: '/restaurants',
+      name: 'Food',
+      path: '/restaurants', 
       icon: (isActive) => (
-        <svg className="w-4 h-4" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 0 : 2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
+        </svg>
+      )
+    },
+    {
+      name: 'Search',
+      path: '/restaurants?search=true',
+      icon: (isActive) => (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
         </svg>
       )
     },
@@ -31,30 +40,18 @@ const BottomNav = () => {
       name: 'Cart',
       path: '/cart',
       icon: (isActive) => (
-        <svg className="w-4 h-4" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 0 : 2} d="M3 7h18l-2 8H7L5 3H2"/>
-          <circle cx="9" cy="20" r="1"/>
-          <circle cx="20" cy="20" r="1"/>
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
         </svg>
       ),
       badge: totalItems
     },
     {
-      name: 'Orders',
-      path: '/orders',
-      icon: (isActive) => (
-        <svg className="w-4 h-4" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 0 : 2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
-      requiresAuth: true
-    },
-    {
       name: 'Profile',
       path: '/profile',
       icon: (isActive) => (
-        <svg className="w-4 h-4" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 0 : 2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
         </svg>
       ),
       requiresAuth: true
@@ -69,8 +66,9 @@ const BottomNav = () => {
   };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-200 z-40">
-      <div className="flex items-center justify-around py-1">
+    <div className="md:hidden fixed bottom-3 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-2xl z-[100] w-[calc(100%-2rem)] max-w-[500px] py-1.5" 
+         style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
+      <div className="flex items-center justify-around">
         {getVisibleItems().map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path === '/restaurants' && location.pathname.startsWith('/restaurants/'));
@@ -79,13 +77,13 @@ const BottomNav = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`flex flex-col items-center py-1 px-2 transition-all duration-200 relative ${
+              className={`flex flex-col items-center py-1 px-2 transition-all duration-200 relative hover:scale-110 ${
                 isActive 
-                  ? 'text-[#ff6600]' 
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'text-[#ff7e2d]' 
+                  : 'text-[#ff7e2d]'
               }`}
             >
-              <div className="relative mb-1">
+              <div className="relative">
                 {item.icon(isActive)}
                 {item.badge && item.badge > 0 && (
                   <span className="absolute -top-1 -right-1 bg-[#ff6600] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center min-w-[16px] font-medium">
@@ -93,11 +91,6 @@ const BottomNav = () => {
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] font-medium leading-none ${
-                isActive ? 'text-[#ff6600]' : 'text-gray-600'
-              }`}>
-                {item.name}
-              </span>
             </Link>
           );
         })}
