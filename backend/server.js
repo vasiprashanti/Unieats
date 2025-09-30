@@ -18,6 +18,7 @@ import preLaunchUserRoutes from "./routes/preLaunchUserRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import devAuth from "./middleware/devAuth.js";
 import orderRouter from "./routes/orderRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -126,6 +127,7 @@ app.use("/api/v1/content", contentRoutes);
 app.use("/api/v1/prelaunch", preLaunchUserRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/orders", orderRouter);
+app.use("/api/v1/payments", paymentRoutes);
 
 // Error handling for CORS
 app.use((err, req, res, next) => {

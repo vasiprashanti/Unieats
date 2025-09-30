@@ -48,8 +48,23 @@ const orderSchema = new mongoose.Schema(
       zipCode: { type: String, required: true },
     },
     paymentDetails: {
-      paymentId: String,
-      status: String,
+      method: {
+        type: String,
+        enum: ["cod", "upi"],
+        required: true,
+      },
+      status: {
+        type: String,
+        enum: ["pending", "confirmed"],
+        default: "pending",
+      },
+      // Payment confirmation details (filled by delivery agent)
+      confirmedBy: {
+        type: String, // Delivery agent ID or name
+      },
+      confirmedAt: {
+        type: Date,
+      },
     },
     // Track if ratings have been submitted for this order
     isRated: {
