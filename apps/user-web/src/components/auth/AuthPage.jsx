@@ -66,7 +66,7 @@ function LoginForm({ onSwitch }) {
   const [password, setPassword] = useState("");
   const [touched, setTouched] = useState({ emailOrPhone: false, password: false });
   const [submitting, setSubmitting] = useState(false);
-
+  const navigate=useNavigate();
   const { login, loading, error, setError } = useAuth();
 
   const isEmail = (v) => /.+@.+\..+/.test(v);
@@ -87,15 +87,45 @@ function LoginForm({ onSwitch }) {
     return map[code] || map.default;
   };
 
-  // onSubmit function with Srikar's backend verification logic
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setTouched({ emailOrPhone: true, password: true });
-    if (hasErrors) return;
-    setSubmitting(true);
+  
+const onSubmit = async (e) => {
+  e.preventDefault();
+  setTouched({ emailOrPhone: true, password: true });
+
+  if (hasErrors) return;
+
+  setSubmitting(true);
+
+  try {
+    // 1. Login and get the Firebase UID / ID token
     const res = await login({ email: emailOrPhone, password });
+    // Assuming `res.uid` is the Firebase ID token
+    const idToken = await res.user.getIdToken();
+    // 2. Make a request to the /verify endpoint
+    const verifyRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/verify`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+    });
+
+    const data = await verifyRes.json();
+    if (!verifyRes.ok) {
+      console.error("Verification failed:", data.message);
+      // handle error (show message to user)
+    } else {
+      console.log("asall ochama");
+      navigate('/restaurants');
+      console.log("Verification successful:", data.user);
+      // You can save the user info in state or context
+    }
+  } catch (error) {
+    console.error("Error during login/verification:", error);
+  } finally {
     setSubmitting(false);
   };
+  }
 
   const onChangeClear = (key, setter) => (val) => {
     setter(val);
