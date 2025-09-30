@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../config/firebase"; // make sure you initialized Firebase
 // Role defaults to 'user' in this app
 const AuthContext = createContext(null);
@@ -12,16 +12,27 @@ export function AuthProvider({ children, initialRole = 'user' }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        await new Promise(r => setTimeout(r, 500));
-        // Optionally set user if session exists
-      } finally {
-        if (active) setInitializing(false);
+    // Listen to Firebase auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          role: "user", // You could fetch role from backend instead of hardcoding
+        });
+        setRole("user");
+      } else {
+        // User is signed out
+        setUser(null);
+        setRole(null);
       }
-    })();
-    return () => { active = false; };
+      setInitializing(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
 
@@ -93,14 +104,17 @@ const signup = useCallback(async ({ email, password, displayName }) => {
 
 
   const logout = useCallback(async () => {
-    setLoading(true); setError(null);
+    setLoading(true); 
+    setError(null);
     try {
-      await new Promise(r => setTimeout(r, 200));
-      setUser(null);
-      setRole(null);
+      await signOut(auth);
+      // The onAuthStateChanged listener will handle clearing the user state
     } catch (e) {
+      console.error('Firebase logout error:', e);
       setError('Failed to logout');
-    } finally { setLoading(false); }
+    } finally { 
+      setLoading(false); 
+    }
   }, []);
 
   const value = useMemo(() => ({ user, role, loading, initializing, error, login, signup, logout, setRole, setError }), [user, role, loading, initializing, error, login, signup, logout]);
