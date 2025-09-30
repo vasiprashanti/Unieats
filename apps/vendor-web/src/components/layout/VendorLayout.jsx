@@ -66,6 +66,15 @@ export default function VendorLayout() {
             </span>
             {sidebarOpen && <span>Menu</span>}
           </NavLink>
+          <NavLink to="/vendor/analytics" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
+            <span className="inline-flex h-6 w-6 items-center justify-center">
+              <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3v18h18" />
+                <path d="m19 9-5 5-4-4-3 3" />
+              </svg>
+            </span>
+            {sidebarOpen && <span>Analytics</span>}
+          </NavLink>
           <NavLink to="/vendor/profile" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
             <span className="inline-flex h-6 w-6 items-center justify-center">
               <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

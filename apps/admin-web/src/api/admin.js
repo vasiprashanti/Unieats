@@ -1,5 +1,12 @@
 // Simple API wrapper for admin endpoints
 export const API_BASE = import.meta.env.VITE_API_BASE || ""; // use proxy or absolute if configured
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+
+export function getVendors() {
+  console.log("HERE-",VITE_API_BASE_URL);
+  return request(`${VITE_API_BASE_URL}/api/v1/admin/vendors`, { method: 'GET' });
+}
 
 async function request(path, { method = 'GET', headers = {}, body } = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -22,14 +29,12 @@ async function request(path, { method = 'GET', headers = {}, body } = {}) {
 
 // Vendors
 export function patchVendorApproval(id, status) {
-  return request(`/api/v1/admin/vendors/${id}/approval`, {
+  return request(`${VITE_API_BASE_URL}/api/v1/admin/vendors/${id}/approval`, {
     method: 'PATCH',
     body: { status },
   });
 }
-export function getVendors() {
-  return request(`/api/v1/admin/vendors`, { method: 'GET' });
-}
+
 
 // Content: Banners
 export function listBanners() {

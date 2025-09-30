@@ -48,7 +48,27 @@ const vendorSchema = new mongoose.Schema({
         rejectionReason: { type: String },
         uploadedAt: { type: Date, default: Date.now }
     }],
+
+    averageRating: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5,
+    },
+    
+    reviewCount: {
+        type: Number,
+        default: 0,
+    },
+    
+    upiId: {
+        type: String,
+        trim: true,
+    },
+
 }, { timestamps: true });
+
+vendorSchema.index({ businessName: 'text', cuisineType: 'text' });
 
 const Vendor = mongoose.model('Vendor', vendorSchema);
 export default Vendor;

@@ -25,8 +25,10 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
+      // Firebase login
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      return { success: true, user: userCredential.user };
+
+      return { success: true, user: userCredential.user, backendUser };
     } catch (error) {
       setError(error.code);
       return { success: false, error: error.code };
@@ -39,17 +41,29 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
-      // Create user account
+      // Create user account in Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
       // Update display name
       if (displayName) {
         await updateProfile(userCredential.user, {
           displayName: displayName
         });
       }
-      
+      // POST user info to backend auth/register route
+      try {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: displayName,
+            email,
+            firebaseUid: userCredential.user.uid
+          }),
+        });
+      } catch (err) {
+        // Optionally handle backend error
+        console.error('Backend signup error:', err);
+      }
       return { success: true, user: userCredential.user };
     } catch (error) {
       setError(error.code);

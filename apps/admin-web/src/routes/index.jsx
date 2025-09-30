@@ -20,38 +20,26 @@ const roleHome = (role) => {
 };
 
 function ProtectedAdmin({ children }) {
-  const { user, role, initializing } = useAuth();
-  if (initializing) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white">
-        <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin" />
-      </div>
-    );
-  }
+  // Get user and role from localStorage
+  let user = null;
+  let role = null;
+  try {
+    const stored = localStorage.getItem('unieats_admin_user');
+    if (stored) {
+      user = JSON.parse(stored);
+      role = user.role;
+    }
+  } catch (e) {}
   if (!user) return <Navigate to="/admin/login" replace />;
   if (role !== 'admin') return <Navigate to={roleHome(role)} replace />;
   return children;
-}
-
-function GuestOnly() {
-  const { user, role, initializing } = useAuth();
-  if (initializing) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white">
-        <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin" />
-      </div>
-    );
-  }
-  if (user) return <Navigate to={roleHome(role)} replace />;
-  return null; // used as wrapper around actual element via element composition
 }
 
 export default function AppRoutes() {
   return (
     <Routes>
       {/* Public auth routes */}
-      <Route path="/admin/login" element={<><GuestOnly /> <Login /></>} />
-      <Route path="/admin/signup" element={<><GuestOnly /> <Signup /></>} />
+      <Route path="/admin/login" element={ <Login />} />
 
       {/* Protected admin routes with common layout */}
       <Route element={<ProtectedAdmin><AdminLayout /></ProtectedAdmin>}>

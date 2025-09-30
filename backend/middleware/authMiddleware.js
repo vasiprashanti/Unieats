@@ -14,6 +14,7 @@ const verifyFirebaseToken = async (req, res, next) => {
   }
 
   const idToken = authHeader.split('Bearer ')[1];
+  console.log("Backend",idToken);
 
   try {
     // 1. Verify the token with Firebase

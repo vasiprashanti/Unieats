@@ -40,6 +40,7 @@ function GuestOnly() {
 import Dashboard from '../pages/Dashboard';
 import Orders from '../pages/Orders';
 import Menu from '../pages/Menu';
+import Analytics from '../pages/Analytics';
 import Profile from '../pages/Profile';
 import Register from '../pages/Register';
 import VendorLayout from '../components/layout/VendorLayout';
@@ -63,10 +64,12 @@ export default function AppRoutes() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="orders" element={<Orders />} />
         <Route path="menu" element={<Menu />} />
+        <Route path="analytics" element={<Analytics />} />
         <Route path="profile" element={<Profile />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/vendor/login" replace />} />
+      {/* Default landing should show the new signup page */}
+      <Route path="*" element={<Navigate to="/vendor/signup" replace />} />
     </Routes>
   );
 }

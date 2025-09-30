@@ -28,7 +28,7 @@ router.post(
 // @route   GET /api/v1/auth/me
 // @desc    Get current user's profile
 // @access  Private
-router.get('/me', verifyFirebaseToken, getMe); // <-- Middleware is applied here!
+router.get('/me', verifyFirebaseToken, getMe); 
 
 // @route   GET /api/v1/auth/verify
 // @desc    Verify a token is still valid
