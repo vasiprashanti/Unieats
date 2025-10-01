@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getRestaurants } from '../api/restaurants';
 import { useTheme } from '../context/ThemeContext';
+import Navbar from '../components/Navigation/Navbar';
+import MobileHeader from '../components/Navigation/MobileHeader';
 
 export default function RestaurantList() {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -11,6 +13,8 @@ export default function RestaurantList() {
   const [isVegOnly, setIsVegOnly] = useState(false);
   const [sortBy, setSortBy] = useState('relevance');
   const [activeCategory, setActiveCategory] = useState(null);
+  const [allRestaurants, setAllRestaurants] = useState([]);
+  const [filteredRestaurants, setFilteredRestaurants] = useState([]);
 
   const [filters, setFilters] = useState({
     search: '',
@@ -18,15 +22,15 @@ export default function RestaurantList() {
     dietType: 'all'
   });
 
-  // Categories data with local images
+  // Categories data with local images and cuisine mappings
   const categories = [
-    { id: 1, name: 'Biryani', image: '/Biryani.jpg' },
-    { id: 2, name: 'Burger', image: '/Burger.jpg' },
-    { id: 3, name: 'Chowmein', image: '/Chowmein.jpg' },
-    { id: 4, name: 'Coffee', image: '/Coffee.jpg' },
-    { id: 5, name: 'Momos', image: '/momos.jpg' },
-    { id: 6, name: 'Pasta', image: '/pasta.jpg' },
-    { id: 7, name: 'Pizza', image: '/pizza.jpg' }
+    { id: 1, name: 'Biryani', image: '/Biryani.jpg', cuisines: ['Indian', 'Multi-cuisine'] },
+    { id: 2, name: 'Burger', image: '/Burger.jpg', cuisines: ['Fast Food', 'Multi-cuisine'] },
+    { id: 3, name: 'Noodles', image: '/Chowmein.jpg', cuisines: ['Chinese', 'Multi-cuisine', 'Fast Food'] },
+    { id: 4, name: 'Coffee', image: '/Coffee.jpg', cuisines: ['Coffee', 'Beverages', 'Cafe'] },
+    { id: 5, name: 'Momos', image: '/momos.jpg', cuisines: ['Chinese', 'Multi-cuisine', 'Fast Food'] },
+    { id: 6, name: 'Pasta', image: '/pasta.jpg', cuisines: ['Italian', 'Multi-cuisine'] },
+    { id: 7, name: 'Pizza', image: '/pizza.jpg', cuisines: ['Italian', 'Multi-cuisine', 'Fast Food'] }
   ];
 
   // Restaurant image mapping
@@ -56,11 +60,43 @@ export default function RestaurantList() {
     }
   }, [location.search]);
 
+  // Handle category selection with smooth scroll and filtering
+  const handleCategoryClick = (categoryId) => {
+    const newActiveCategory = activeCategory === categoryId ? null : categoryId;
+    setActiveCategory(newActiveCategory);
+    
+    // Filter restaurants based on selected category
+    if (newActiveCategory) {
+      const selectedCategory = categories.find(cat => cat.id === newActiveCategory);
+      const filtered = allRestaurants.filter(restaurant => 
+        selectedCategory.cuisines.some(cuisine => 
+          restaurant.cuisine?.toLowerCase().includes(cuisine.toLowerCase())
+        )
+      );
+      setFilteredRestaurants(filtered);
+      setRestaurants(filtered); // Update restaurants state for consistency
+    } else {
+      setFilteredRestaurants(allRestaurants);
+      setRestaurants(allRestaurants); // Show all restaurants when no category selected
+    }
+    
+    // Smooth scroll to restaurants section
+    const restaurantsSection = document.querySelector('.restaurants-section');
+    if (restaurantsSection) {
+      restaurantsSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   const fetchRestaurants = async () => {
     setLoading(true);
     try {
       const response = await getRestaurants(filters);
       if (response.success) {
+        setAllRestaurants(response.data);
+        setFilteredRestaurants(response.data);
         setRestaurants(response.data);
       } else {
         // Fallback to test data if API fails (for testing local images)
@@ -76,6 +112,8 @@ export default function RestaurantList() {
           { id: 9, name: 'Tea Tradition', cuisine: 'Beverages', rating: '4.1', deliveryTime: '10-15' },
           { id: 10, name: 'The Health Bar', cuisine: 'Healthy', rating: '4.4', deliveryTime: '20-25' }
         ];
+        setAllRestaurants(fallbackRestaurants);
+        setFilteredRestaurants(fallbackRestaurants);
         setRestaurants(fallbackRestaurants);
       }
     } catch (error) {
@@ -93,6 +131,8 @@ export default function RestaurantList() {
         { id: 9, name: 'Tea Tradition', cuisine: 'Beverages', rating: '4.1', deliveryTime: '10-15' },
         { id: 10, name: 'The Health Bar', cuisine: 'Healthy', rating: '4.4', deliveryTime: '20-25' }
       ];
+      setAllRestaurants(fallbackRestaurants);
+      setFilteredRestaurants(fallbackRestaurants);
       setRestaurants(fallbackRestaurants);
     } finally {
       setLoading(false);
@@ -119,14 +159,20 @@ export default function RestaurantList() {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark-mode bg-gray-900 text-white' : 'bg-white text-black'}`} 
+    <div className="min-h-screen transition-colors duration-300" 
          style={{
+           backgroundColor: 'hsl(var(--background))',
+           color: 'hsl(var(--foreground))',
            margin: 0,
            fontFamily: "'DM Sans', sans-serif",
            textAlign: 'center',
            padding: 0
          }}>
       
+      {/* Shared Navigation Components */}
+      <Navbar />
+      <MobileHeader title="Restaurants" showCart={true} />
+
       {/* CSS Styles - embedded for complete control */}
       <style jsx>{`
         * {
@@ -245,6 +291,8 @@ export default function RestaurantList() {
           border-radius: 50%;
           object-fit: cover;
           margin-bottom: 8px;
+          border: 3px solid transparent;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .category-card span {
@@ -254,10 +302,23 @@ export default function RestaurantList() {
           display: block;
         }
 
-        /* Center card emphasis */
+        /* Selected category - Elegant glow effect */
         .category-card.active {
-          transform: scale(1.3) translateY(-20px);
-          z-index: 2;
+          position: relative;
+        }
+        
+        .category-card.active img {
+          border: 3px solid #ff6600;
+          box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.1), 
+                      0 0 20px rgba(255, 102, 0, 0.3),
+                      0 4px 12px rgba(0, 0, 0, 0.15);
+          transform: scale(1.05);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .category-card.active span {
+          color: #ff6600;
+          font-weight: 600;
         }
 
         /* Mobile: Straight layout */
@@ -287,6 +348,11 @@ export default function RestaurantList() {
           .category-card span {
             font-size: 0.8rem;
           }
+          
+          /* Mobile hover/touch effects */
+          .category-card:not(.active):active img {
+            transform: scale(0.98);
+          }
         }
 
         /* Tablets and Desktop: Subtle Arc effect */
@@ -306,15 +372,19 @@ export default function RestaurantList() {
           .category-card:nth-child(6) { transform: translateY(10px); }
           .category-card:nth-child(7) { transform: translateY(25px); }
 
-          /* Enhanced active state for larger screens */
+          /* Enhanced active state for larger screens - no lift effect */
           .category-card.active {
-            transform: scale(1.3) translateY(-20px) !important;
-            z-index: 10;
+            position: relative;
           }
 
           /* Hover effects for larger screens */
+          .category-card:not(.active):hover img {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+          
           .category-card:hover {
-            transform: translateY(calc(var(--y-offset, 0px) - 5px)) scale(1.05);
+            transform: translateY(calc(var(--y-offset, 0px) - 5px));
           }
         }
 
@@ -327,17 +397,9 @@ export default function RestaurantList() {
           scrollbar-width: none;
         }
 
-        /* Dark mode for categories */
-        .dark-mode .category-card span {
-          color: #fff;
-        }
-        .dark-mode .category-card {
-          background: #1e1e1e08;
-        }
-
         /* --- Restaurant Cards 1:1 Aspect Ratio --- */
         .restaurant-card {
-          background: #fff;
+          background: hsl(var(--card));
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -373,7 +435,7 @@ export default function RestaurantList() {
         .restaurant-info .name-rating {
           font-weight: 700;
           font-size: 1rem;
-          color: #222;
+          color: hsl(var(--foreground));
           transition: color 0.3s;
         }
 
@@ -383,100 +445,7 @@ export default function RestaurantList() {
           color: #ff611e;
           transition: color 0.3s;
         }
-
-        /* Dark mode for restaurant cards */
-        .dark-mode .restaurant-card {
-          background: #1e1e1e;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        }
-
-        .dark-mode .restaurant-card:hover {
-          box-shadow: 0 8px 16px rgba(0,0,0,0.7);
-        }
-
-        .dark-mode .restaurant-info .name-rating {
-          color: #fff;
-        }
       `}</style>
-
-      {/* Top Navbar (Desktop/Tablet) */}
-      <nav className="hidden md:flex fixed top-0 left-1/2 transform -translate-x-1/2 z-50 bg-white/20 backdrop-blur-md shadow-lg rounded-2xl mt-2.5 w-4/5 max-w-6xl"
-           style={{
-             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-             border: '1px solid rgba(255,255,255,0.3)'
-           }}>
-        <div className="flex items-center justify-between w-full px-5 py-2">
-          <img src="/unilogo.jpg" alt="UniEats" className="h-10 cursor-pointer" />
-          
-          <div className="flex items-center space-x-6">
-            <a href="/home" className="text-base font-normal text-orange-500 hover:text-orange-600 hover:scale-110 transition-all duration-200">
-              Home
-            </a>
-            <a href="/restaurants" className="text-base font-normal text-orange-500 hover:text-orange-600 hover:scale-110 transition-all duration-200">
-              Eats
-            </a>
-            <a href="/cart" className="text-base font-normal text-orange-500 hover:text-orange-600 hover:scale-110 transition-all duration-200">
-              Cart
-            </a>
-            <a href="/profile" className="text-base font-normal text-orange-500 hover:text-orange-600 hover:scale-110 transition-all duration-200">
-              Profile
-            </a>
-          </div>
-
-          <button 
-            onClick={toggleTheme}
-            className="bg-none border-none cursor-pointer text-base transition-colors duration-300"
-            style={{ 
-              color: '#ff6f00',
-              fontSize: '1.2rem'
-            }}
-          >
-            {isDarkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Topbar */}
-      <div className="md:hidden flex items-center justify-between px-3 py-3 bg-white/20 backdrop-blur-md shadow-sm fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-           style={{
-             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-             border: '1px solid rgba(255,255,255,0.3)'
-           }}>
-        <img src="/unilogo.jpg" alt="UniEats" className="h-6" />
-        <div className="flex items-center text-sm font-medium text-gray-800 cursor-pointer">
-          University Campus
-          <i className="fas fa-chevron-down ml-2 text-xs text-gray-600"></i>
-        </div>
-        <button 
-          onClick={toggleTheme}
-          className="bg-none border-none cursor-pointer text-base transition-colors duration-300"
-          style={{ 
-            color: '#ff6f00',
-            fontSize: '1.2rem'
-          }}
-        >
-          {isDarkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
-        </button>
-      </div>
-
-      {/* Bottom Navbar (Mobile Only) */}
-      <nav className="md:hidden fixed bottom-3 left-1/2 transform -translate-x-1/2 bg-white w-11/12 max-w-md py-1.5 shadow-lg rounded-2xl flex justify-around z-50"
-           style={{
-             boxShadow: '0 4px 12px rgba(0,0,0,0.12)'
-           }}>
-        <a href="/home" className="no-underline">
-          <i className="fas fa-home text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
-        </a>
-        <a href="/restaurants" className="no-underline">
-          <i className="fas fa-utensils text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
-        </a>
-        <a href="/cart" className="no-underline">
-          <i className="fas fa-shopping-cart text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
-        </a>
-        <a href="/profile" className="no-underline">
-          <i className="fas fa-user text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
-        </a>
-      </nav>
 
       {/* Banner Section - Natural Flow */}
       <div className="w-full flex justify-center overflow-hidden mb-0 pt-16 md:pt-20">
@@ -492,22 +461,24 @@ export default function RestaurantList() {
 
       {/* Categories Section */}
       <section className="mx-auto max-w-5xl text-center pt-8 px-4">
-        <h1 className="font-black text-6xl md:text-8xl text-black m-0 pt-8 transition-colors duration-300"
+        <h1 className="font-black text-6xl md:text-8xl m-0 pt-8 transition-colors duration-300"
             style={{
               fontFamily: "'Poppins', sans-serif",
               fontSize: 'clamp(2.5rem, 8vw, 8rem)',
+              color: 'hsl(var(--foreground))',
               transform: 'perspective(1000px) rotateX(0deg)',
               transformOrigin: 'bottom center',
               transition: 'transform 1.3s ease-out, color 0.3s'
             }}>
           CATEGORIES
         </h1>
-        <h4 className="font-medium text-gray-600 text-sm md:text-base my-2 mb-6"
+        <h4 className="font-medium text-sm md:text-base my-2 mb-6"
             style={{
               fontFamily: "'Poppins', sans-serif",
-              fontSize: 'clamp(0.86rem, 1.3vw, 2rem)'
+              fontSize: 'clamp(0.86rem, 1.3vw, 2rem)',
+              color: 'hsl(var(--muted-foreground))'
             }}>
-          From cheesy slices to juicy burgers, pick your craving.
+          From Cheeeesy Slices to juicy burgers, pick your craving.
         </h4>
 
         {/* Arc Carousel - Exact HTML Match */}
@@ -517,12 +488,14 @@ export default function RestaurantList() {
               <div 
                 key={category.id}
                 className={`category-card ${activeCategory === category.id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(activeCategory === category.id ? null : category.id)}
+                onClick={() => handleCategoryClick(category.id)}
               >
-                <img 
-                  src={category.image}
-                  alt={category.name}
-                />
+                <div className="relative">
+                  <img 
+                    src={category.image}
+                    alt={category.name}
+                  />
+                </div>
                 <span>
                   {category.name}
                 </span>
@@ -533,24 +506,27 @@ export default function RestaurantList() {
       </section>
 
       {/* Restaurants Section */}
-      <section className="w-full max-w-5xl mx-auto text-center bg-white px-4 pb-10">
-        <h2 className="font-black text-6xl md:text-8xl text-black m-0 pt-8 transition-colors duration-300"
+      <section className="restaurants-section w-full mx-auto text-center px-2 pb-10 transition-colors duration-300"
+               style={{ backgroundColor: 'hsl(var(--background))' }}>
+        <h2 className="font-black text-6xl md:text-8xl m-0 pt-8 transition-colors duration-300"
             style={{
               fontFamily: "'Poppins', sans-serif",
-              fontSize: 'clamp(2.5rem, 8vw, 8rem)'
+              fontSize: 'clamp(2.5rem, 8vw, 8rem)',
+              color: 'hsl(var(--foreground))'
             }}>
           EATERIES
         </h2>
-        <h4 className="font-medium text-gray-600 text-sm md:text-base my-3 mb-6"
+        <h4 className="font-medium text-sm md:text-base my-3 mb-6 transition-colors duration-300"
             style={{
               fontFamily: "'Poppins', sans-serif",
-              fontSize: 'clamp(0.9rem, 1.5vw, 2rem)'
+              fontSize: 'clamp(0.9rem, 1.5vw, 2rem)',
+              color: 'hsl(var(--muted-foreground))'
             }}>
           Top rated restaurants near you
         </h4>
 
         {/* Filters Container */}
-        <div className="flex justify-between items-center my-4 mb-6 px-4 max-w-lg mx-auto">
+        <div className="flex justify-between items-center my-4 mb-6 px-2 max-w-lg mx-auto">
           {/* Veg Switch - Exact HTML Match */}
           <div className="switch">
             <input
@@ -566,9 +542,11 @@ export default function RestaurantList() {
             id="sortSelect"
             value={sortBy}
             onChange={handleSortChange}
-            className="flex-shrink-0 h-8 rounded-xl border border-gray-300 px-2 text-sm bg-white text-gray-800 cursor-pointer outline-none transition-all duration-200 shadow-sm"
+            className="flex-shrink-0 h-8 rounded-xl border px-2 text-sm cursor-pointer outline-none transition-all duration-200 shadow-sm"
             style={{
-              borderColor: '#ddd',
+              backgroundColor: 'hsl(var(--card))',
+              color: 'hsl(var(--card-foreground))',
+              borderColor: 'hsl(var(--border))',
               boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
             }}
           >
@@ -585,18 +563,17 @@ export default function RestaurantList() {
           <div className="flex justify-center items-center py-16">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-              <span className="font-medium text-gray-600">Finding delicious restaurants...</span>
+              <span className="font-medium" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Finding delicious restaurants...
+              </span>
             </div>
           </div>
         ) : (
           <>
             {/* Restaurants Grid */}
-            {restaurants.length > 0 ? (
-              <div className="mt-3 grid gap-4 justify-center justify-items-center items-start w-full max-w-5xl mx-auto"
-                   style={{
-                     gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))'
-                   }}>
-                {restaurants.map((restaurant) => {
+            {filteredRestaurants.length > 0 ? (
+              <div className="mt-3 grid gap-6 justify-center justify-items-center items-start w-full mx-auto px-4 grid-cols-2 md:grid-cols-4">
+                {filteredRestaurants.map((restaurant) => {
                   const restaurantName = restaurant.name || restaurant.businessName || restaurant.title || restaurant.restaurantName;
                   const localImage = restaurantImages[restaurantName];
                   const finalImage = localImage || restaurant.image || restaurant.logo || restaurant.photo || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=300&fit=crop&crop=center';
@@ -609,10 +586,10 @@ export default function RestaurantList() {
                     />
                     <div className="restaurant-info">
                       <div className="name-rating">
-                        {restaurantName}
+                        {restaurantName} • {restaurant.rating || '4.2'}
                       </div>
                       <div className="cuisine">
-                        {restaurant.cuisine || 'Multi-cuisine'} • {restaurant.rating || '4.2'} ⭐ • {restaurant.deliveryTime || '30-45'} min
+                        {restaurant.cuisine || 'Multi-cuisine'}
                       </div>
                     </div>
                   </div>
@@ -624,10 +601,10 @@ export default function RestaurantList() {
                 <div className="mb-4">
                   <span className="text-6xl">🔍</span>
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900">
+                <h3 className="text-xl font-semibold mb-2" style={{ color: 'hsl(var(--foreground))' }}>
                   No restaurants found
                 </h3>
-                <p className="mb-6 text-gray-600">
+                <p className="mb-6" style={{ color: 'hsl(var(--muted-foreground))' }}>
                   Try adjusting your filters to find more options.
                 </p>
                 <button
@@ -652,31 +629,32 @@ export default function RestaurantList() {
 
       {/* Footer */}
       <footer className="w-full bg-transparent p-0 box-border transition-all duration-300 mt-16">
-        <div className="mx-auto bg-white rounded-t-3xl p-6 md:p-10 shadow-lg flex flex-col md:flex-row md:flex-wrap justify-between items-center md:items-start gap-6 transition-all duration-300 text-center md:text-left"
+        <div className="mx-auto rounded-t-3xl p-6 md:p-10 shadow-lg flex flex-col md:flex-row md:flex-wrap justify-between items-center md:items-start gap-6 transition-all duration-300 text-center md:text-left"
              style={{
+               backgroundColor: 'hsl(var(--card))',
                borderRadius: '20px 20px 0 0',
                boxShadow: '0 -6px 16px rgba(0,0,0,0.08)'
              }}>
           
           {/* Site Section */}
           <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
-            <h4 className="font-semibold text-base mb-2">Site</h4>
-            <a href="/home" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Home</a>
-            <a href="/restaurants" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Restaurants</a>
-            <a href="/cart" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Cart</a>
-            <a href="/profile" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Profile</a>
+            <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Site</h4>
+            <a href="/home" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Home</a>
+            <a href="/restaurants" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Restaurants</a>
+            <a href="/cart" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Cart</a>
+            <a href="/profile" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Profile</a>
           </div>
 
           {/* Legal Section */}
           <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
-            <h4 className="font-semibold text-base mb-2">Legal</h4>
-            <a href="#" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Privacy Policy</a>
-            <a href="#" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Terms & Conditions</a>
+            <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Legal</h4>
+            <a href="#" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Privacy Policy</a>
+            <a href="#" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Terms & Conditions</a>
           </div>
 
           {/* Follow Us Section */}
           <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
-            <h4 className="font-semibold text-base mb-2">Follow Us</h4>
+            <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Follow Us</h4>
             <div className="flex gap-4 justify-center md:justify-start">
               <i className="fab fa-facebook-f text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
               <i className="fab fa-instagram text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
@@ -686,68 +664,7 @@ export default function RestaurantList() {
         </div>
       </footer>
 
-      {/* Dark mode styles */}
-      <style jsx>{`
-        .dark-mode {
-          background: #121212 !important;
-          color: #e0e0e0 !important;
-        }
-        .dark-mode nav,
-        .dark-mode .mobile-topbar {
-          background: #1c1c1c !important;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.6) !important;
-        }
-        .dark-mode nav a,
-        .dark-mode .mobile-topbar * {
-          color: #fff !important;
-        }
-        .dark-mode h1,
-        .dark-mode h2 {
-          color: #fff !important;
-        }
-        .dark-mode h4 {
-          color: #ccc !important;
-        }
-        .dark-mode .category-card span {
-          color: #fff !important;
-        }
-        .dark-mode select {
-          background: #2a2a2a !important;
-          color: #fff !important;
-          border-color: #fff !important;
-        }
-        .dark-mode .restaurant-card {
-          background: #1e1e1e !important;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-        }
-        .dark-mode .restaurant-card:hover {
-          box-shadow: 0 8px 16px rgba(0,0,0,0.7) !important;
-        }
-        .dark-mode .restaurant-info .name-rating {
-          color: #fff !important;
-        }
-        .dark-mode footer div {
-          background: #1e1e1e !important;
-          color: #eee !important;
-        }
-        .dark-mode footer h4 {
-          color: #fff !important;
-        }
-        .dark-mode footer a {
-          color: #ccc !important;
-        }
-        .dark-mode footer a:hover {
-          color: #ff7e2d !important;
-        }
 
-        /* Dark mode for content overlay */
-        .dark-mode section.bg-white {
-          background: #1e1e1e !important;
-        }
-        .dark-mode section.mx-auto {
-          background: #1e1e1e !important;
-        }
-      `}</style>
     </div>
   );
 }

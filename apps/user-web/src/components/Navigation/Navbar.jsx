@@ -58,24 +58,30 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="hidden md:flex fixed top-0 left-1/2 transform -translate-x-1/2 z-50 bg-white/92 backdrop-blur-md border border-black/5 rounded-2xl shadow-lg transition-all duration-300 mt-0 w-[90%] max-w-[1100px]" 
-         style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+    <nav className="hidden md:flex fixed top-0 left-1/2 transform -translate-x-1/2 z-50 backdrop-blur-md border rounded-2xl shadow-lg transition-all duration-300 mt-0 w-[90%] max-w-[1100px]" 
+         style={{ 
+           backgroundColor: 'hsl(var(--card) / 0.92)',
+           borderColor: 'hsl(var(--border))',
+           boxShadow: '0 4px 12px rgba(0,0,0,0.08)' 
+         }}>
       <div className="w-full px-5 py-2">
-        <div className="flex justify-between items-center h-12">
+        <div className="grid grid-cols-3 items-center h-12">
           {/* Logo */}
-          <Link to="/home" className="flex-shrink-0">
-            <div className="flex items-center">
-              <img 
-                src="/unilogo.jpg" 
-                alt="UniEats" 
-                className="h-10 w-auto object-contain cursor-pointer"
-              />
-            </div>
-          </Link>
+          <div className="flex justify-start">
+            <Link to="/home" className="flex-shrink-0">
+              <div className="flex items-center">
+                <img 
+                  src="/unilogo.jpg" 
+                  alt="UniEats" 
+                  className="h-10 w-auto object-contain cursor-pointer"
+                />
+              </div>
+            </Link>
+          </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Links - Centered */}
           <div className="hidden md:block">
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center justify-center space-x-6">
               {navLinks.map((link) => {
                 // Skip protected routes if user is not logged in
                 if (link.protected && !user) return null;
@@ -84,7 +90,10 @@ const Navbar = () => {
                   <Link
                     key={link.name}
                     to={link.path}
-                    className="text-base font-normal text-[#ff8641] hover:text-[#ff7d46] hover:scale-110 transition-all duration-200"
+                    className="text-base font-normal hover:scale-110 transition-all duration-200"
+                    style={{ 
+                      color: 'hsl(var(--primary))',
+                    }}
                   >
                     {link.name}
                   </Link>
@@ -94,7 +103,7 @@ const Navbar = () => {
           </div>
 
           {/* Right side buttons */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-end space-x-4">
             {/* Search Bar */}
             <div className="relative">
               {isSearchOpen ? (
