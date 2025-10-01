@@ -620,62 +620,76 @@ export default function RestaurantList() {
           </div>
         ) : (
           <>
-            {/* Restaurants Grid */}
-            {filteredRestaurants.length > 0 ? (
-              <div className="mt-3 grid gap-6 justify-center justify-items-center items-start w-full mx-auto px-4 grid-cols-2 md:grid-cols-4">
-                {filteredRestaurants.map((restaurant) => {
-                  const restaurantName = restaurant.name || restaurant.businessName || restaurant.title || restaurant.restaurantName;
-                  const localImage = restaurantImages[restaurantName];
-                  const finalImage = localImage || restaurant.image || restaurant.logo || restaurant.photo || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=300&fit=crop&crop=center';
+  {/* Restaurants Grid */}
+  {restaurants.length > 0 ? (
+    <div
+      className="mt-3 grid gap-4 justify-center justify-items-center items-start w-full max-w-5xl mx-auto"
+      style={{
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+      }}
+    >
+      {restaurants.map((restaurant) => {
+        const restaurantName =
+          restaurant.name ||
+          restaurant.businessName ||
+          restaurant.title ||
+          restaurant.restaurantName;
+        const localImage = restaurantImages[restaurantName];
+        const finalImage =
+          localImage ||
+          restaurant.image ||
+          restaurant.logo ||
+          restaurant.photo ||
+          'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=300&fit=crop&crop=center';
 
-                  return (
-                  <div key={restaurant.id} className="restaurant-card">
-                    <img 
-                      src={finalImage}
-                      alt={restaurantName}
-                    />
-                    <div className="restaurant-info">
-                      <div className="name-rating">
-                        {restaurantName}
-                      </div>
-                      <div className="cuisine">
-                        {restaurant.cuisine || 'Multi-cuisine'} • {restaurant.rating || '4.2'} ⭐ • {restaurant.deliveryTime || '30-45'} min
-                      </div>
-                    </div>
-                  </div>
-                  );
-                })}
+        return (
+          <div
+            key={restaurant.id}
+            className="restaurant-card cursor-pointer"
+            onClick={() => navigate(`/restaurants/${restaurant._id}`)}
+          >
+            <img src={finalImage} alt={restaurantName} />
+            <div className="restaurant-info">
+              <div className="name-rating">{restaurantName}</div>
+              <div className="cuisine">
+                {restaurant.cuisine || 'Multi-cuisine'} •{' '}
+                {restaurant.rating || '4.2'} ⭐ •{' '}
+                {restaurant.deliveryTime || '30-45'} min
               </div>
-            ) : (
-              <div className="text-center py-16">
-                <div className="mb-4">
-                  <span className="text-6xl">🔍</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: 'hsl(var(--foreground))' }}>
-                  No restaurants found
-                </h3>
-                <p className="mb-6" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                  Try adjusting your filters to find more options.
-                </p>
-                <button
-                  onClick={() => {
-                    setIsVegOnly(false);
-                    setSortBy('relevance');
-                    setActiveCategory(null);
-                    setFilters({
-                      search: '',
-                      sortBy: 'relevance',
-                      dietType: 'all',
-                    });
-                    setFilteredRestaurants(allRestaurants);
-                  }}
-                  className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors"
-                >
-                  Clear all filters
-                </button>
-              </div>
-            )}
-          </>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  ) : (
+    <div className="text-center py-16">
+      <div className="mb-4">
+        <span className="text-6xl">🔍</span>
+      </div>
+      <h3 className="text-xl font-semibold mb-2 text-gray-900">
+        No restaurants found
+      </h3>
+      <p className="mb-6 text-gray-600">
+        Try adjusting your filters to find more options.
+      </p>
+      <button
+        onClick={() => {
+          setIsVegOnly(false);
+          setSortBy('relevance');
+          setFilters({
+            search: '',
+            sortBy: 'relevance',
+            dietType: 'all',
+          });
+        }}
+        className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors"
+      >
+        Clear all filters
+      </button>
+    </div>
+  )}
+</>
+
         )}
       </section>
 
