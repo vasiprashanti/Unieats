@@ -57,7 +57,6 @@ const corsOptions = {
       "https://admin.unieats.co",
       "https://vendor.unieats.co",
       "https://user.unieats.co",
-      "https://admin.unietas.co",
     ];
 
     // Allow localhost with any port
