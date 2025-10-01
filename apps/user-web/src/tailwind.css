@@ -32,30 +32,30 @@
 /* Dark mode overrides */
 .dark {
   /* Main Layout */
-  --background: 0 0% 0%;
-  --foreground: 0 0% 100%;
+  --background: 0 0% 12%;
+  --foreground: 210 40% 98%;
   /* Cards & Surfaces */
-  --card: 0 0% 0%;
-  --card-foreground: 0 0% 100%;
+  --card: 0 0% 16%;
+  --card-foreground: 210 40% 98%;
   /* Brand Colors */
   --primary: 24 100% 58%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary-foreground: 0 0% 12%;
   /* Text & Content */
-  --muted: 217.2 32.6% 17.5%;
+  --muted: 0 0% 20%;
   --muted-foreground: 215 20.2% 65.1%;
   /* Interactive Elements */
-  --accent: 217.2 32.6% 17.5%;
+  --accent: 0 0% 20%;
   --accent-foreground: 210 40% 98%;
   /* Status Colors */
   --destructive: 0 62.8% 30.6%;
-  --secondary: 217.2 32.6% 17.5%;
+  --secondary: 0 0% 20%;
   /* Borders */
-  --border: 217.2 32.6% 17.5%;
+  --border: 0 0% 25%;
   /* Sidebar */
-  --sidebar-background: 240 5.9% 10%;
+  --sidebar-background: 0 0% 10%;
   --sidebar-foreground: 240 4.8% 95.9%;
   --sidebar-primary: 24 100% 60%;
-  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent: 0 0% 18%;
 }
 
 /* Apply tokens to body */

@@ -1,35 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getRestaurants } from '../api/restaurants';
 import { useTheme } from '../context/ThemeContext';
-import { useNavigate } from 'react-router-dom';
 
 export default function RestaurantList() {
   const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isVegOnly, setIsVegOnly] = useState(false);
   const [sortBy, setSortBy] = useState('relevance');
   const [activeCategory, setActiveCategory] = useState(null);
+  const [allRestaurants, setAllRestaurants] = useState([]);
+  const [filteredRestaurants, setFilteredRestaurants] = useState([]);
 
-
-  const navigate=useNavigate();
   const [filters, setFilters] = useState({
     search: '',
     sortBy: 'relevance',
     dietType: 'all'
   });
 
-  // Categories data with local images
+  // Categories data with local images and cuisine mappings
   const categories = [
-    { id: 1, name: 'Biryani', image: '/Biryani.jpg' },
-    { id: 2, name: 'Burger', image: '/Burger.jpg' },
-    { id: 3, name: 'Chowmein', image: '/Chowmein.jpg' },
-    { id: 4, name: 'Coffee', image: '/Coffee.jpg' },
-    { id: 5, name: 'Momos', image: '/momos.jpg' },
-    { id: 6, name: 'Pasta', image: '/pasta.jpg' },
-    { id: 7, name: 'Pizza', image: '/pizza.jpg' }
+    { id: 1, name: 'Biryani', image: '/Biryani.jpg', cuisines: ['Indian', 'Multi-cuisine'] },
+    { id: 2, name: 'Burger', image: '/Burger.jpg', cuisines: ['Fast Food', 'Multi-cuisine'] },
+    { id: 3, name: 'Noodles', image: '/Chowmein.jpg', cuisines: ['Chinese', 'Multi-cuisine', 'Fast Food'] },
+    { id: 4, name: 'Coffee', image: '/Coffee.jpg', cuisines: ['Coffee', 'Beverages', 'Cafe'] },
+    { id: 5, name: 'Momos', image: '/momos.jpg', cuisines: ['Chinese', 'Multi-cuisine', 'Fast Food'] },
+    { id: 6, name: 'Pasta', image: '/pasta.jpg', cuisines: ['Italian', 'Multi-cuisine'] },
+    { id: 7, name: 'Pizza', image: '/pizza.jpg', cuisines: ['Italian', 'Multi-cuisine', 'Fast Food'] }
   ];
 
   // Restaurant image mapping
@@ -59,44 +59,55 @@ export default function RestaurantList() {
     }
   }, [location.search]);
 
+  // Handle category selection with smooth scroll and filtering
+  const handleCategoryClick = (categoryId) => {
+    const newActiveCategory = activeCategory === categoryId ? null : categoryId;
+    setActiveCategory(newActiveCategory);
+    
+    // Filter restaurants based on selected category
+    if (newActiveCategory) {
+      const selectedCategory = categories.find(cat => cat.id === newActiveCategory);
+      const filtered = allRestaurants.filter(restaurant => 
+        selectedCategory.cuisines.some(cuisine => 
+          restaurant.cuisine?.toLowerCase().includes(cuisine.toLowerCase())
+        )
+      );
+      setFilteredRestaurants(filtered);
+      setRestaurants(filtered);
+    } else {
+      setFilteredRestaurants(allRestaurants);
+      setRestaurants(allRestaurants);
+    }
+    
+    // Smooth scroll to restaurants section
+    const restaurantsSection = document.querySelector('.restaurants-section');
+    if (restaurantsSection) {
+      restaurantsSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   const fetchRestaurants = async () => {
     setLoading(true);
     try {
       const response = await getRestaurants(filters);
       if (response.success) {
+        setAllRestaurants(response.data);
+        setFilteredRestaurants(response.data);
         setRestaurants(response.data);
       } else {
-        // Fallback to test data if API fails (for testing local images)
-        const fallbackRestaurants = [
-          { id: 1, name: 'Chatkara', cuisine: 'Indian', rating: '4.2', deliveryTime: '25-30' },
-          { id: 2, name: 'Chilling Point', cuisine: 'Multi-cuisine', rating: '4.0', deliveryTime: '30-35' },
-          { id: 3, name: 'Dev Sweets', cuisine: 'Sweets', rating: '4.5', deliveryTime: '20-25' },
-          { id: 4, name: 'Dialog', cuisine: 'Cafe', rating: '4.1', deliveryTime: '15-20' },
-          { id: 5, name: 'Italian Oven', cuisine: 'Italian', rating: '4.3', deliveryTime: '25-30' },
-          { id: 6, name: "Let's Go Live", cuisine: 'Fast Food', rating: '3.9', deliveryTime: '20-25' },
-          { id: 7, name: 'Nescafe', cuisine: 'Coffee', rating: '4.0', deliveryTime: '10-15' },
-          { id: 8, name: 'Subway', cuisine: 'Fast Food', rating: '4.2', deliveryTime: '15-20' },
-          { id: 9, name: 'Tea Tradition', cuisine: 'Beverages', rating: '4.1', deliveryTime: '10-15' },
-          { id: 10, name: 'The Health Bar', cuisine: 'Healthy', rating: '4.4', deliveryTime: '20-25' }
-        ];
-        setRestaurants(fallbackRestaurants);
+        console.error('API returned unsuccessful response');
+        setAllRestaurants([]);
+        setFilteredRestaurants([]);
+        setRestaurants([]);
       }
     } catch (error) {
       console.error('Error fetching restaurants:', error);
-      // Fallback to test data if API fails (for testing local images)
-      const fallbackRestaurants = [
-        { id: 1, name: 'Chatkara', cuisine: 'Indian', rating: '4.2', deliveryTime: '25-30' },
-        { id: 2, name: 'Chilling Point', cuisine: 'Multi-cuisine', rating: '4.0', deliveryTime: '30-35' },
-        { id: 3, name: 'Dev Sweets', cuisine: 'Sweets', rating: '4.5', deliveryTime: '20-25' },
-        { id: 4, name: 'Dialog', cuisine: 'Cafe', rating: '4.1', deliveryTime: '15-20' },
-        { id: 5, name: 'Italian Oven', cuisine: 'Italian', rating: '4.3', deliveryTime: '25-30' },
-        { id: 6, name: "Let's Go Live", cuisine: 'Fast Food', rating: '3.9', deliveryTime: '20-25' },
-        { id: 7, name: 'Nescafe', cuisine: 'Coffee', rating: '4.0', deliveryTime: '10-15' },
-        { id: 8, name: 'Subway', cuisine: 'Fast Food', rating: '4.2', deliveryTime: '15-20' },
-        { id: 9, name: 'Tea Tradition', cuisine: 'Beverages', rating: '4.1', deliveryTime: '10-15' },
-        { id: 10, name: 'The Health Bar', cuisine: 'Healthy', rating: '4.4', deliveryTime: '20-25' }
-      ];
-      setRestaurants(fallbackRestaurants);
+      setAllRestaurants([]);
+      setFilteredRestaurants([]);
+      setRestaurants([]);
     } finally {
       setLoading(false);
     }
@@ -130,7 +141,7 @@ export default function RestaurantList() {
            padding: 0
          }}>
       
-      {/* CSS Styles - embedded for complete control */}
+      {/* CSS Styles */}
       <style jsx>{`
         * {
           scrollbar-width: none;
@@ -161,7 +172,7 @@ export default function RestaurantList() {
           background: #ffffff;
         }
 
-        /* --- Veg Switch Styles (Exact HTML Match) --- */
+        /* Veg Switch Styles */
         .switch {
           flex: 0 0 auto;
           width: 3.5rem;
@@ -205,7 +216,6 @@ export default function RestaurantList() {
           background-color: #cde6cd;
         }
 
-        /* DARK MODE for Switch */
         .dark-mode input[type=checkbox]::before {
           background-color: #fff;
         }
@@ -216,7 +226,7 @@ export default function RestaurantList() {
           background-color: #28a745;
         }
 
-        /* --- Arc Carousel Styles (Enhanced for Subtle Arc) --- */
+        /* Arc Carousel Styles */
         .arc-carousel {
           perspective: 1000px;
           overflow-x: auto;
@@ -248,6 +258,8 @@ export default function RestaurantList() {
           border-radius: 50%;
           object-fit: cover;
           margin-bottom: 8px;
+          border: 3px solid transparent;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .category-card span {
@@ -257,10 +269,23 @@ export default function RestaurantList() {
           display: block;
         }
 
-        /* Center card emphasis */
+        /* Selected category - Elegant glow effect */
         .category-card.active {
-          transform: scale(1.3) translateY(-20px);
-          z-index: 2;
+          position: relative;
+        }
+        
+        .category-card.active img {
+          border: 3px solid #ff6600;
+          box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.1), 
+                      0 0 20px rgba(255, 102, 0, 0.3),
+                      0 4px 12px rgba(0, 0, 0, 0.15);
+          transform: scale(1.05);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .category-card.active span {
+          color: #ff6600;
+          font-weight: 600;
         }
 
         /* Mobile: Straight layout */
@@ -278,7 +303,6 @@ export default function RestaurantList() {
           }
 
           .category-card {
-            /* No arc positioning on mobile */
             position: relative;
           }
 
@@ -290,6 +314,10 @@ export default function RestaurantList() {
           .category-card span {
             font-size: 0.8rem;
           }
+          
+          .category-card:not(.active):active img {
+            transform: scale(0.98);
+          }
         }
 
         /* Tablets and Desktop: Subtle Arc effect */
@@ -300,28 +328,28 @@ export default function RestaurantList() {
             height: 240px;
           }
 
-          /* Arc positioning for each item */
           .category-card:nth-child(1) { transform: translateY(25px); }
           .category-card:nth-child(2) { transform: translateY(10px); }
           .category-card:nth-child(3) { transform: translateY(3px); }
-          .category-card:nth-child(4) { transform: translateY(0px); } /* center */
+          .category-card:nth-child(4) { transform: translateY(0px); }
           .category-card:nth-child(5) { transform: translateY(3px); }
           .category-card:nth-child(6) { transform: translateY(10px); }
           .category-card:nth-child(7) { transform: translateY(25px); }
 
-          /* Enhanced active state for larger screens */
           .category-card.active {
-            transform: scale(1.3) translateY(-20px) !important;
-            z-index: 10;
+            position: relative;
           }
 
-          /* Hover effects for larger screens */
+          .category-card:not(.active):hover img {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+          
           .category-card:hover {
-            transform: translateY(calc(var(--y-offset, 0px) - 5px)) scale(1.05);
+            transform: translateY(calc(var(--y-offset, 0px) - 5px));
           }
         }
 
-        /* Hide scrollbar */
         .arc-carousel::-webkit-scrollbar {
           display: none;
         }
@@ -330,7 +358,6 @@ export default function RestaurantList() {
           scrollbar-width: none;
         }
 
-        /* Dark mode for categories */
         .dark-mode .category-card span {
           color: #fff;
         }
@@ -338,7 +365,7 @@ export default function RestaurantList() {
           background: #1e1e1e08;
         }
 
-        /* --- Restaurant Cards 1:1 Aspect Ratio --- */
+        /* Restaurant Cards */
         .restaurant-card {
           background: #fff;
           border-radius: 12px;
@@ -387,7 +414,6 @@ export default function RestaurantList() {
           transition: color 0.3s;
         }
 
-        /* Dark mode for restaurant cards */
         .dark-mode .restaurant-card {
           background: #1e1e1e;
           box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -434,7 +460,7 @@ export default function RestaurantList() {
               fontSize: '1.2rem'
             }}
           >
-            {isDarkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+            {isDarkMode ? '☀️' : '🌙'}
           </button>
         </div>
       </nav>
@@ -448,7 +474,7 @@ export default function RestaurantList() {
         <img src="/unilogo.jpg" alt="UniEats" className="h-6" />
         <div className="flex items-center text-sm font-medium text-gray-800 cursor-pointer">
           University Campus
-          <i className="fas fa-chevron-down ml-2 text-xs text-gray-600"></i>
+          <span className="ml-2 text-xs">▼</span>
         </div>
         <button 
           onClick={toggleTheme}
@@ -458,7 +484,7 @@ export default function RestaurantList() {
             fontSize: '1.2rem'
           }}
         >
-          {isDarkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+          {isDarkMode ? '☀️' : '🌙'}
         </button>
       </div>
 
@@ -467,21 +493,21 @@ export default function RestaurantList() {
            style={{
              boxShadow: '0 4px 12px rgba(0,0,0,0.12)'
            }}>
-        <a href="/home" className="no-underline">
-          <i className="fas fa-home text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        <a href="/home" className="no-underline text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125">
+          🏠
         </a>
-        <a href="/restaurants" className="no-underline">
-          <i className="fas fa-utensils text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        <a href="/restaurants" className="no-underline text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125">
+          🍴
         </a>
-        <a href="/cart" className="no-underline">
-          <i className="fas fa-shopping-cart text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        <a href="/cart" className="no-underline text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125">
+          🛒
         </a>
-        <a href="/profile" className="no-underline">
-          <i className="fas fa-user text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        <a href="/profile" className="no-underline text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125">
+          👤
         </a>
       </nav>
 
-      {/* Banner Section - Natural Flow */}
+      {/* Banner Section */}
       <div className="w-full flex justify-center overflow-hidden mb-0 pt-16 md:pt-20">
         <img 
           src="/banner.jpg" 
@@ -510,22 +536,24 @@ export default function RestaurantList() {
               fontFamily: "'Poppins', sans-serif",
               fontSize: 'clamp(0.86rem, 1.3vw, 2rem)'
             }}>
-          From cheesy slices to juicy burgers, pick your craving.
+          From Cheeeesy Slices to juicy burgers, pick your craving.
         </h4>
 
-        {/* Arc Carousel - Exact HTML Match */}
+        {/* Arc Carousel */}
         <div className="arc-carousel">
           <div className="arc-track">
-            {categories.map((category, index) => (
+            {categories.map((category) => (
               <div 
                 key={category.id}
                 className={`category-card ${activeCategory === category.id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(activeCategory === category.id ? null : category.id)}
+                onClick={() => handleCategoryClick(category.id)}
               >
-                <img 
-                  src={category.image}
-                  alt={category.name}
-                />
+                <div className="relative">
+                  <img 
+                    src={category.image}
+                    alt={category.name}
+                  />
+                </div>
                 <span>
                   {category.name}
                 </span>
@@ -536,7 +564,7 @@ export default function RestaurantList() {
       </section>
 
       {/* Restaurants Section */}
-      <section className="w-full max-w-5xl mx-auto text-center bg-white px-4 pb-10">
+      <section className="restaurants-section w-full max-w-5xl mx-auto text-center bg-white px-4 pb-10">
         <h2 className="font-black text-6xl md:text-8xl text-black m-0 pt-8 transition-colors duration-300"
             style={{
               fontFamily: "'Poppins', sans-serif",
@@ -554,7 +582,7 @@ export default function RestaurantList() {
 
         {/* Filters Container */}
         <div className="flex justify-between items-center my-4 mb-6 px-4 max-w-lg mx-auto">
-          {/* Veg Switch - Exact HTML Match */}
+          {/* Veg Switch */}
           <div className="switch">
             <input
               type="checkbox"
@@ -593,76 +621,63 @@ export default function RestaurantList() {
           </div>
         ) : (
           <>
-  {/* Restaurants Grid */}
-  {restaurants.length > 0 ? (
-    <div
-      className="mt-3 grid gap-4 justify-center justify-items-center items-start w-full max-w-5xl mx-auto"
-      style={{
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-      }}
-    >
-      {restaurants.map((restaurant) => {
-        const restaurantName =
-          restaurant.name ||
-          restaurant.businessName ||
-          restaurant.title ||
-          restaurant.restaurantName;
-        const localImage = restaurantImages[restaurantName];
-        const finalImage =
-          localImage ||
-          restaurant.image ||
-          restaurant.logo ||
-          restaurant.photo ||
-          'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=300&fit=crop&crop=center';
+            {/* Restaurants Grid */}
+            {filteredRestaurants.length > 0 ? (
+              <div className="mt-3 grid gap-6 justify-center justify-items-center items-start w-full mx-auto px-4 grid-cols-2 md:grid-cols-4">
+                {filteredRestaurants.map((restaurant) => {
+                  const restaurantName = restaurant.name || restaurant.businessName || restaurant.title || restaurant.restaurantName;
+                  const localImage = restaurantImages[restaurantName];
+                  const finalImage = localImage || restaurant.image || restaurant.logo || restaurant.photo || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=300&fit=crop&crop=center';
 
-        return (
-          <div
-            key={restaurant.id}
-            className="restaurant-card cursor-pointer"
-            onClick={() => {navigate(`/restaurants/${restaurant._id}`)}}
-          >
-            <img src={finalImage} alt={restaurantName} />
-            <div className="restaurant-info">
-              <div className="name-rating">{restaurantName}</div>
-              <div className="cuisine">
-                {restaurant.cuisine || 'Multi-cuisine'} •{' '}
-                {restaurant.rating || '4.2'} ⭐ •{' '}
-                {restaurant.deliveryTime || '30-45'} min
+                  return (
+                    <div
+                      key={restaurant.id}
+                      className="restaurant-card cursor-pointer"
+                      onClick={() => navigate(`/restaurants/${restaurant._id}`)}
+                    >
+                      <img src={finalImage} alt={restaurantName} />
+                      <div className="restaurant-info">
+                        <div className="name-rating">
+                          {restaurantName} • {restaurant.rating || '4.2'}
+                        </div>
+                        <div className="cuisine">
+                          {restaurant.cuisine || 'Multi-cuisine'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  ) : (
-    <div className="text-center py-16">
-      <div className="mb-4">
-        <span className="text-6xl">🔍</span>
-      </div>
-      <h3 className="text-xl font-semibold mb-2 text-gray-900">
-        No restaurants found
-      </h3>
-      <p className="mb-6 text-gray-600">
-        Try adjusting your filters to find more options.
-      </p>
-      <button
-        onClick={() => {
-          setIsVegOnly(false);
-          setSortBy('relevance');
-          setFilters({
-            search: '',
-            sortBy: 'relevance',
-            dietType: 'all',
-          });
-        }}
-        className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors"
-      >
-        Clear all filters
-      </button>
-    </div>
-  )}
-</>
-
+            ) : (
+              <div className="text-center py-16">
+                <div className="mb-4">
+                  <span className="text-6xl">🔍</span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900">
+                  No restaurants found
+                </h3>
+                <p className="mb-6 text-gray-600">
+                  Try adjusting your filters to find more options.
+                </p>
+                <button
+                  onClick={() => {
+                    setIsVegOnly(false);
+                    setSortBy('relevance');
+                    setActiveCategory(null);
+                    setFilters({
+                      search: '',
+                      sortBy: 'relevance',
+                      dietType: 'all',
+                    });
+                    setFilteredRestaurants(allRestaurants);
+                  }}
+                  className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -694,9 +709,9 @@ export default function RestaurantList() {
           <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
             <h4 className="font-semibold text-base mb-2">Follow Us</h4>
             <div className="flex gap-4 justify-center md:justify-start">
-              <i className="fab fa-facebook-f text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
-              <i className="fab fa-instagram text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
-              <i className="fab fa-twitter text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
+              <span className="text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500">📘</span>
+              <span className="text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500">📷</span>
+              <span className="text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500">🐦</span>
             </div>
           </div>
         </div>
@@ -755,8 +770,6 @@ export default function RestaurantList() {
         .dark-mode footer a:hover {
           color: #ff7e2d !important;
         }
-
-        /* Dark mode for content overlay */
         .dark-mode section.bg-white {
           background: #1e1e1e !important;
         }

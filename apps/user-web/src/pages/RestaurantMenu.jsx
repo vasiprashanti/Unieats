@@ -113,12 +113,12 @@ export default function RestaurantMenu() {
   if (loading) {
     return (
       <div className="min-h-screen transition-colors duration-300" 
-           style={{ backgroundColor: 'hsl(var(--background))' }}>
+           style={{ backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))' }}>
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading menu...</p>
+            <p style={{ color: 'hsl(var(--muted-foreground))' }}>Loading menu...</p>
           </div>
         </div>
       </div>
@@ -127,7 +127,8 @@ export default function RestaurantMenu() {
 
   if (error) {
     return (
-      <div className="min-h-screen transition-colors duration-300 bg-white">
+      <div className="min-h-screen transition-colors duration-300" 
+           style={{ backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))' }}>
         <Navbar />
         <MobileHeader />
         <div className="flex items-center justify-center h-96 pt-20 md:pt-20">
