@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getRestaurants } from '../api/restaurants';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navigation/Navbar';
@@ -8,8 +8,9 @@ import MobileHeader from '../components/Navigation/MobileHeader';
 export default function RestaurantList() {
   const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isVegOnly, setIsVegOnly] = useState(false);
   const [sortBy, setSortBy] = useState('relevance');
   const [activeCategory, setActiveCategory] = useState(null);
@@ -60,36 +61,6 @@ export default function RestaurantList() {
     }
   }, [location.search]);
 
-  // Handle category selection with smooth scroll and filtering
-  const handleCategoryClick = (categoryId) => {
-    const newActiveCategory = activeCategory === categoryId ? null : categoryId;
-    setActiveCategory(newActiveCategory);
-    
-    // Filter restaurants based on selected category
-    if (newActiveCategory) {
-      const selectedCategory = categories.find(cat => cat.id === newActiveCategory);
-      const filtered = allRestaurants.filter(restaurant => 
-        selectedCategory.cuisines.some(cuisine => 
-          restaurant.cuisine?.toLowerCase().includes(cuisine.toLowerCase())
-        )
-      );
-      setFilteredRestaurants(filtered);
-      setRestaurants(filtered); // Update restaurants state for consistency
-    } else {
-      setFilteredRestaurants(allRestaurants);
-      setRestaurants(allRestaurants); // Show all restaurants when no category selected
-    }
-    
-    // Smooth scroll to restaurants section
-    const restaurantsSection = document.querySelector('.restaurants-section');
-    if (restaurantsSection) {
-      restaurantsSection.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
-  };
-
   const fetchRestaurants = async () => {
     setLoading(true);
     try {
@@ -112,8 +83,6 @@ export default function RestaurantList() {
           { id: 9, name: 'Tea Tradition', cuisine: 'Beverages', rating: '4.1', deliveryTime: '10-15' },
           { id: 10, name: 'The Health Bar', cuisine: 'Healthy', rating: '4.4', deliveryTime: '20-25' }
         ];
-        setAllRestaurants(fallbackRestaurants);
-        setFilteredRestaurants(fallbackRestaurants);
         setRestaurants(fallbackRestaurants);
       }
     } catch (error) {
@@ -131,8 +100,6 @@ export default function RestaurantList() {
         { id: 9, name: 'Tea Tradition', cuisine: 'Beverages', rating: '4.1', deliveryTime: '10-15' },
         { id: 10, name: 'The Health Bar', cuisine: 'Healthy', rating: '4.4', deliveryTime: '20-25' }
       ];
-      setAllRestaurants(fallbackRestaurants);
-      setFilteredRestaurants(fallbackRestaurants);
       setRestaurants(fallbackRestaurants);
     } finally {
       setLoading(false);
@@ -169,10 +136,6 @@ export default function RestaurantList() {
            padding: 0
          }}>
       
-      {/* Shared Navigation Components */}
-      <Navbar />
-      <MobileHeader title="Restaurants" showCart={true} />
-
       {/* CSS Styles - embedded for complete control */}
       <style jsx>{`
         * {
@@ -204,7 +167,7 @@ export default function RestaurantList() {
           background: #ffffff;
         }
 
-        /* --- Veg Switch Styles (Exact HTML Match) --- */
+        /* Veg Switch Styles */
         .switch {
           flex: 0 0 auto;
           width: 3.5rem;
@@ -248,7 +211,6 @@ export default function RestaurantList() {
           background-color: #cde6cd;
         }
 
-        /* DARK MODE for Switch */
         .dark-mode input[type=checkbox]::before {
           background-color: #fff;
         }
@@ -259,7 +221,7 @@ export default function RestaurantList() {
           background-color: #28a745;
         }
 
-        /* --- Arc Carousel Styles (Enhanced for Subtle Arc) --- */
+        /* Arc Carousel Styles */
         .arc-carousel {
           perspective: 1000px;
           overflow-x: auto;
@@ -336,7 +298,6 @@ export default function RestaurantList() {
           }
 
           .category-card {
-            /* No arc positioning on mobile */
             position: relative;
           }
 
@@ -348,11 +309,6 @@ export default function RestaurantList() {
           .category-card span {
             font-size: 0.8rem;
           }
-          
-          /* Mobile hover/touch effects */
-          .category-card:not(.active):active img {
-            transform: scale(0.98);
-          }
         }
 
         /* Tablets and Desktop: Subtle Arc effect */
@@ -363,32 +319,26 @@ export default function RestaurantList() {
             height: 240px;
           }
 
-          /* Arc positioning for each item */
           .category-card:nth-child(1) { transform: translateY(25px); }
           .category-card:nth-child(2) { transform: translateY(10px); }
           .category-card:nth-child(3) { transform: translateY(3px); }
-          .category-card:nth-child(4) { transform: translateY(0px); } /* center */
+          .category-card:nth-child(4) { transform: translateY(0px); }
           .category-card:nth-child(5) { transform: translateY(3px); }
           .category-card:nth-child(6) { transform: translateY(10px); }
           .category-card:nth-child(7) { transform: translateY(25px); }
 
-          /* Enhanced active state for larger screens - no lift effect */
+          /* Enhanced active state for larger screens */
           .category-card.active {
-            position: relative;
+            transform: scale(1.3) translateY(-20px) !important;
+            z-index: 10;
           }
 
           /* Hover effects for larger screens */
-          .category-card:not(.active):hover img {
-            transform: scale(1.02);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          }
-          
           .category-card:hover {
             transform: translateY(calc(var(--y-offset, 0px) - 5px));
           }
         }
 
-        /* Hide scrollbar */
         .arc-carousel::-webkit-scrollbar {
           display: none;
         }
@@ -397,7 +347,15 @@ export default function RestaurantList() {
           scrollbar-width: none;
         }
 
-        /* --- Restaurant Cards 1:1 Aspect Ratio --- */
+        /* Dark mode for categories */
+        .dark-mode .category-card span {
+          color: #fff;
+        }
+        .dark-mode .category-card {
+          background: #1e1e1e08;
+        }
+
+        /* Restaurant Cards */
         .restaurant-card {
           background: hsl(var(--card));
           border-radius: 12px;
@@ -445,9 +403,102 @@ export default function RestaurantList() {
           color: #ff611e;
           transition: color 0.3s;
         }
+
+        /* Dark mode for restaurant cards */
+        .dark-mode .restaurant-card {
+          background: #1e1e1e;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .dark-mode .restaurant-card:hover {
+          box-shadow: 0 8px 16px rgba(0,0,0,0.7);
+        }
+
+        .dark-mode .restaurant-info .name-rating {
+          color: #fff;
+        }
       `}</style>
 
-      {/* Banner Section - Natural Flow */}
+      {/* Top Navbar (Desktop/Tablet) */}
+      <nav className="hidden md:flex fixed top-0 left-1/2 transform -translate-x-1/2 z-50 bg-white/20 backdrop-blur-md shadow-lg rounded-2xl mt-2.5 w-4/5 max-w-6xl"
+           style={{
+             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+             border: '1px solid rgba(255,255,255,0.3)'
+           }}>
+        <div className="flex items-center justify-between w-full px-5 py-2">
+          <img src="/unilogo.jpg" alt="UniEats" className="h-10 cursor-pointer" />
+          
+          <div className="flex items-center space-x-6">
+            <a href="/home" className="text-base font-normal text-orange-500 hover:text-orange-600 hover:scale-110 transition-all duration-200">
+              Home
+            </a>
+            <a href="/restaurants" className="text-base font-normal text-orange-500 hover:text-orange-600 hover:scale-110 transition-all duration-200">
+              Eats
+            </a>
+            <a href="/cart" className="text-base font-normal text-orange-500 hover:text-orange-600 hover:scale-110 transition-all duration-200">
+              Cart
+            </a>
+            <a href="/profile" className="text-base font-normal text-orange-500 hover:text-orange-600 hover:scale-110 transition-all duration-200">
+              Profile
+            </a>
+          </div>
+
+          <button 
+            onClick={toggleTheme}
+            className="bg-none border-none cursor-pointer text-base transition-colors duration-300"
+            style={{ 
+              color: '#ff6f00',
+              fontSize: '1.2rem'
+            }}
+          >
+            {isDarkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Topbar */}
+      <div className="md:hidden flex items-center justify-between px-3 py-3 bg-white/20 backdrop-blur-md shadow-sm fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+           style={{
+             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+             border: '1px solid rgba(255,255,255,0.3)'
+           }}>
+        <img src="/unilogo.jpg" alt="UniEats" className="h-6" />
+        <div className="flex items-center text-sm font-medium text-gray-800 cursor-pointer">
+          University Campus
+          <i className="fas fa-chevron-down ml-2 text-xs text-gray-600"></i>
+        </div>
+        <button 
+          onClick={toggleTheme}
+          className="bg-none border-none cursor-pointer text-base transition-colors duration-300"
+          style={{ 
+            color: '#ff6f00',
+            fontSize: '1.2rem'
+          }}
+        >
+          {isDarkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+        </button>
+      </div>
+
+      {/* Bottom Navbar (Mobile Only) */}
+      <nav className="md:hidden fixed bottom-3 left-1/2 transform -translate-x-1/2 bg-white w-11/12 max-w-md py-1.5 shadow-lg rounded-2xl flex justify-around z-50"
+           style={{
+             boxShadow: '0 4px 12px rgba(0,0,0,0.12)'
+           }}>
+        <a href="/home" className="no-underline">
+          <i className="fas fa-home text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        </a>
+        <a href="/restaurants" className="no-underline">
+          <i className="fas fa-utensils text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        </a>
+        <a href="/cart" className="no-underline">
+          <i className="fas fa-shopping-cart text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        </a>
+        <a href="/profile" className="no-underline">
+          <i className="fas fa-user text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        </a>
+      </nav>
+
+      {/* Banner Section */}
       <div className="w-full flex justify-center overflow-hidden mb-0 pt-16 md:pt-20">
         <img 
           src="/banner.jpg" 
@@ -481,10 +532,10 @@ export default function RestaurantList() {
           From Cheeeesy Slices to juicy burgers, pick your craving.
         </h4>
 
-        {/* Arc Carousel - Exact HTML Match */}
+        {/* Arc Carousel */}
         <div className="arc-carousel">
           <div className="arc-track">
-            {categories.map((category, index) => (
+            {categories.map((category) => (
               <div 
                 key={category.id}
                 className={`category-card ${activeCategory === category.id ? 'active' : ''}`}
@@ -506,9 +557,8 @@ export default function RestaurantList() {
       </section>
 
       {/* Restaurants Section */}
-      <section className="restaurants-section w-full mx-auto text-center px-2 pb-10 transition-colors duration-300"
-               style={{ backgroundColor: 'hsl(var(--background))' }}>
-        <h2 className="font-black text-6xl md:text-8xl m-0 pt-8 transition-colors duration-300"
+      <section className="w-full max-w-5xl mx-auto text-center bg-white px-4 pb-10">
+        <h2 className="font-black text-6xl md:text-8xl text-black m-0 pt-8 transition-colors duration-300"
             style={{
               fontFamily: "'Poppins', sans-serif",
               fontSize: 'clamp(2.5rem, 8vw, 8rem)',
@@ -526,7 +576,7 @@ export default function RestaurantList() {
         </h4>
 
         {/* Filters Container */}
-        <div className="flex justify-between items-center my-4 mb-6 px-2 max-w-lg mx-auto">
+        <div className="flex justify-between items-center my-4 mb-6 px-4 max-w-lg mx-auto">
           {/* Veg Switch - Exact HTML Match */}
           <div className="switch">
             <input
@@ -577,7 +627,7 @@ export default function RestaurantList() {
                   const restaurantName = restaurant.name || restaurant.businessName || restaurant.title || restaurant.restaurantName;
                   const localImage = restaurantImages[restaurantName];
                   const finalImage = localImage || restaurant.image || restaurant.logo || restaurant.photo || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=300&fit=crop&crop=center';
-                  
+
                   return (
                   <div key={restaurant.id} className="restaurant-card">
                     <img 
@@ -586,10 +636,10 @@ export default function RestaurantList() {
                     />
                     <div className="restaurant-info">
                       <div className="name-rating">
-                        {restaurantName} • {restaurant.rating || '4.2'}
+                        {restaurantName}
                       </div>
                       <div className="cuisine">
-                        {restaurant.cuisine || 'Multi-cuisine'}
+                        {restaurant.cuisine || 'Multi-cuisine'} • {restaurant.rating || '4.2'} ⭐ • {restaurant.deliveryTime || '30-45'} min
                       </div>
                     </div>
                   </div>
@@ -611,11 +661,13 @@ export default function RestaurantList() {
                   onClick={() => {
                     setIsVegOnly(false);
                     setSortBy('relevance');
-                    setFilters({ 
-                      search: '', 
+                    setActiveCategory(null);
+                    setFilters({
+                      search: '',
                       sortBy: 'relevance',
-                      dietType: 'all'
+                      dietType: 'all',
                     });
+                    setFilteredRestaurants(allRestaurants);
                   }}
                   className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors"
                 >
@@ -656,15 +708,76 @@ export default function RestaurantList() {
           <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
             <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Follow Us</h4>
             <div className="flex gap-4 justify-center md:justify-start">
-              <i className="fab fa-facebook-f text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
-              <i className="fab fa-instagram text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
-              <i className="fab fa-twitter text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
+              <span className="text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500">📘</span>
+              <span className="text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500">📷</span>
+              <span className="text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500">🐦</span>
             </div>
           </div>
         </div>
       </footer>
 
+      {/* Dark mode styles */}
+      <style jsx>{`
+        .dark-mode {
+          background: #121212 !important;
+          color: #e0e0e0 !important;
+        }
+        .dark-mode nav,
+        .dark-mode .mobile-topbar {
+          background: #1c1c1c !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.6) !important;
+        }
+        .dark-mode nav a,
+        .dark-mode .mobile-topbar * {
+          color: #fff !important;
+        }
+        .dark-mode h1,
+        .dark-mode h2 {
+          color: #fff !important;
+        }
+        .dark-mode h4 {
+          color: #ccc !important;
+        }
+        .dark-mode .category-card span {
+          color: #fff !important;
+        }
+        .dark-mode select {
+          background: #2a2a2a !important;
+          color: #fff !important;
+          border-color: #fff !important;
+        }
+        .dark-mode .restaurant-card {
+          background: #1e1e1e !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+        }
+        .dark-mode .restaurant-card:hover {
+          box-shadow: 0 8px 16px rgba(0,0,0,0.7) !important;
+        }
+        .dark-mode .restaurant-info .name-rating {
+          color: #fff !important;
+        }
+        .dark-mode footer div {
+          background: #1e1e1e !important;
+          color: #eee !important;
+        }
+        .dark-mode footer h4 {
+          color: #fff !important;
+        }
+        .dark-mode footer a {
+          color: #ccc !important;
+        }
+        .dark-mode footer a:hover {
+          color: #ff7e2d !important;
+        }
 
+        /* Dark mode for content overlay */
+        .dark-mode section.bg-white {
+          background: #1e1e1e !important;
+        }
+        .dark-mode section.mx-auto {
+          background: #1e1e1e !important;
+        }
+      `}</style>
     </div>
   );
 }

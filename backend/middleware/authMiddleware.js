@@ -11,7 +11,7 @@ const verifyFirebaseToken = async (req, res, next) => {
   }
 
   const idToken = authHeader.split("Bearer ")[1];
-  // console.log("Backend", idToken);
+  // console.log("Backend", idToken)
 
   try {
     // 1. Verify the token with Firebase
@@ -29,7 +29,6 @@ const verifyFirebaseToken = async (req, res, next) => {
 
     // 4. Attach OUR user object (with the role) to the request
     req.user = user;
-
     next();
   } catch (error) {
     console.error("Error verifying Firebase ID token:", error);

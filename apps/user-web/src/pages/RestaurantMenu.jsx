@@ -28,10 +28,35 @@ export default function RestaurantMenu() {
         const response = await getRestaurantMenu(restaurantId);
         
         if (response.success) {
-          setMenuData(response.data);
+          // Transform API response to match expected structure
+          const transformedData = {
+            restaurant: {
+              name: response.data.vendor.businessName,
+              image: response.data.vendor.image || '/placeholder-restaurant.jpg',
+              rating: response.data.vendor.rating || 4.5,
+              reviewCount: response.data.vendor.reviewCount || 100,
+              deliveryTime: response.data.vendor.deliveryTime || '30-40 min',
+            },
+            categories: response.data.menu.map(category => ({
+              id: category._id,
+              name: category.name,
+              itemCount: category.items.length
+            })),
+            menuItems: response.data.menu.flatMap(category =>
+              category.items.map(item => ({
+                ...item,
+                id: item._id,
+                categoryId: category._id
+              }))
+            ),
+            bestsellers: [] // Empty for now, can be populated if API provides bestseller data
+          };
+
+          setMenuData(transformedData);
+          
           // Select first category by default
-          if (response.data.categories.length > 0) {
-            setSelectedCategory(response.data.categories[0]);
+          if (transformedData.categories.length > 0) {
+            setSelectedCategory(transformedData.categories[0]);
           }
         } else {
           setError(response.error);
@@ -56,7 +81,7 @@ export default function RestaurantMenu() {
 
   // Get bestseller items
   const bestsellerItems = useMemo(() => {
-    if (!menuData) return [];
+    if (!menuData || !menuData.bestsellers) return [];
     return menuData.menuItems.filter(item => 
       menuData.bestsellers.includes(item.id)
     );
@@ -223,13 +248,15 @@ export default function RestaurantMenu() {
           </div>
 
           <div className="p-4 md:p-6">
-            {/* Bestsellers Section */}
-            <Bestsellers
-              items={bestsellerItems}
-              onAddToCart={handleAddToCart}
-              getItemQuantity={getItemQuantity}
-              onUpdateQuantity={handleUpdateQuantity}
-            />
+            {/* Bestsellers Section - Only show if there are bestseller items */}
+            {bestsellerItems.length > 0 && (
+              <Bestsellers
+                items={bestsellerItems}
+                onAddToCart={handleAddToCart}
+                getItemQuantity={getItemQuantity}
+                onUpdateQuantity={handleUpdateQuantity}
+              />
+            )}
 
             {/* Category Header */}
             <div className="mb-6">
@@ -241,7 +268,11 @@ export default function RestaurantMenu() {
                    selectedCategory?.name.toLowerCase().includes('rice') ? '🍚' :
                    selectedCategory?.name.toLowerCase().includes('dal') ? '🍛' :
                    selectedCategory?.name.toLowerCase().includes('dessert') ? '🧁' :
-                   selectedCategory?.name.toLowerCase().includes('beverage') ? '🥤' : '🍽️'}
+                   selectedCategory?.name.toLowerCase().includes('beverage') ? '🥤' :
+                   selectedCategory?.name.toLowerCase().includes('sandwich') ? '🥪' :
+                   selectedCategory?.name.toLowerCase().includes('wrap') ? '🌯' :
+                   selectedCategory?.name.toLowerCase().includes('salad') ? '🥗' :
+                   selectedCategory?.name.toLowerCase().includes('side') ? '🍟' : '🍽️'}
                 </span>
                 <h2 className="text-xl md:text-2xl font-bold text-foreground">
                   {selectedCategory?.name}

@@ -12,6 +12,10 @@ import {
 import Navbar from '../components/Navigation/Navbar';
 import MobileHeader from '../components/Navigation/MobileHeader';
 
+import { getAuth } from "firebase/auth";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+
 export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState("cod");
@@ -76,46 +80,67 @@ export default function Checkout() {
   };
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddress || !selectedPayment) {
-      alert("Please select delivery address and payment method");
-      return;
-    }
+  if (!selectedAddress || !selectedPayment) {
+    alert("Please select delivery address and payment method");
+    return;
+  }
 
-    setIsPlacingOrder(true);
-
-    try {
-      const orderData = {
-        items: cartItems,
-        address: selectedAddress,
-        paymentMethod: selectedPayment,
-        total: total,
-      };
-
-      const response = await fetch("/api/v1/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer your-auth-token",
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Order placed successfully:", result);
-
-        // ✅ Backend will handle notifying vendor via WebSocket
-        setOrderSuccess(true);
-      } else {
-        throw new Error("Failed to place order");
+  setIsPlacingOrder(true);
+  const auth = getAuth();
+  const user = auth.currentUser;
+  
+    if (!user) {
+        throw new Error("User not authenticated");
       }
-    } catch (error) {
-      console.error("Error placing order:", error);
-      alert("Failed to place order. Please try again.");
-    } finally {
-      setIsPlacingOrder(false);
+  
+      // 🔑 Get fresh Firebase ID token
+    const token = await user.getIdToken();
+  try {
+    const orderData = {
+      vendorId: "68daaf5d9f9f5d74183a3294", // Replace dynamically if needed
+      items: cartItems.map(item => ({
+        menuItem: item.id, // Assuming cartItems have id field
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      deliveryAddress: selectedAddress,
+      paymentMethod: selectedPayment,
+      totalPrice: total,
+    };
+
+    // Use URL from .env
+    console.log("order data we are sending--",orderData);
+    const response = await fetch(`${API_BASE_URL }api/v1/payments/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // Replace with actual token
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log("Order placed successfully:", result);
+
+      setOrderSuccess(true);
+
+      // Optional: store orderId or redirect
+      const orderId = result.data.orderId;
+      console.log("Order ID:", orderId);
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to place order");
     }
-  };
+  } catch (error) {
+    console.error("Error placing order:", error);
+    alert("Failed to place order. Please try again.");
+  } finally {
+    setIsPlacingOrder(false);
+  }
+};
+
 
   if (orderSuccess) {
     return (
