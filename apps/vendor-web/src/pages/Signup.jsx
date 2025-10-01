@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 
 // Vendor Sign-up page with multi-step form
 export default function Signup() {
-  const location = useLocation();
   const texts = useMemo(
     () => [
       "Grow your restaurant with Unieats!",
@@ -26,18 +24,6 @@ export default function Signup() {
     }, 2500);
     return () => clearInterval(id);
   }, [texts.length]);
-
-  // Handle hash-based navigation when coming from login page
-  useEffect(() => {
-    if (location.hash) {
-      const element = document.getElementById(location.hash.substring(1));
-      if (element) {
-        setTimeout(() => {
-          scrollToSection(element);
-        }, 100);
-      }
-    }
-  }, [location.hash]);
 
   // Smooth scroll with navbar offset
   const scrollToSection = (element) => {
@@ -85,7 +71,7 @@ export default function Signup() {
             >
               Support
             </button>
-            <Link to="/vendor/login" className="hover:text-[#ff6600] transition-colors">Login</Link>
+            <button className="hover:text-[#ff6600] transition-colors">Login</button>
           </nav>
         </div>
       </div>
@@ -94,8 +80,7 @@ export default function Signup() {
       <div className="relative z-0 h-[320px] flex items-center justify-center text-center overflow-hidden">
         {/* Background with blur + dim */}
         <div
-          className="absolute inset-0 z-0 bg-center bg-cover transform scale-105 filter blur-sm"
-          style={{ backgroundImage: "url('/vendor-login.jpg')" }}
+          className="absolute inset-0 z-0 bg-center bg-cover transform scale-105 filter blur-sm bg-gradient-to-r from-orange-400 to-red-500"
         />
         <div className="absolute inset-0 z-0 bg-black/40" />
         <h2
@@ -159,99 +144,65 @@ export default function Signup() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Pricing Section */}
       <section id="pricing" className="px-[10%] py-16 bg-white border-t border-[#f0f0f0]">
         <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Pricing</h2>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Commission Based */}
-          <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">Popular</span>
-            </div>
-            <h3 className="text-xl font-semibold text-[#333] mb-3">Commission Based</h3>
-            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Pay-per-order model for flexible scaling</p>
-            <div className="mb-6">
-              <div className="text-2xl font-bold text-[#ff6600] mb-2">Min % Commission</div>
-              <div className="text-sm text-[#555]">On orders above ₹50</div>
-            </div>
-            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Unlimited orders per month
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Complete analytics dashboard
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                All vendor features included
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Priority listing by ratings
-              </li>
-            </ul>
-            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Commission</button>
+         {/* Commission-Based Plan */}
+        <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative flex flex-col">
+          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+          
           </div>
+          <h3 className="text-xl font-semibold text-[#333] mb-3">Commission-Based Plan</h3>
+          <ul className="text-[15px] text-[#333] space-y-3 mb-6 flex-1">
+            <li>Pay % commission only on orders above ₹50.</li>
+            <li>Unlimited orders per month.</li>
+            <li>Add, manage, and customize your menu easily.</li>
+            <li>Accept online orders via app or website.</li>
+            <li>Real-time sales and customer analytics.</li>
+            <li>Single admin access, compatible on mobile, tablet, and PC.</li>
+          </ul>
+          <button className="mt-auto w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">
+            Choose Commission
+          </button>
+        </div>
 
-          {/* Subscription Based */}
-          <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
-            <h3 className="text-xl font-semibold text-[#333] mb-3">Subscription Based</h3>
-            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Fixed monthly fee with no commissions</p>
-            <div className="mb-6">
-              <div className="text-2xl font-bold text-[#ff6600] mb-2">Minimal Fee</div>
-              <div className="text-sm text-[#555]">Monthly or Annual plans</div>
-            </div>
-            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Unlimited orders per month
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Complete analytics dashboard
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                All vendor features included
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Priority listing by ratings
-              </li>
-            </ul>
-            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Subscription</button>
-          </div>
+        {/* Subscription-Based Plan */}
+        <div className="bg-white border border-[#f0f0f0] p-8 rounded-xl shadow hover:shadow-lg transition flex flex-col">
+          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Subscription-Based Plan</h3>
+          <p className="text-[#555] mb-6">Fixed monthly or annual fee.</p>
+          <ul className="space-y-3 text-[15px] text-[#333] flex-1">
+            <li>Limited orders per month</li>
+            <li>Easy menu management and customization</li>
+            <li>Accept online orders seamlessly</li>
+            <li>Full analytics dashboard</li>
+            <li>Single admin access, compatible on mobile, tablet, and PC.</li>
+          </ul>
+          <button className="mt-auto w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
+            Choose Subscription
+          </button>
+        </div>
 
-          {/* Hybrid Model */}
-          <div className="p-8 rounded-xl border border-[#eee] shadow-[0_6px_18px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.08)] transition-shadow bg-white">
-            <h3 className="text-xl font-semibold text-[#333] mb-3">Hybrid Model</h3>
-            <p className="text-[15px] text-[#555] mb-6 leading-relaxed">Best of both worlds - subscription + commission</p>
-            <div className="mb-6">
-              <div className="text-2xl font-bold text-[#ff6600] mb-2">Subscription + Commission</div>
-              <div className="text-sm text-[#555]">Combined model</div>
-            </div>
-            <ul className="text-[15px] text-[#333] space-y-3 mb-8">
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Unlimited orders per month
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Complete analytics dashboard
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                All vendor features included
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-[#ff6600] rounded-full mr-3"></div>
-                Priority listing by ratings
-              </li>
-            </ul>
-            <button className="w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">Choose Hybrid</button>
-          </div>
+        {/* Hybrid Plan */}
+        <div className="relative bg-white border-2 border-[#ff6600] p-8 rounded-xl shadow-[0_10px_25px_rgba(255,102,0,0.2)] flex flex-col">
+          <span className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">
+            Most Popular
+          </span>
+          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Hybrid Plan (Recommended)</h3>
+          <p className="text-[#555] mb-6">Fixed subscription + % commission per order.</p>
+          <ul className="space-y-3 text-[15px] text-[#333] flex-1">
+            <li>Unlimited orders per month.</li>
+            <li>Advanced menu management and customizations.</li>
+            <li>Effortless online order acceptance.</li>
+            <li>Real-time analytics & insights.</li>
+            <li>Single admin access, compatible on mobile, tablet, and PC.</li>
+          </ul>
+          <button className="mt-auto w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
+            Choose Hybrid
+          </button>
+        </div>
+
         </div>
         
         {/* Additional Features */}
@@ -387,52 +338,61 @@ function VendorSignupForm() {
     }
   };
 
- const onSubmit = async (e) => {
-  e.preventDefault();
+  const onSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    const data = new FormData();
+    try {
+      const data = new FormData();
 
-    // Append text fields only
-    data.append("businessName", formData.businessName);
-    data.append("phone", formData.phone);
-    data.append("street", formData.street);
-    data.append("city", formData.city);
-    data.append("state", formData.state);
-    data.append("zipCode", formData.zipCode);
-    data.append("cuisineType", JSON.stringify(formData.cuisineType));
-    data.append("operatingHours", JSON.stringify(formData.operatingHours));
+      // Append text fields only
+      data.append("businessName", formData.businessName);
+      data.append("phone", formData.phone);
+      data.append("street", formData.street);
+      data.append("city", formData.city);
+      data.append("state", formData.state);
+      data.append("zipCode", formData.zipCode);
+      data.append("cuisineType", JSON.stringify(formData.cuisineType));
+      data.append("operatingHours", JSON.stringify(formData.operatingHours));
 
-    // Append files
-    if (formData.businessLicense) {
-      data.append("businessLicense", formData.businessLicense); // actual File object
-    }
-    if (formData.foodSafetyCertificate) {
-      data.append("foodSafetyCertificate", formData.foodSafetyCertificate); // actual File object
-    }
+      // Append files
+      if (formData.businessLicense) {
+        data.append("businessLicense", formData.businessLicense);
+      }
+      if (formData.foodSafetyCertificate) {
+        data.append("foodSafetyCertificate", formData.foodSafetyCertificate);
+      }
 
-    const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/api/v1/vendors/register`,
-      {
+      // Mock API call since we can't use environment variables in artifacts
+      const response = await fetch("/api/v1/vendors/register", {
         method: "POST",
         body: data,
+      });
+
+      if (response.ok) {
+        alert("Vendor registered successfully!");
+        // Reset form
+        setFormData({
+          businessName: "",
+          phone: "",
+          street: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          cuisineType: [],
+          operatingHours: [],
+          businessLicense: null,
+          foodSafetyCertificate: null,
+        });
+        setCurrentStep(1);
+      } else {
+        const result = await response.json();
+        alert(result.message || "Vendor registration failed.");
       }
-    );
-
-    const result = await response.json();
-    console.log("API Response:", result);
-
-    if (response.ok) {
-      alert("Vendor registered successfully!");
-    } else {
-      alert(result.message || "Vendor registration failed.");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("An error occurred. Please try again.");
     }
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    alert("An error occurred. Please try again.");
-  }
-};
-
+  };
 
   const renderStep = () => {
     switch (currentStep) {
@@ -622,12 +582,12 @@ function Step3({ formData, updateFormData, onNext, onPrev }) {
         </label>
         <div className="grid grid-cols-2 gap-2">
           {cuisineOptions.map(cuisine => (
-            <label key={cuisine} className="flex items-center cursor-pointer">
+            <label key={cuisine} className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.cuisineType.includes(cuisine)}
                 onChange={() => handleCuisineChange(cuisine)}
-                className="mr-2 text-[#ff6600] focus:ring-[#ff6600]"
+                className="rounded border-gray-300 text-[#ff6600] focus:ring-[#ff6600]"
               />
               <span className="text-sm text-[#333]">{cuisine}</span>
             </label>
@@ -639,24 +599,24 @@ function Step3({ formData, updateFormData, onNext, onPrev }) {
         <label className="block text-sm font-medium text-[#333] mb-3">
           Operating Hours (Optional)
         </label>
-        <div className="space-y-2 max-h-40 overflow-y-auto">
+        <div className="space-y-3">
           {days.map(day => {
-            const dayHours = formData.operatingHours.find(h => h.day === day) || {};
+            const dayHours = formData.operatingHours.find(h => h.day === day);
             return (
-              <div key={day} className="flex items-center gap-2 text-sm">
-                <span className="w-20 text-[#333]">{day.slice(0, 3)}</span>
+              <div key={day} className="flex items-center gap-2">
+                <span className="w-20 text-sm text-[#333]">{day.slice(0, 3)}</span>
                 <input
                   type="time"
-                  value={dayHours.open || ''}
-                  onChange={(e) => handleOperatingHoursChange(day, 'open', e.target.value)}
-                  className="px-2 py-1 border border-[#ddd] rounded text-xs"
+                  value={dayHours?.openTime || ''}
+                  onChange={(e) => handleOperatingHoursChange(day, 'openTime', e.target.value)}
+                  className="px-2 py-1 border border-gray-300 rounded text-sm"
                 />
-                <span className="text-[#666]">to</span>
+                <span className="text-sm text-[#555]">to</span>
                 <input
                   type="time"
-                  value={dayHours.close || ''}
-                  onChange={(e) => handleOperatingHoursChange(day, 'close', e.target.value)}
-                  className="px-2 py-1 border border-[#ddd] rounded text-xs"
+                  value={dayHours?.closeTime || ''}
+                  onChange={(e) => handleOperatingHoursChange(day, 'closeTime', e.target.value)}
+                  className="px-2 py-1 border border-gray-300 rounded text-sm"
                 />
               </div>
             );
@@ -688,40 +648,43 @@ function Step4({ formData, updateFormData, onSubmit, onPrev }) {
     <form onSubmit={onSubmit}>
       <h4 className="text-lg font-semibold text-[#333] mb-4">Required Documents</h4>
       
-      <div className="mb-4">
+      <div className="mb-6">
         <label className="block text-sm font-medium text-[#333] mb-2">
-          Business License *
+          Business License/Registration *
         </label>
         <input
           type="file"
           accept=".pdf,.jpg,.jpeg,.png"
           onChange={(e) => handleFileChange('businessLicense', e.target.files[0])}
-          className="w-full px-3 py-2 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#ff6600] text-sm"
           required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ff6600]"
         />
-        <p className="text-xs text-[#666] mt-1">Upload PDF, JPG, or PNG (Max 5MB)</p>
+        <p className="text-xs text-gray-500 mt-1">Accepted formats: PDF, JPG, PNG (Max 5MB)</p>
       </div>
 
       <div className="mb-6">
         <label className="block text-sm font-medium text-[#333] mb-2">
-          Food Safety Certificate (FSSAI) *
+          FSSAI License/Food Safety Certificate *
         </label>
         <input
           type="file"
           accept=".pdf,.jpg,.jpeg,.png"
           onChange={(e) => handleFileChange('foodSafetyCertificate', e.target.files[0])}
-          className="w-full px-3 py-2 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#ff6600] text-sm"
           required
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ff6600]"
         />
-        <p className="text-xs text-[#666] mt-1">Upload PDF, JPG, or PNG (Max 5MB)</p>
+        <p className="text-xs text-gray-500 mt-1">Accepted formats: PDF, JPG, PNG (Max 5MB)</p>
       </div>
 
-      <div className="bg-[#fff3e0] border border-[#ffcc80] rounded-lg p-4 mb-6">
-        <h5 className="text-sm font-semibold text-[#ef6c00] mb-2">Review Process</h5>
-        <p className="text-xs text-[#bf360c]">
-          After submission, our team will review your application within 2-3 business days. 
-          You'll receive an email notification once your account is approved.
-        </p>
+      <div className="bg-gray-50 p-4 rounded-lg mb-6">
+        <h5 className="font-semibold text-[#333] mb-2">Review Your Information</h5>
+        <div className="text-sm text-[#555] space-y-1">
+          <p><strong>Business Name:</strong> {formData.businessName}</p>
+          <p><strong>Phone:</strong> {formData.phone}</p>
+          <p><strong>Address:</strong> {formData.street}, {formData.city}, {formData.state} {formData.zipCode}</p>
+          <p><strong>Cuisines:</strong> {formData.cuisineType.join(', ') || 'None selected'}</p>
+          <p><strong>Documents:</strong> {formData.businessLicense ? '✓' : '✗'} Business License, {formData.foodSafetyCertificate ? '✓' : '✗'} FSSAI Certificate</p>
+        </div>
       </div>
 
       <div className="flex gap-2">

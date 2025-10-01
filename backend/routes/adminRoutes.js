@@ -7,26 +7,32 @@ import { verifyFirebaseToken, checkRole } from '../middleware/authMiddleware.js'
 import { monitorRealTimeOrders, exportOrdersToCSV } from '../controllers/adminOrderController.js';
 
 const router = express.Router();
-const adminOnly = [verifyFirebaseToken, checkRole('admin')];
+const adminOnly = [verifyFirebaseToken, checkRole("admin")];
 
-router.get('/dashboard', ...adminOnly, getAdminDashboard);
+router.get("/dashboard", ...adminOnly, getAdminDashboard);
 
 // Vendor Management
-router.get('/vendors', getVendors);
-router.patch('/vendors/:id/approval',  updateVendorApproval);
+router.get("/vendors", getVendors);
+router.patch("/vendors/:id/approval", updateVendorApproval);
 
 // Settings Routes
-router.get('/settings', ...adminOnly, getSettings);
+router.get("/settings", ...adminOnly, getSettings);
 router.post(
-    '/settings',
-    ...adminOnly,
-    [
-        check('deliveryFee').optional().isNumeric().withMessage('Delivery fee must be a number.'),
-        check('commissionRate').optional().isFloat({ min: 0, max: 1 }).withMessage('Commission rate must be between 0 and 1.'),
-    ],
-    updateSettings
+  "/settings",
+  ...adminOnly,
+  [
+    check("deliveryFee")
+      .optional()
+      .isNumeric()
+      .withMessage("Delivery fee must be a number."),
+    check("commissionRate")
+      .optional()
+      .isFloat({ min: 0, max: 1 })
+      .withMessage("Commission rate must be between 0 and 1."),
+  ],
+  updateSettings
 );
-router.get('/analytics', ...adminOnly, getBasicAnalytics);
+router.get("/analytics", ...adminOnly, getBasicAnalytics);
 
 
 //  Admin Order Management Routes 

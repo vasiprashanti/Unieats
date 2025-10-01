@@ -7,19 +7,19 @@ import { monitorRealTimeOrders, exportOrdersToCSV } from '../controllers/adminOr
 
 
 const router = express.Router();
-const adminOnly = [verifyFirebaseToken, checkRole('admin')];
+const adminOnly = [verifyFirebaseToken, checkRole("admin")];
 
 // REGISTER ROUTE
 // @route   POST /api/v1/auth/register
 // @desc    Register a new user
 // @access  Public
 router.post(
-  '/register',
+  "/register",
   [
     // Validation middleware
-    check('name', 'Name is required').not().isEmpty(),
-    check('email', 'Please include a valid email').isEmail(),
-    check('firebaseUid', 'Firebase UID is required').not().isEmpty(),
+    check("name", "Name is required").not().isEmpty(),
+    check("email", "Please include a valid email").isEmail(),
+    check("firebaseUid", "Firebase UID is required").not().isEmpty(),
   ],
   registerUser
 );
@@ -33,14 +33,14 @@ router.get('/me', verifyFirebaseToken, getMe);
 // @route   GET /api/v1/auth/verify
 // @desc    Verify a token is still valid
 // @access  Private
-router.get('/verify', verifyFirebaseToken, verifyToken);
+router.get("/verify", verifyFirebaseToken, verifyToken);
 
 // --- Analytics Routes ---
-router.get('/analytics/basic', ...adminOnly, getBasicAnalytics);
-router.get('/analytics/comprehensive', ...adminOnly, getComprehensiveAnalytics);
+router.get("/analytics/basic", ...adminOnly, getBasicAnalytics);
+router.get("/analytics/comprehensive", ...adminOnly, getComprehensiveAnalytics);
 
 // Order Management & Export Routes
-router.get('/orders/monitor', ...adminOnly, monitorRealTimeOrders);
-router.get('/orders/export-csv', ...adminOnly, exportOrdersToCSV);
+router.get("/orders/monitor", ...adminOnly, monitorRealTimeOrders);
+router.get("/orders/export-csv", ...adminOnly, exportOrdersToCSV);
 
 export default router;

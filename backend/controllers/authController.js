@@ -1,7 +1,7 @@
-import User from '../models/User.model.js'; // Import the User model
-import { validationResult } from 'express-validator';
+import User from "../models/User.model.js"; // Import the User model
+import { validationResult } from "express-validator";
 
-// REGISTRATION CONTROLLER 
+// REGISTRATION CONTROLLER
 const registerUser = async (req, res) => {
     const {
         firebaseUid,
@@ -68,16 +68,18 @@ const getMe = async (req, res) => {
     // The user's firebaseUid is attached to req.user by the middleware
     const firebaseUid = req.user.firebaseUid;
     // Find the user in your MongoDB by their firebaseUid
-    const user = await User.findOne({ firebaseUid }).select('-password'); // .select('-password') is good practice
+    const user = await User.findOne({ firebaseUid }).select("-password"); // .select('-password') is good practice
     if (!user) {
-      return res.status(404).json({ message: 'User not found in our database.' });
+      return res
+        .status(404)
+        .json({ message: "User not found in our database." });
     }
 
     // Send the user profile back
     res.status(200).json(user);
   } catch (error) {
-    console.error('Error fetching user profile:', error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ message: "Server error." });
   }
 };
 
@@ -86,10 +88,9 @@ const verifyToken = (req, res) => {
   // If we reach this point, the token is valid and req.user is populated.
   // We just send back the user data as confirmation.
   res.status(200).json({
-    message: 'Token is valid.',
-    user: req.user
+    message: "Token is valid.",
+    user: req.user,
   });
 };
-
 
 export { registerUser, getMe, verifyToken };

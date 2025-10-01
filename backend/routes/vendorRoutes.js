@@ -9,16 +9,30 @@ import { getPayoutHistory, calculateCurrentPayout } from '../controllers/payment
 
 const router = express.Router();
 
+// GET all vendors (restaurants)
+router.get("/restaurants", verifyFirebaseToken, getAllVendors); // Will support search via query param
+// GET vendor (restaurant) details + menu
+
+// GET vendor (restaurant) details + menu (cached)
+router.get(
+  "/restaurants/:id",
+  verifyFirebaseToken,
+  cacheMiddleware,
+  getVendorDetails
+);
+
 // @route   POST /api/v1/vendors/register
 // @desc    Register a new vendor profile
 // @access  Private (requires user to be logged in)
 router.post(
-    '/register',
-    uploadDocuments.fields([ // Handle multiple file fields
-        { name: 'businessLicense', maxCount: 1 },
-        { name: 'foodSafetyCertificate', maxCount: 1 }
-    ]),
-    registerVendor
+  "/register",
+  verifyFirebaseToken,
+  uploadDocuments.fields([
+    // Handle multiple file fields
+    { name: "businessLicense", maxCount: 1 },
+    { name: "foodSafetyCertificate", maxCount: 1 },
+  ]),
+  registerVendor
 );
 
 // @route   GET /api/v1/vendors/profile

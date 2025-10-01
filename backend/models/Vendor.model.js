@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const vendorSchema = new mongoose.Schema({
     owner: {
@@ -7,20 +7,33 @@ const vendorSchema = new mongoose.Schema({
         required: true,
         index: true,
     },
-    businessName: { type: String, required: true, trim: true, unique: true },
+    businessName: { type: String, required: [true, "Business name is required."], trim: true, unique: true },
     businessAddress: {
         street: { type: String, required: true, trim: true },
         city: { type: String, required: true, trim: true },
         state: { type: String, required: true, trim: true },
         zipCode: { type: String, required: true, trim: true },
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      zipCode: { type: String, required: true },
+    },
+    phone: {
+      type: String,
+      required: [true, "Business phone number is required."],
     },
     contactPhone: { type: String, required: true },
     cuisineType: { type: [String], required: true },
-    approvalStatus: {
-        type: String,
-        enum: ['pending', 'approved', 'rejected'],
-        default: 'pending',
+    cuisineType: {
+      type: [String],
+      required: [true, "At least one cuisine type is required."],
     },
+    // Approval status controlled by admins
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+  },
     profileImage: { url: String, public_id: String },
     commissionRate: {
         type: Number,
@@ -70,5 +83,5 @@ const vendorSchema = new mongoose.Schema({
 
 vendorSchema.index({ businessName: 'text', cuisineType: 'text' });
 
-const Vendor = mongoose.model('Vendor', vendorSchema);
+const Vendor = mongoose.model("Vendor", vendorSchema);
 export default Vendor;

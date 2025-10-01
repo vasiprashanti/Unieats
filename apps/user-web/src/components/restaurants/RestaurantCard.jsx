@@ -1,11 +1,45 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const RestaurantCard = ({ restaurant, isLarge = false }) => {
+const RestaurantCard = ({ restaurant, mobileCardType = 'default', desktopCardType = 'default' }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
     navigate(`/restaurants/${restaurant.id}`);
+  };
+
+  // Define mobile card heights (Pinterest 2-column style)
+  const getMobileCardClasses = () => {
+    switch (mobileCardType) {
+      case 'tall':
+        return 'h-96'; // Very tall card for Pinterest effect
+      case 'small':
+        return 'h-40'; // Compact card
+      case 'medium':
+        return 'h-72'; // Medium card
+      case 'extra-tall':
+        return 'h-[28rem]'; // Extra tall card
+      default:
+        return 'h-60'; // Default card
+    }
+  };
+
+  // Define desktop card classes (masonry style)
+  const getDesktopCardClasses = () => {
+    switch (desktopCardType) {
+      case 'large':
+        return 'md:h-96'; // Large card
+      case 'tall':
+        return 'md:h-[28rem]'; // Very tall card
+      case 'small':
+        return 'md:h-48'; // Compact card
+      case 'medium':
+        return 'md:h-80'; // Medium card
+      case 'extra-tall':
+        return 'md:h-[32rem]'; // Extra tall card
+      default:
+        return 'md:h-72'; // Default card
+    }
   };
 
   return (
@@ -14,7 +48,7 @@ const RestaurantCard = ({ restaurant, isLarge = false }) => {
       className={`
         relative bg-white rounded-2xl overflow-hidden cursor-pointer group
         transition-all duration-300 hover:shadow-xl hover:scale-[1.02]
-        ${isLarge ? 'col-span-1 md:col-span-2 h-64' : 'col-span-1 h-72'}
+        break-inside-avoid mb-2 md:mb-3 ${getMobileCardClasses()} ${getDesktopCardClasses()}
       `}
     >
       {/* Background Image */}
@@ -41,12 +75,34 @@ const RestaurantCard = ({ restaurant, isLarge = false }) => {
 
       {/* Content overlay */}
       <div className="relative h-full flex flex-col justify-between p-6">
-        {/* Top section - Rating and badges */}
+        {/* Top section - Diet badges only */}
         <div className="flex justify-between items-start">
-          {/* Rating badge */}
-          <div className="bg-white/95 backdrop-blur-sm px-3 py-2 rounded-full flex items-center gap-1 shadow-sm">
-            <span className="text-[#FF6B35] text-sm">⭐</span>
-            <span className="text-gray-800 font-semibold text-sm">{restaurant.rating}</span>
+          {/* Diet Type Indicator */}
+          <div className="flex items-center gap-2">
+            {restaurant.dietType === 'veg' && (
+              <div className="bg-white/95 backdrop-blur-sm p-2 rounded-full shadow-sm">
+                <div className="w-3 h-3 border-2 border-green-600 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+                </div>
+              </div>
+            )}
+            {restaurant.dietType === 'non-veg' && (
+              <div className="bg-white/95 backdrop-blur-sm p-2 rounded-full shadow-sm">
+                <div className="w-3 h-3 border-2 border-red-600 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-red-600"></div>
+                </div>
+              </div>
+            )}
+            {restaurant.dietType === 'both' && (
+              <div className="bg-white/95 backdrop-blur-sm p-2 rounded-full shadow-sm flex items-center gap-0.5">
+                <div className="w-2.5 h-2.5 border border-green-600 flex items-center justify-center">
+                  <div className="w-1 h-1 bg-green-600 rounded-full"></div>
+                </div>
+                <div className="w-2.5 h-2.5 border border-red-600 flex items-center justify-center">
+                  <div className="w-1 h-1 bg-red-600"></div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Status badges */}
@@ -66,10 +122,26 @@ const RestaurantCard = ({ restaurant, isLarge = false }) => {
 
         {/* Bottom section - Restaurant info */}
         <div className="text-white">
-          <h3 className={`font-bold mb-1 ${isLarge ? 'text-2xl' : 'text-xl'}`}>
+          <h3 className={`font-bold mb-1 ${
+            // Mobile sizing based on mobileCardType
+            mobileCardType === 'tall' ? 'text-base' :
+            mobileCardType === 'small' ? 'text-sm' : 'text-sm'
+          } ${
+            // Desktop sizing based on desktopCardType
+            desktopCardType === 'large' ? 'md:text-2xl' : 
+            desktopCardType === 'tall' ? 'md:text-xl' :
+            desktopCardType === 'small' ? 'md:text-lg' : 'md:text-xl'
+          }`}>
             {restaurant.name}
           </h3>
-          <p className={`text-white/90 mb-3 ${isLarge ? 'text-base' : 'text-sm'}`}>
+          <p className={`text-white/90 mb-3 ${
+            // Mobile sizing
+            mobileCardType === 'small' ? 'text-xs' : 'text-xs'
+          } ${
+            // Desktop sizing
+            desktopCardType === 'large' ? 'md:text-base' : 
+            desktopCardType === 'small' ? 'md:text-xs' : 'md:text-sm'
+          }`}>
             {restaurant.cuisine}
           </p>
           

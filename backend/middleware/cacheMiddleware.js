@@ -1,11 +1,11 @@
-import NodeCache from 'node-cache';
+import NodeCache from "node-cache";
 
 // Initialize cache with a standard TTL (Time To Live) of 10 minutes
 const cache = new NodeCache({ stdTTL: 600 });
 
 const cacheMiddleware = (req, res, next) => {
-    const key = req.originalUrl; // Use the URL as the cache key
-    const cachedResponse = cache.get(key);
+  const key = req.originalUrl; // Use the URL as the cache key
+  const cachedResponse = cache.get(key);
 
     if (cachedResponse) {
         console.log(`Cache hit for key: ${key}`);

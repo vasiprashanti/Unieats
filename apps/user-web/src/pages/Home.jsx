@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 // --- Helper Components for Icons ---
 // You can replace these with an icon library like lucide-react or Font Awesome if you have it installed.
@@ -86,17 +88,41 @@ const IPhoneMockup = () => (
   </div>
 );
 
-const Header = () => (
-  <header className="sticky top-0 z-10 flex justify-between items-center px-[5%] py-4 bg-[#121214] border-b border-[#111]">
-    <h1 className="text-[2.4rem] font-extrabold text-[#ff802c]">UniEats</h1>
-    <nav className="flex items-center space-x-[30px] text-[#ff802c] font-semibold text-[1.1rem] md:text-[1.2rem]">
-      <a href="#benefits" className="hover:text-white transition-colors">Perks</a>
-      <a href="#contact" className="hover:text-white transition-colors">Contact</a>
-    </nav>
-  </header>
-);
+const Header = () => {
+  const { user } = useAuth();
+  
+  return (
+    <header className="sticky top-0 z-10 flex justify-between items-center px-[5%] py-4 bg-[#121214] border-b border-[#111]">
+      <img 
+        src="/unilogo.jpg" 
+        alt="UniEats" 
+        className="h-10 w-auto object-contain"
+      />
+      <nav className="flex items-center space-x-[30px] text-[#ff802c] font-semibold text-[1.1rem] md:text-[1.2rem]">
+        <a href="#benefits" className="hover:text-white transition-colors">Perks</a>
+        <a href="#contact" className="hover:text-white transition-colors">Contact</a>
+        {user ? (
+          <Link 
+            to="/restaurants" 
+            className="px-4 py-2 bg-[#ff802c] text-black rounded-md text-sm font-medium hover:bg-[#ff6f17] transition-colors duration-200"
+          >
+            Browse Restaurants
+          </Link>
+        ) : (
+          <Link 
+            to="/login" 
+            className="px-3 py-2 rounded-md text-sm font-medium text-muted hover:text-white hover:bg-accent transition-colors duration-200"
+          >
+            Login
+          </Link>
+        )}
+      </nav>
+    </header>
+  );
+};
 
 const Hero = () => {
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const nameInputRef = useRef(null);
 
@@ -119,7 +145,7 @@ const Hero = () => {
         body: JSON.stringify({ name, email, phone })
       });
       if (res.ok) {
-        alert('You will be notified soon!');
+        alert('Entry received! Check Insta for weekly winner');
         console.log(res);
         setShowForm(false);
       } else {
@@ -246,8 +272,8 @@ const FaqItem = ({ question, answer }) => {
 const Faq = () => (
   <section id="faq" className="py-16 px-[5%]">
     <div className="text-left mb-8">
-      <p className="text-white text-[1.3rem] md:text-[2rem] font-semibold">Questions?</p>
-      <h2 className="text-[#ff802c] text-[2.8rem] md:text-[3.2rem] font-extrabold leading-tight">We've got answers</h2>
+      <p className="text-white text-[1.3rem] md:text-[2rem] font-semibold">Confused?</p>
+      <h2 className="text-[#ff802c] text-[2.8rem] md:text-[3.2rem] font-extrabold leading-tight">Let’s spill the tea</h2>
     </div>
     <div className="w-full space-y-3">
       <FaqItem question="When will UniEats launch?" answer="Taking orders from September last week – get ready!

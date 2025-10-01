@@ -1,24 +1,103 @@
-import express from 'express';
-import { createReview } from '../controllers/reviewController.js';
-import { placeOrder, confirmUpiPayment, getUserOrders } from '../controllers/userOrderController.js';
-import { verifyFirebaseToken } from '../middleware/authMiddleware.js';
+import express from "express";
+import { check, validationResult } from "express-validator";
+import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
+import {
+  getMe,
+  updateMe,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+  getAddresses,
+  setDefaultAddress,
+  toggleFavorite,
+  toggleNotificationPreference,
+} from "../controllers/userController.js";
 
-const router = express.Router();
+const userRouter = express.Router();
 
-// @route   POST /api/v1/user/reviews/:vendorId
-// @desc    Create a new review for a vendor
-// @access  Private (User must be logged in)
-router.post('/reviews/:vendorId', verifyFirebaseToken, createReview);
+// === PROFILE ROUTES ===
+// UPDATE current user's profile
+userRouter.put(
+  "/me",
+  verifyFirebaseToken,
+  [
+    check("name", "Name is required").optional().not().isEmpty(),
+    check("email", "Please include a valid email").optional().isEmail(),
+  ],
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+  updateMe
+);
 
-// Step 1: Place the order and get payment details
-router.post('/orders', verifyFirebaseToken, placeOrder);
+// === ADDRESS MANAGEMENT ROUTES ===
+// GET all addresses
+userRouter.get("/addresses", verifyFirebaseToken, getAddresses);
 
-// Step 2: Confirm the payment after user has paid via UPI app
-router.post('/orders/:orderId/confirm-payment', verifyFirebaseToken, confirmUpiPayment);
+// ADD new address
+userRouter.post(
+  "/addresses",
+  verifyFirebaseToken,
+  [
+    check("street", "Street is required").not().isEmpty(),
+    check("city", "City is required").not().isEmpty(),
+    check("state", "State is required").not().isEmpty(),
+    check("zipCode", "Zip code is required").not().isEmpty(),
+  ],
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+  addAddress
+);
 
-// @route   GET /api/v1/user/orders
-// @desc    Get all orders for the currently logged-in user
-// @access  Private
-router.get('/orders', verifyFirebaseToken, getUserOrders);
+// UPDATE address by ID
+userRouter.put(
+  "/addresses/:id",
+  verifyFirebaseToken,
+  [
+    check("street", "Street is required").optional().not().isEmpty(),
+    check("city", "City is required").optional().not().isEmpty(),
+    check("state", "State is required").optional().not().isEmpty(),
+    check("zipCode", "Zip code is required").optional().not().isEmpty(),
+  ],
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+  updateAddress
+);
 
-export default router;
+// DELETE address by ID
+userRouter.delete("/addresses/:id", verifyFirebaseToken, deleteAddress);
+
+// SET default address
+userRouter.patch(
+  "/addresses/:id/default",
+  verifyFirebaseToken,
+  setDefaultAddress
+);
+
+// === FAVORITES ROUTES ===
+// TOGGLE favorite restaurant
+userRouter.patch("/favorites/:vendorId", verifyFirebaseToken, toggleFavorite);
+
+// === NOTIFICATION PREFERENCES ===
+// TOGGLE notification preference
+userRouter.patch(
+  "/notifications/toggle",
+  verifyFirebaseToken,
+  toggleNotificationPreference
+);
+
+export default userRouter;

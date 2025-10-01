@@ -9,19 +9,24 @@ const router = express.Router();
 
 // --- PUBLIC ROUTES (Cached) ---
 // Get all active content (banners, FAQs, etc.)
-router.get('/', cacheMiddleware, getAllContent);
+router.get("/", cacheMiddleware, getAllContent);
 // Get a single piece of content by ID
-router.get('/:id', cacheMiddleware, getContentById);
-
+router.get("/:id", cacheMiddleware, getContentById);
 
 // --- ADMIN-ONLY ROUTES ---
-const adminProtected = [verifyFirebaseToken, checkRole('admin')];
+// const adminProtected = [verifyFirebaseToken, checkRole("admin")];
+const adminProtected = [checkRole("admin")];
 
 // Create new content
-router.post('/', ...adminProtected, uploadImage.single('image'), createContent);
+router.post("/", ...adminProtected, uploadImage.single("image"), createContent);
 // Update content
-router.put('/:id', ...adminProtected, uploadImage.single('image'), updateContent);
+router.put(
+  "/:id",
+  ...adminProtected,
+  uploadImage.single("image"),
+  updateContent
+);
 // Delete content
-router.delete('/:id', ...adminProtected, deleteContent);
+router.delete("/:id", ...adminProtected, deleteContent);
 
 export default router;

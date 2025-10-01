@@ -1,38 +1,81 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import DropdownMenu, { DropdownItem, DropdownDivider } from '../ui/DropdownMenu';
 
 const Navbar = () => {
   const { isDarkMode, toggleTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { totalItems } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Search functionality
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const isActive = (path) => {
     return location.pathname === path;
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      // Navigate to restaurants page with search query
+      navigate(`/restaurants?search=${encodeURIComponent(searchTerm.trim())}`);
+      setIsSearchOpen(false);
+      setSearchTerm('');
+    }
+  };
+
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (!isSearchOpen) {
+      // Focus on search input after animation
+      setTimeout(() => {
+        const searchInput = document.getElementById('navbar-search');
+        if (searchInput) searchInput.focus();
+      }, 100);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/home');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
   const navLinks = [
     { name: 'Home', path: '/home' },
-    { name: 'Orders', path: '/orders', protected: true },
+    { name: 'Eats', path: '/restaurants' },
+    { name: 'Cart', path: '/cart' },
     { name: 'Profile', path: '/profile', protected: true }
   ];
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg border-b border-base transition-all duration-300" 
-         style={{ backgroundColor: 'hsl(var(--background) / 0.9)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="hidden md:flex fixed top-0 left-1/2 transform -translate-x-1/2 z-50 bg-white/92 backdrop-blur-md border border-black/5 rounded-2xl shadow-lg transition-all duration-300 mt-0 w-[90%] max-w-[1100px]" 
+         style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+      <div className="w-full px-5 py-2">
+        <div className="flex justify-between items-center h-12">
           {/* Logo */}
           <Link to="/home" className="flex-shrink-0">
             <div className="flex items-center">
-              <span className="text-2xl font-bold text-[#FF6B35]">UniEats</span>
+              <img 
+                src="/unilogo.jpg" 
+                alt="UniEats" 
+                className="h-10 w-auto object-contain cursor-pointer"
+              />
             </div>
           </Link>
 
           {/* Navigation Links */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8">
+            <div className="flex items-center space-x-6">
               {navLinks.map((link) => {
                 // Skip protected routes if user is not logged in
                 if (link.protected && !user) return null;
@@ -41,11 +84,7 @@ const Navbar = () => {
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                      isActive(link.path)
-                        ? 'text-[hsl(var(--primary))] bg-accent'
-                        : 'text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent'
-                    }`}
+                    className="text-base font-normal text-[#ff8641] hover:text-[#ff7d46] hover:scale-110 transition-all duration-200"
                   >
                     {link.name}
                   </Link>
@@ -56,6 +95,46 @@ const Navbar = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
+            {/* Search Bar */}
+            <div className="relative">
+              {isSearchOpen ? (
+                <form onSubmit={handleSearchSubmit} className="flex items-center">
+                  <input
+                    id="navbar-search"
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search restaurants..."
+                    className="w-64 pl-4 pr-10 py-2 text-sm border border-base rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all duration-200"
+                    style={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      color: 'hsl(var(--foreground))',
+                      borderColor: 'hsl(var(--border))'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-muted hover:text-[hsl(var(--foreground))] transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </form>
+              ) : (
+                <button
+                  onClick={toggleSearch}
+                  className="p-2 rounded-lg transition-all duration-200 text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent"
+                  aria-label="Search restaurants"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -79,36 +158,72 @@ const Navbar = () => {
               className="p-2 rounded-lg transition-all duration-200 relative text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6m-8 0V9a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18l-2 8H7L5 3H2"/>
+                <circle cx="9" cy="20" r="1"/>
+                <circle cx="20" cy="20" r="1"/>
               </svg>
-              {/* Cart badge - you can implement cart count logic here */}
-              {/* <span className="absolute -top-1 -right-1 bg-[#FF6B35] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span> */}
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#ff6600] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] font-medium">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
             </Link>
 
             {/* User Menu */}
             {user ? (
-              <div className="relative">
-                <Link
-                  to="/profile"
-                  className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent"
-                >
-                  <div className="w-8 h-8 bg-[#FF6B35] rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">
-                      {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
-                    </span>
+              <DropdownMenu
+                trigger={
+                  <div className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent">
+                    <div className="w-8 h-8 bg-[#FF6B35] rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">
+                        {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
+                      </span>
+                    </div>
+                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
-                </Link>
-              </div>
+                }
+              >
+                <DropdownItem
+                  to="/orders"
+                  icon={
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  }
+                >
+                  Past Orders
+                </DropdownItem>
+                <DropdownItem
+                  to="/profile"
+                  icon={
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  }
+                >
+                  Account Settings
+                </DropdownItem>
+                <DropdownDivider />
+                <DropdownItem
+                  onClick={handleLogout}
+                  variant="danger"
+                  icon={
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  }
+                >
+                  Logout
+                </DropdownItem>
+              </DropdownMenu>
             ) : (
               <Link
                 to="/login"
-                className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-                style={{ 
-                  backgroundColor: 'hsl(var(--primary))', 
-                  color: 'hsl(var(--primary-foreground))' 
-                }}
+                className="px-3 py-2 rounded-md text-sm font-medium text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent transition-colors duration-200"
               >
-                Sign In
+                Login
               </Link>
             )}
           </div>

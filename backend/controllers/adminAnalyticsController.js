@@ -7,8 +7,7 @@ const getBasicAnalytics = async (req, res) => {
         const totalUsers = await User.countDocuments({ role: 'user' });
         const totalVendors = await Vendor.countDocuments();
         const approvedVendors = await Vendor.countDocuments({ approvalStatus: 'approved' });
-        // const totalOrders = await Order.countDocuments(); // Placeholder for when you have an Order model
-
+        const totalOrders = await Order.countDocuments(); 
         res.status(200).json({
             success: true,
             data: {
@@ -16,7 +15,7 @@ const getBasicAnalytics = async (req, res) => {
                 totalVendors,
                 approvedVendors,
                 pendingVendors: totalVendors - approvedVendors,
-                // totalOrders,
+                totalOrders,
             }
         });
     } catch (error) {
