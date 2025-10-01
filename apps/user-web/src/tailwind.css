@@ -122,3 +122,14 @@ body {
   -webkit-box-orient: unset;
   overflow: visible;
 }
+
+
+
+@layer utilities {
+  .bg-notebook {
+    background-image: 
+      repeating-linear-gradient(white, white 28px, #d2d3d4 29px),
+      linear-gradient(to right, #ef4444 60px, transparent 60px);
+    background-size: 100% 30px, 100% 100%;
+  }
+}

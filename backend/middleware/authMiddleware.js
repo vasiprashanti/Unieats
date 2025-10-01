@@ -37,7 +37,11 @@ const verifyFirebaseToken = async (req, res, next) => {
         .status(401)
         .json({ message: "Unauthorized: Token has expired." });
     }
+<<<<<<< HEAD
     return res.status(403).json({ message: "Forbidden: Invalid token." ,payLoad:{error}});
+=======
+      return res.status(403).json({ message: "Forbidden: Invalid token." ,payLoad:{error}});
+>>>>>>> 1f0c963526dd6afa7d16d5f0d8ef25a4d5b1b70c
   }
 };
 
