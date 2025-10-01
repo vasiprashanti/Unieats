@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getRestaurants } from '../api/restaurants';
-import { useTheme } from '../context/ThemeContext';
-import Navbar from '../components/Navigation/Navbar';
-import MobileHeader from '../components/Navigation/MobileHeader';
 
 export default function RestaurantList() {
-  const { isDarkMode, toggleTheme } = useTheme();
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
@@ -61,7 +58,37 @@ export default function RestaurantList() {
     }
   }, [location.search]);
 
-  const fetchRestaurants = async () => {
+  // Handle category selection with smooth scroll and filtering
+  const handleCategoryClick = (categoryId) => {
+    const newActiveCategory = activeCategory === categoryId ? null : categoryId;
+    setActiveCategory(newActiveCategory);
+    
+    // Filter restaurants based on selected category
+    if (newActiveCategory) {
+      const selectedCategory = categories.find(cat => cat.id === newActiveCategory);
+      const filtered = allRestaurants.filter(restaurant => 
+        selectedCategory.cuisines.some(cuisine => 
+          restaurant.cuisine?.toLowerCase().includes(cuisine.toLowerCase())
+        )
+      );
+      setFilteredRestaurants(filtered);
+      setRestaurants(filtered);
+    } else {
+      setFilteredRestaurants(allRestaurants);
+      setRestaurants(allRestaurants);
+    }
+    
+    // Smooth scroll to restaurants section
+    const restaurantsSection = document.querySelector('.restaurants-section');
+    if (restaurantsSection) {
+      restaurantsSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+   const fetchRestaurants = async () => {
     setLoading(true);
     try {
       const response = await getRestaurants(filters);
@@ -106,9 +133,10 @@ export default function RestaurantList() {
     }
   };
 
+
   useEffect(() => {
     fetchRestaurants();
-  }, [filters]);
+  }, []);
 
   const handleSortChange = (e) => {
     const newSortBy = e.target.value;
@@ -125,18 +153,20 @@ export default function RestaurantList() {
     }));
   };
 
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
   return (
-    <div className="min-h-screen transition-colors duration-300" 
+    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark-mode bg-gray-900 text-white' : 'bg-white text-black'}`} 
          style={{
-           backgroundColor: 'hsl(var(--background))',
-           color: 'hsl(var(--foreground))',
            margin: 0,
            fontFamily: "'DM Sans', sans-serif",
            textAlign: 'center',
            padding: 0
          }}>
       
-      {/* CSS Styles - embedded for complete control */}
+      {/* CSS Styles */}
       <style jsx>{`
         * {
           scrollbar-width: none;
@@ -309,6 +339,10 @@ export default function RestaurantList() {
           .category-card span {
             font-size: 0.8rem;
           }
+          
+          .category-card:not(.active):active img {
+            transform: scale(0.98);
+          }
         }
 
         /* Tablets and Desktop: Subtle Arc effect */
@@ -327,13 +361,15 @@ export default function RestaurantList() {
           .category-card:nth-child(6) { transform: translateY(10px); }
           .category-card:nth-child(7) { transform: translateY(25px); }
 
-          /* Enhanced active state for larger screens */
           .category-card.active {
-            transform: scale(1.3) translateY(-20px) !important;
-            z-index: 10;
+            position: relative;
           }
 
-          /* Hover effects for larger screens */
+          .category-card:not(.active):hover img {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+          
           .category-card:hover {
             transform: translateY(calc(var(--y-offset, 0px) - 5px));
           }
@@ -347,7 +383,6 @@ export default function RestaurantList() {
           scrollbar-width: none;
         }
 
-        /* Dark mode for categories */
         .dark-mode .category-card span {
           color: #fff;
         }
@@ -357,7 +392,7 @@ export default function RestaurantList() {
 
         /* Restaurant Cards */
         .restaurant-card {
-          background: hsl(var(--card));
+          background: #fff;
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -393,7 +428,7 @@ export default function RestaurantList() {
         .restaurant-info .name-rating {
           font-weight: 700;
           font-size: 1rem;
-          color: hsl(var(--foreground));
+          color: #222;
           transition: color 0.3s;
         }
 
@@ -404,7 +439,6 @@ export default function RestaurantList() {
           transition: color 0.3s;
         }
 
-        /* Dark mode for restaurant cards */
         .dark-mode .restaurant-card {
           background: #1e1e1e;
           box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -451,7 +485,7 @@ export default function RestaurantList() {
               fontSize: '1.2rem'
             }}
           >
-            {isDarkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+            {isDarkMode ? '☀️' : '🌙'}
           </button>
         </div>
       </nav>
@@ -465,7 +499,7 @@ export default function RestaurantList() {
         <img src="/unilogo.jpg" alt="UniEats" className="h-6" />
         <div className="flex items-center text-sm font-medium text-gray-800 cursor-pointer">
           University Campus
-          <i className="fas fa-chevron-down ml-2 text-xs text-gray-600"></i>
+          <span className="ml-2 text-xs">▼</span>
         </div>
         <button 
           onClick={toggleTheme}
@@ -475,7 +509,7 @@ export default function RestaurantList() {
             fontSize: '1.2rem'
           }}
         >
-          {isDarkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+          {isDarkMode ? '☀️' : '🌙'}
         </button>
       </div>
 
@@ -484,17 +518,17 @@ export default function RestaurantList() {
            style={{
              boxShadow: '0 4px 12px rgba(0,0,0,0.12)'
            }}>
-        <a href="/home" className="no-underline">
-          <i className="fas fa-home text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        <a href="/home" className="no-underline text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125">
+          🏠
         </a>
-        <a href="/restaurants" className="no-underline">
-          <i className="fas fa-utensils text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        <a href="/restaurants" className="no-underline text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125">
+          🍴
         </a>
-        <a href="/cart" className="no-underline">
-          <i className="fas fa-shopping-cart text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        <a href="/cart" className="no-underline text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125">
+          🛒
         </a>
-        <a href="/profile" className="no-underline">
-          <i className="fas fa-user text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125"></i>
+        <a href="/profile" className="no-underline text-2xl text-orange-500 cursor-pointer transition-transform duration-200 hover:scale-125">
+          👤
         </a>
       </nav>
 
@@ -512,22 +546,20 @@ export default function RestaurantList() {
 
       {/* Categories Section */}
       <section className="mx-auto max-w-5xl text-center pt-8 px-4">
-        <h1 className="font-black text-6xl md:text-8xl m-0 pt-8 transition-colors duration-300"
+        <h1 className="font-black text-6xl md:text-8xl text-black m-0 pt-8 transition-colors duration-300"
             style={{
               fontFamily: "'Poppins', sans-serif",
               fontSize: 'clamp(2.5rem, 8vw, 8rem)',
-              color: 'hsl(var(--foreground))',
               transform: 'perspective(1000px) rotateX(0deg)',
               transformOrigin: 'bottom center',
               transition: 'transform 1.3s ease-out, color 0.3s'
             }}>
           CATEGORIES
         </h1>
-        <h4 className="font-medium text-sm md:text-base my-2 mb-6"
+        <h4 className="font-medium text-gray-600 text-sm md:text-base my-2 mb-6"
             style={{
               fontFamily: "'Poppins', sans-serif",
-              fontSize: 'clamp(0.86rem, 1.3vw, 2rem)',
-              color: 'hsl(var(--muted-foreground))'
+              fontSize: 'clamp(0.86rem, 1.3vw, 2rem)'
             }}>
           From Cheeeesy Slices to juicy burgers, pick your craving.
         </h4>
@@ -557,27 +589,25 @@ export default function RestaurantList() {
       </section>
 
       {/* Restaurants Section */}
-      <section className="w-full max-w-5xl mx-auto text-center bg-white px-4 pb-10">
+      <section className="restaurants-section w-full max-w-5xl mx-auto text-center bg-white px-4 pb-10">
         <h2 className="font-black text-6xl md:text-8xl text-black m-0 pt-8 transition-colors duration-300"
             style={{
               fontFamily: "'Poppins', sans-serif",
-              fontSize: 'clamp(2.5rem, 8vw, 8rem)',
-              color: 'hsl(var(--foreground))'
+              fontSize: 'clamp(2.5rem, 8vw, 8rem)'
             }}>
           EATERIES
         </h2>
-        <h4 className="font-medium text-sm md:text-base my-3 mb-6 transition-colors duration-300"
+        <h4 className="font-medium text-gray-600 text-sm md:text-base my-3 mb-6"
             style={{
               fontFamily: "'Poppins', sans-serif",
-              fontSize: 'clamp(0.9rem, 1.5vw, 2rem)',
-              color: 'hsl(var(--muted-foreground))'
+              fontSize: 'clamp(0.9rem, 1.5vw, 2rem)'
             }}>
           Top rated restaurants near you
         </h4>
 
         {/* Filters Container */}
         <div className="flex justify-between items-center my-4 mb-6 px-4 max-w-lg mx-auto">
-          {/* Veg Switch - Exact HTML Match */}
+          {/* Veg Switch */}
           <div className="switch">
             <input
               type="checkbox"
@@ -592,11 +622,9 @@ export default function RestaurantList() {
             id="sortSelect"
             value={sortBy}
             onChange={handleSortChange}
-            className="flex-shrink-0 h-8 rounded-xl border px-2 text-sm cursor-pointer outline-none transition-all duration-200 shadow-sm"
+            className="flex-shrink-0 h-8 rounded-xl border border-gray-300 px-2 text-sm bg-white text-gray-800 cursor-pointer outline-none transition-all duration-200 shadow-sm"
             style={{
-              backgroundColor: 'hsl(var(--card))',
-              color: 'hsl(var(--card-foreground))',
-              borderColor: 'hsl(var(--border))',
+              borderColor: '#ddd',
               boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
             }}
           >
@@ -613,114 +641,98 @@ export default function RestaurantList() {
           <div className="flex justify-center items-center py-16">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-              <span className="font-medium" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                Finding delicious restaurants...
-              </span>
+              <span className="font-medium text-gray-600">Finding delicious restaurants...</span>
             </div>
           </div>
         ) : (
           <>
-  {/* Restaurants Grid */}
-  {restaurants.length > 0 ? (
-    <div
-      className="mt-3 grid gap-4 justify-center justify-items-center items-start w-full max-w-5xl mx-auto"
-      style={{
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-      }}
-    >
-      {restaurants.map((restaurant) => {
-        const restaurantName =
-          restaurant.name ||
-          restaurant.businessName ||
-          restaurant.title ||
-          restaurant.restaurantName;
-        const localImage = restaurantImages[restaurantName];
-        const finalImage =
-          localImage ||
-          restaurant.image ||
-          restaurant.logo ||
-          restaurant.photo ||
-          'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=300&fit=crop&crop=center';
+            {/* Restaurants Grid */}
+            {filteredRestaurants.length > 0 ? (
+              <div className="mt-3 grid gap-6 justify-center justify-items-center items-start w-full mx-auto px-4 grid-cols-2 md:grid-cols-4">
+                {filteredRestaurants.map((restaurant) => {
+                  const restaurantName = restaurant.name || restaurant.businessName || restaurant.title || restaurant.restaurantName;
+                  const localImage = restaurantImages[restaurantName];
+                  const finalImage = localImage || restaurant.image || restaurant.logo || restaurant.photo || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=300&h=300&fit=crop&crop=center';
 
-        return (
-          <div
-            key={restaurant.id}
-            className="restaurant-card cursor-pointer"
-            onClick={() => navigate(`/restaurants/${restaurant._id}`)}
-          >
-            <img src={finalImage} alt={restaurantName} />
-            <div className="restaurant-info">
-              <div className="name-rating">{restaurantName}</div>
-              <div className="cuisine">
-                {restaurant.cuisine || 'Multi-cuisine'} •{' '}
-                {restaurant.rating || '4.2'} ⭐ •{' '}
-                {restaurant.deliveryTime || '30-45'} min
+                  return (
+                    <div
+                      key={restaurant.id}
+                      className="restaurant-card cursor-pointer"
+                      onClick={() => navigate(`/restaurants/${restaurant._id}`)}
+                    >
+                      <img src={finalImage} alt={restaurantName} />
+                      <div className="restaurant-info">
+                        <div className="name-rating">
+                          {restaurantName} • {restaurant.rating || '4.2'}
+                        </div>
+                        <div className="cuisine">
+                          {restaurant.cuisine || 'Multi-cuisine'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  ) : (
-    <div className="text-center py-16">
-      <div className="mb-4">
-        <span className="text-6xl">🔍</span>
-      </div>
-      <h3 className="text-xl font-semibold mb-2 text-gray-900">
-        No restaurants found
-      </h3>
-      <p className="mb-6 text-gray-600">
-        Try adjusting your filters to find more options.
-      </p>
-      <button
-        onClick={() => {
-          setIsVegOnly(false);
-          setSortBy('relevance');
-          setFilters({
-            search: '',
-            sortBy: 'relevance',
-            dietType: 'all',
-          });
-        }}
-        className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors"
-      >
-        Clear all filters
-      </button>
-    </div>
-  )}
-</>
-
+            ) : (
+              <div className="text-center py-16">
+                <div className="mb-4">
+                  <span className="text-6xl">🔍</span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900">
+                  No restaurants found
+                </h3>
+                <p className="mb-6 text-gray-600">
+                  Try adjusting your filters to find more options.
+                </p>
+                <button
+                  onClick={() => {
+                    setIsVegOnly(false);
+                    setSortBy('relevance');
+                    setActiveCategory(null);
+                    setFilters({
+                      search: '',
+                      sortBy: 'relevance',
+                      dietType: 'all',
+                    });
+                    setFilteredRestaurants(allRestaurants);
+                  }}
+                  className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
       {/* Footer */}
       <footer className="w-full bg-transparent p-0 box-border transition-all duration-300 mt-16">
-        <div className="mx-auto rounded-t-3xl p-6 md:p-10 shadow-lg flex flex-col md:flex-row md:flex-wrap justify-between items-center md:items-start gap-6 transition-all duration-300 text-center md:text-left"
+        <div className="mx-auto bg-white rounded-t-3xl p-6 md:p-10 shadow-lg flex flex-col md:flex-row md:flex-wrap justify-between items-center md:items-start gap-6 transition-all duration-300 text-center md:text-left"
              style={{
-               backgroundColor: 'hsl(var(--card))',
                borderRadius: '20px 20px 0 0',
                boxShadow: '0 -6px 16px rgba(0,0,0,0.08)'
              }}>
           
           {/* Site Section */}
           <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
-            <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Site</h4>
-            <a href="/home" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Home</a>
-            <a href="/restaurants" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Restaurants</a>
-            <a href="/cart" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Cart</a>
-            <a href="/profile" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Profile</a>
+            <h4 className="font-semibold text-base mb-2">Site</h4>
+            <a href="/home" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Home</a>
+            <a href="/restaurants" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Restaurants</a>
+            <a href="/cart" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Cart</a>
+            <a href="/profile" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Profile</a>
           </div>
 
           {/* Legal Section */}
           <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
-            <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Legal</h4>
-            <a href="#" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Privacy Policy</a>
-            <a href="#" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Terms & Conditions</a>
+            <h4 className="font-semibold text-base mb-2">Legal</h4>
+            <a href="#" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Privacy Policy</a>
+            <a href="#" className="text-gray-700 no-underline transition-colors duration-200 hover:text-orange-500">Terms & Conditions</a>
           </div>
 
           {/* Follow Us Section */}
           <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
-            <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Follow Us</h4>
+            <h4 className="font-semibold text-base mb-2">Follow Us</h4>
             <div className="flex gap-4 justify-center md:justify-start">
               <span className="text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500">📘</span>
               <span className="text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500">📷</span>
@@ -783,8 +795,6 @@ export default function RestaurantList() {
         .dark-mode footer a:hover {
           color: #ff7e2d !important;
         }
-
-        /* Dark mode for content overlay */
         .dark-mode section.bg-white {
           background: #1e1e1e !important;
         }
