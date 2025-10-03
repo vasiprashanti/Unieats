@@ -1,11 +1,8 @@
 import express from "express";
 import { check } from "express-validator";
-import {
-  placeOrder,
-  confirmPayment,
-  vendorConfirmOrder,
-} from "../controllers/paymentController.js";
+import { placeOrder, confirmUpiPayment} from "../controllers/userOrderController.js";
 import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
+import { updateOrderStatus} from "../controllers/vendorController.js";
 
 const router = express.Router();
 const authenticated = [verifyFirebaseToken];
@@ -30,10 +27,10 @@ router.post(
 
 // @route   PATCH /api/v1/payments/confirm/:orderId
 // Delivery agent confirms the payment
-router.patch("/confirm/:orderId", ...authenticated, confirmPayment);
+router.patch("/confirm/:orderId", ...authenticated, confirmUpiPayment);
 
 // @route   PATCH /api/v1/payments/vendor-confirm/:orderId
 // Vendor confirms order (changes status from pending to accepted)
-router.patch("/vendor-confirm/:orderId", ...authenticated, vendorConfirmOrder);
+router.patch("/vendor-confirm/:orderId", ...authenticated, updateOrderStatus);
 
 export default router;

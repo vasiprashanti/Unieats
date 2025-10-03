@@ -1,27 +1,43 @@
-import NodeCache from "node-cache";
+import NodeCache from 'node-cache';
 
-// Initialize cache with a standard TTL (Time To Live) of 10 minutes
-const cache = new NodeCache({ stdTTL: 600 });
+// Initialize the cache. The stdTTL is the default time-to-live in seconds for every key.
+const myCache = new NodeCache({ stdTTL: 120 }); // Default cache for 2 minutes
 
-const cacheMiddleware = (req, res, next) => {
-  const key = req.originalUrl; // Use the URL as the cache key
-  const cachedResponse = cache.get(key);
+const cacheMiddleware = (duration) => (req, res, next) => {
+    // --- THIS IS THE KEY GENERATION ---
+    // We create a unique key for each request based on its URL.
+    const key = req.originalUrl || req.url;
 
+    // --- THIS IS THE FIX ---
+    // 1. Safety Check: If for some reason we couldn't generate a key,
+    //    we skip the cache entirely to prevent a crash.
+    if (!key) {
+        return next();
+    }
+
+    // 2. Check if we have a cached response for this key.
+    const cachedResponse = myCache.get(key);
+
+    // If a cached response exists, send it immediately.
     if (cachedResponse) {
-        console.log(`Cache hit for key: ${key}`);
-        return res.status(200).json(cachedResponse);
+        console.log(`CACHE HIT: Serving from cache for key: ${key}`);
+        return res.send(cachedResponse);
     } else {
-        console.log(`Cache miss for key: ${key}`);
-        // If not in cache, proceed to the controller, but override res.json
-        const originalJson = res.json;
-        res.json = (body) => {
-            // Cache the response before sending it
-            cache.set(key, body);
-            originalJson.call(res, body);
+        // If no cached response, we prepare to create one.
+        console.log(`CACHE MISS: No cache found for key: ${key}`);
+        
+        // We hijack the 'send' function.
+        const originalSend = res.send;
+        res.send = (body) => {
+            // When the controller is done and calls 'res.send()',
+            // we will cache the response body before sending it.
+            myCache.set(key, body, duration);
+            originalSend.call(res, body);
         };
         next();
     }
 };
+
 
 // Function to clear cache, useful for admin actions
 const clearCache = (key) => {

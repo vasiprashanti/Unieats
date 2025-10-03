@@ -158,6 +158,57 @@ const updateVendorProfile = async (req, res) => {
     }
 };
 
+// GET all orders for a vendor, with advanced filtering
+const getVendorOrders = async (req, res) => {
+    try {
+        // 1. SECURITY: Find the vendor profile for the logged-in user
+        // This is the most important step. We need the vendor's specific ID
+        // to ensure we only fetch THEIR orders.
+        const vendorProfile = await Vendor.findOne({ owner: req.user._id });
+        if (!vendorProfile) {
+            return res.status(403).json({ message: "Vendor profile not found. You are not authorized to view orders." });
+        }
+
+        // 2. FILTERING LOGIC: Build a dynamic query object
+        // We start with the base security filter: only find orders for this vendor.
+        const query = { vendor: vendorProfile._id };
+
+        // Now, we check for optional filters from the URL (req.query)
+        // Example: /orders?status=pending
+        const { status, date } = req.query; 
+
+        if (status) {
+            query.status = status;
+        }
+        
+        // Example date filter: /orders?date=2025-10-03
+        if (date) {
+            const startDate = new Date(date);
+            const endDate = new Date(date);
+            endDate.setDate(endDate.getDate() + 1); // Get all orders from the start of the day to the end
+            query.createdAt = { $gte: startDate, $lt: endDate };
+        }
+        
+        // 3. EXECUTE THE QUERY
+        // We use our dynamically built 'query' object to find the matching orders.
+        const orders = await Order.find(query)
+            .populate('user', 'name') // Pull in the customer's name for display
+            .sort({ createdAt: -1 }); // Show the newest orders first
+            
+        // 4. SEND THE RESPONSE
+        res.status(200).json({ 
+            success: true,
+            count: orders.length,
+            orders: orders 
+        });
+
+    } catch (error) {
+        console.error("Error fetching vendor orders:", error);
+        res.status(500).json({ message: "Server error while fetching orders." });
+    }
+};
+
+
 const updateOrderStatus = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -179,7 +230,7 @@ const updateOrderStatus = async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to update this order.' });
         }
         
-        // --- Order Status Transition Validation (State Machine) ---
+        // Order Status Transition Validation (State Machine)
         const currentStatus = order.status;
         const allowedTransitions = {
             pending: ['preparing', 'cancelled'],
@@ -199,7 +250,7 @@ const updateOrderStatus = async (req, res) => {
         
         const updatedOrder = await order.save();
 
-        // --- DAY 18: Socket.io Broadcasting for Status Changes ---
+        // Socket.io Broadcasting for Status Changes
         const io = req.app.get('socketio');
         // Notify the vendor's own dashboard
         io.to(vendorProfile._id.toString()).emit('order_update', updatedOrder);
@@ -308,5 +359,5 @@ const getVendorDetails = async (req, res) => {
   }
 };
 
-export { updateVendorProfile, getVendorProfile, updateOrderStatus};
+export { updateVendorProfile, getVendorProfile, updateOrderStatus, getVendorOrders };
 export { registerVendor, getAllVendors, getVendorDetails };

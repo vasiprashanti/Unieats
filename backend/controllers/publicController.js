@@ -1,7 +1,7 @@
-import Vendor from '../models/Vendor.js';
-import Content from '../models/Content.js';
-import MenuItem from '../models/MenuItem.js'; 
-import Review from '../models/Review.js'; 
+import Vendor from '../models/Vendor.model.js';
+import Content from '../models/Content.model.js';
+import MenuItem from '../models/MenuItem.model.js'; 
+import Review from '../models/Review.model.js'; 
 
 //  Get Published Banners 
 const getPublicBanners = async (req, res) => {

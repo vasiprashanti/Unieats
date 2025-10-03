@@ -1,3 +1,5 @@
+import mongoose, {Schema} from "mongoose";
+
 const cartItemSchema = new Schema({
     menuItem: {
         type: Schema.Types.ObjectId,
@@ -39,3 +41,5 @@ const cartSchema = new Schema({
 }, { timestamps: true });
 
 const Cart = mongoose.model('Cart', cartSchema);
+
+export default Cart;

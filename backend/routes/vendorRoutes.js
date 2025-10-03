@@ -1,10 +1,11 @@
 import express from 'express';
-import { registerVendor, updateVendorProfile, getVendorProfile  } from '../controllers/vendorController.js';
+import { registerVendor, updateVendorProfile, getVendorProfile, getAllVendors, getVendorDetails } from '../controllers/vendorController.js';
 import { verifyFirebaseToken } from '../middleware/authMiddleware.js';
+import { cacheMiddleware } from '../middleware/cacheMiddleware.js';
 import { uploadDocuments, uploadImage } from '../middleware/fileUpload.js';
-import { getVendorOrders, updateOrderStatus } from '../controllers/orderController.js';
-import { createMenuItem, getMenuItems, updateMenuItem, deleteMenuItem } from '../controllers/menuController.js';
-import { getVendorAnalytics } from '../controllers/analyticsController.js';
+import { getVendorOrders, updateOrderStatus } from '../controllers/vendorController.js';
+import { createMenuItem, getVendorMenu, updateMenuItem, deleteMenuItem } from '../controllers/menuController.js';
+import { getVendorAnalytics } from '../controllers/vendorAnalyticsController.js';
 import { getPayoutHistory, calculateCurrentPayout } from '../controllers/paymentController.js';
 
 const router = express.Router();
@@ -71,7 +72,7 @@ router.get('/orders', verifyFirebaseToken, getVendorOrders);
 router.patch('/orders/:orderId/status', verifyFirebaseToken, updateOrderStatus);
 
 router.post('/menu', verifyFirebaseToken, uploadImage.single('image'), createMenuItem);
-router.get('/menu', verifyFirebaseToken, getMenuItems);
+router.get('/menu', verifyFirebaseToken, getVendorMenu);
 router.patch('/menu/:itemId', verifyFirebaseToken, uploadImage.single('image'), updateMenuItem);
 router.delete('/menu/:itemId', verifyFirebaseToken, deleteMenuItem);
 

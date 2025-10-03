@@ -8,8 +8,9 @@ import initializeFirebaseAdmin from "./config/firebaseAdmin.js";
 import { cloudinaryConfig } from "./config/cloudinary.js";
 import { Server } from 'socket.io';
 import http from 'http';
-// import rateLimiter from "./middleware/rateLimiter.js";
+import rateLimiter from "./middleware/rateLimiter.js";
 // import errorHandler from './middleware/errorHandler.js';
+
 // Import Routes
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
