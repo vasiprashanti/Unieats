@@ -469,13 +469,14 @@ export default function RestaurantList() {
 
       {/* Categories Section */}
       <section className="mx-auto max-w-5xl text-center pt-8 px-4">
-        <h1 className="font-black text-6xl md:text-8xl text-black m-0 pt-8 transition-colors duration-300"
+        <h1 className="font-black text-6xl md:text-8xl text-black dark:text-white m-0 pt-8 transition-colors duration-300"
             style={{
               fontFamily: "'Poppins', sans-serif",
               fontSize: 'clamp(2.5rem, 8vw, 8rem)',
               transform: 'perspective(1000px) rotateX(0deg)',
               transformOrigin: 'bottom center',
-              transition: 'transform 1.3s ease-out, color 0.3s'
+              transition: 'transform 1.3s ease-out, color 0.3s',
+              color: 'hsl(var(--foreground))'
             }}>
           CATEGORIES
         </h1>
