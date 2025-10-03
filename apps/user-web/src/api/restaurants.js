@@ -153,7 +153,6 @@ export const getRestaurantMenu = async (restaurantId) => {
         'Content-Type': 'application/json'
       }
     });
-    console.log("ochindaa-",response);
     const data = await response.json();
     console.log('[getRestaurantMenu] Response:', data);
 

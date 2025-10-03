@@ -17,6 +17,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
 export default function Checkout() {
+  console.log('Checkout page loaded');
+  console.log('API_BASE_URL:', API_BASE_URL);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState("cod");
   const [showNewAddress, setShowNewAddress] = useState(false);
@@ -29,23 +31,42 @@ export default function Checkout() {
     phone: "",
   });
 
-  // Mock data - replace with actual API calls
-  const [savedAddresses] = useState([
-    {
-      id: 1,
-      label: "Hostel Room",
-      address: "Block A, Room 204, University Hostel, Main Campus",
-      landmark: "Near Library, Ground Floor Reception",
-      phone: "+91 98765 43210",
-    },
-    {
-      id: 2,
-      label: "Campus Canteen",
-      address: "Student Activity Center, 2nd Floor, Main Campus",
-      landmark: "Above Cafeteria, Next to Study Hall",
-      phone: "+91 98765 43210",
-    },
-  ]);
+  // Real-time address data from backend
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  // Fetch addresses from backend
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      console.log('Fetching addresses...');
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        console.log('User:', user);
+        if (!user) return;
+        const token = await user.getIdToken();
+        const res = await fetch(`${API_BASE_URL}/api/v1/users/addresses`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        console.log('Fetch response:', res);
+        try {
+          const data = await res.json();
+          console.log('Backend addresses response:', data);
+          setSavedAddresses(data.addresses || []);
+          if (data.addresses && data.addresses.length > 0) {
+            setSelectedAddress(data.addresses[0]);
+          }
+        } catch (err) {
+          console.error('Error parsing response:', err);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setSavedAddresses([]);
+      }
+    };
+    fetchAddresses();
+  }, []);
 
   const [cartItems] = useState([
     { id: 1, name: "Margherita Pizza", quantity: 1, price: 299 },
@@ -69,13 +90,41 @@ export default function Checkout() {
 
   const handleAddNewAddress = () => {
     if (newAddress.label && newAddress.address && newAddress.phone) {
-      const newAddr = {
-        id: Date.now(),
-        ...newAddress,
-      };
-      setSelectedAddress(newAddr);
-      setShowNewAddress(false);
-      setNewAddress({ label: "", address: "", landmark: "", phone: "" });
+      (async () => {
+        try {
+          const auth = getAuth();
+          const user = auth.currentUser;
+          if (!user) return;
+          const token = await user.getIdToken();
+          await fetch(`${API_BASE_URL}api/v1/users/addresses`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              label: newAddress.label,
+              street: newAddress.address, // or split into street/city/state/zipCode if needed
+              landmark: newAddress.landmark,
+              phone: newAddress.phone,
+            }),
+          });
+          // Refetch addresses
+          const res = await fetch(`${API_BASE_URL}api/v1/users/addresses`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await res.json();
+          setSavedAddresses(data.addresses || []);
+          setSelectedAddress(data.addresses[0]);
+          setShowNewAddress(false);
+          setNewAddress({ label: "", address: "", landmark: "", phone: "" });
+        } catch (err) {
+          // handle error
+        }
+      })();
     }
   };
 
@@ -444,10 +493,10 @@ export default function Checkout() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {savedAddresses.map((address) => (
                     <div
-                      key={address.id}
+                      key={address._id || address.id}
                       onClick={() => setSelectedAddress(address)}
                       className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
-                        selectedAddress?.id === address.id
+                        selectedAddress?._id === (address._id || address.id)
                           ? "border-orange-500 bg-orange-50 shadow-md"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
@@ -458,16 +507,24 @@ export default function Checkout() {
                             <span className="font-semibold text-gray-900">
                               {address.label}
                             </span>
-                            {selectedAddress?.id === address.id && (
+                            {selectedAddress?._id === (address._id || address.id) && (
                               <Check className="h-4 w-4 text-orange-500" />
                             )}
                           </div>
-                          <p className="text-gray-600 mb-2">
-                            {address.address}
+                          <p className="text-gray-600 mb-1">
+                            {address.street}
+                          </p>
+                          <p className="text-gray-600 mb-1">
+                            {address.city}, {address.state} - {address.zipCode}
                           </p>
                           {address.landmark && (
                             <p className="text-sm text-gray-500">
-                              {address.landmark}
+                              Landmark: {address.landmark}
+                            </p>
+                          )}
+                          {address.phone && (
+                            <p className="text-sm text-gray-500">
+                              Phone: {address.phone}
                             </p>
                           )}
                         </div>

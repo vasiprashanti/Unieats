@@ -198,13 +198,6 @@ export default function Profile() {
             isLoading={loading}
           />
 
-          {/* Payment Methods */}
-          <PaymentMethods
-            paymentMethods={paymentMethods}
-            onDeletePaymentMethod={handleDeletePaymentMethod}
-            isLoading={loading}
-          />
-
           {/* Account Actions */}
           <AccountActions
             onNavigateToOrders={handleNavigateToOrders}
