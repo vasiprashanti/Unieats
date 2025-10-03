@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapPin, Edit3, Trash2, Plus } from 'lucide-react';
+import { MapPin, Edit3, Trash2, Plus, Star } from 'lucide-react';
 import AddAddressModal from './AddAddressModal';
 import { auth } from '../../config/firebase';
 
@@ -11,6 +11,7 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [deletingAddressId, setDeletingAddressId] = useState(null);
+  const [settingDefaultId, setSettingDefaultId] = useState(null);
   const [error, setError] = useState(null);
 
   // Get auth token helper
@@ -172,12 +173,6 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
     }
   };
 
-  // Handle edit button click
-  const handleEditClick = (address) => {
-    setEditingAddress(address);
-    setIsModalOpen(true);
-  };
-
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
@@ -274,6 +269,20 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
                 </div>
 
                 <div className="flex items-center gap-2 ml-4">
+                  {!address.isDefault && (
+                    <button
+                      onClick={() => handleSetDefaultAddress(address._id || address.id)}
+                      disabled={settingDefaultId === (address._id || address.id)}
+                      className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Set as Default"
+                    >
+                      {settingDefaultId === (address._id || address.id) ? (
+                        <div className="w-4 h-4 border-2 border-orange-300 border-t-orange-500 rounded-full animate-spin"></div>
+                      ) : (
+                        <Star className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleEditClick(address)}
                     className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"

@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navigation/Navbar';
-import MobileHeader from '../components/Navigation/MobileHeader';
-import CategoryList from '../components/menu/CategoryList';
-import Bestsellers from '../components/menu/Bestsellers';
-import MenuItemCard from '../components/menu/MenuItemCard';
-import Toast from '../components/Toast';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getRestaurantMenu } from '../api/restaurants';
 import { useCart } from '../context/CartContext';
+
+import Navbar from '../components/Navigation/Navbar';
+import MobileHeader from '../components/Navigation/MobileHeader';
 
 export default function RestaurantMenu() {
   const { id: restaurantId } = useParams();
@@ -17,50 +14,59 @@ export default function RestaurantMenu() {
   const [menuData, setMenuData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [toast, setToast] = useState({ isVisible: false, message: '', type: 'success' });
+  const [collapsedCategories, setCollapsedCategories] = useState(new Set());
+  const [showCategoryPanel, setShowCategoryPanel] = useState(false);
+
+  // Sample menu data structure to match HTML
+  const SAMPLE_MENU = {
+    restaurant: {
+      name: "Subway",
+      image: "/images/M1.png",
+      rating: 4.5,
+      reviewCount: 100,
+      deliveryTime: '30-40 min',
+    },
+    bestsellers: [
+      { id: 1, name: "Italian B.M.T.", desc: "Salami, Pepperoni & Ham with veggies", price: 299, image: "/images/pizza.png" },
+      { id: 2, name: "Veggie Delight", desc: "Lettuce, tomato, cucumber & olives", price: 249, image: "/images/burger.png" }
+    ],
+    categories: {
+      "Subs": Array.from({length: 10}, (_, i) => ({ 
+        id: 100 + i, 
+        name: `Sub Item ${i + 1}`, 
+        desc: "Delicious freshly made sub", 
+        price: 299 + i * 10, 
+        image: "/images/sub4.jpg" 
+      })),
+      "Salads": Array.from({length: 10}, (_, i) => ({ 
+        id: 200 + i, 
+        name: `Salad ${i + 1}`, 
+        desc: "Fresh greens with toppings", 
+        price: 199 + i * 5, 
+        image: "/images/sub5.jpg" 
+      })),
+      "Wraps": Array.from({length: 10}, (_, i) => ({ 
+        id: 300 + i, 
+        name: `Wrap ${i + 1}`, 
+        desc: "Tasty wrap with sauces", 
+        price: 249 + i * 7, 
+        image: "/images/burger.png" 
+      }))
+    }
+  };
 
   // Load menu data
   useEffect(() => {
     const loadMenuData = async () => {
       try {
         setLoading(true);
-        const response = await getRestaurantMenu(restaurantId);
+        // For now, use sample data. Replace with actual API call
+        // const response = await getRestaurantMenu(restaurantId);
         
-        if (response.success) {
-          // Transform API response to match expected structure
-          const transformedData = {
-            restaurant: {
-              name: response.data.vendor.businessName,
-              image: response.data.vendor.image || '/placeholder-restaurant.jpg',
-              rating: response.data.vendor.rating || 4.5,
-              reviewCount: response.data.vendor.reviewCount || 100,
-              deliveryTime: response.data.vendor.deliveryTime || '30-40 min',
-            },
-            categories: response.data.menu.map(category => ({
-              id: category._id,
-              name: category.name,
-              itemCount: category.items.length
-            })),
-            menuItems: response.data.menu.flatMap(category =>
-              category.items.map(item => ({
-                ...item,
-                id: item._id,
-                categoryId: category._id
-              }))
-            ),
-            bestsellers: [] // Empty for now, can be populated if API provides bestseller data
-          };
-
-          setMenuData(transformedData);
-          
-          // Select first category by default
-          if (transformedData.categories.length > 0) {
-            setSelectedCategory(transformedData.categories[0]);
-          }
-        } else {
-          setError(response.error);
-        }
+        // Simulate loading time
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setMenuData(SAMPLE_MENU);
       } catch (err) {
         setError('Failed to load menu');
       } finally {
@@ -73,52 +79,70 @@ export default function RestaurantMenu() {
     }
   }, [restaurantId]);
 
-  // Get filtered menu items for selected category
-  const filteredMenuItems = useMemo(() => {
-    if (!menuData || !selectedCategory) return [];
-    return menuData.menuItems.filter(item => item.categoryId === selectedCategory.id);
-  }, [menuData, selectedCategory]);
-
-  // Get bestseller items
-  const bestsellerItems = useMemo(() => {
-    if (!menuData || !menuData.bestsellers) return [];
-    return menuData.menuItems.filter(item => 
-      menuData.bestsellers.includes(item.id)
-    );
-  }, [menuData]);
-
   // Handle adding items to cart
-  const handleAddToCart = (item) => {
-    addItem(item, restaurantId);
-    setToast({
-      isVisible: true,
-      message: `${item.name} added to cart`,
-      type: 'success'
+  const handleAddToCart = (itemId) => {
+    const item = getAllItems().find(item => item.id === itemId);
+    if (item) {
+      addItem(item, restaurantId);
+    }
+  };
+
+  const handleIncreaseQty = (itemId) => {
+    const currentQty = getItemQuantity(itemId);
+    updateQuantity(itemId, currentQty + 1);
+  };
+
+  const handleDecreaseQty = (itemId) => {
+    const currentQty = getItemQuantity(itemId);
+    if (currentQty > 1) {
+      updateQuantity(itemId, currentQty - 1);
+    } else {
+      updateQuantity(itemId, 0);
+    }
+  };
+
+  const toggleCategory = (categoryName) => {
+    setCollapsedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryName)) {
+        newSet.delete(categoryName);
+      } else {
+        newSet.add(categoryName);
+      }
+      return newSet;
     });
   };
 
-  // Handle quantity updates
-  const handleUpdateQuantity = (itemId, quantity) => {
-    updateQuantity(itemId, quantity);
+  const scrollToCategory = (categoryName) => {
+    const element = document.getElementById(`cat-${categoryName}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    // Close the category panel after scrolling
+    setShowCategoryPanel(false);
   };
 
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
+  const toggleCategoryPanel = () => {
+    setShowCategoryPanel(!showCategoryPanel);
   };
 
-  const handleBackClick = () => {
-    navigate(-1);
+  const getAllItems = () => {
+    if (!menuData) return [];
+    return [
+      ...menuData.bestsellers,
+      ...Object.values(menuData.categories).flat()
+    ];
   };
+
+
 
   if (loading) {
     return (
-      <div className="min-h-screen transition-colors duration-300" 
-           style={{ backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))' }}>
-        <Navbar />
+      <div className="min-h-screen bg-[#fefefe]">
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin mx-auto mb-4" />
-            <p style={{ color: 'hsl(var(--muted-foreground))' }}>Loading menu...</p>
+            <p className="text-gray-600">Loading menu...</p>
           </div>
         </div>
       </div>
@@ -127,15 +151,12 @@ export default function RestaurantMenu() {
 
   if (error) {
     return (
-      <div className="min-h-screen transition-colors duration-300" 
-           style={{ backgroundColor: 'hsl(var(--background))', color: 'hsl(var(--foreground))' }}>
-        <Navbar />
-        <MobileHeader />
-        <div className="flex items-center justify-center h-96 pt-20 md:pt-20">
+      <div className="min-h-screen bg-[#fefefe]">
+        <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <p className="text-red-500 mb-4">Failed to load menu: {error}</p>
             <button
-              onClick={handleBackClick}
+              onClick={() => navigate(-1)}
               className="px-4 py-2 bg-[#ff6600] text-white rounded-lg hover:bg-[#e55a00] transition-colors"
             >
               Go Back
@@ -149,174 +170,333 @@ export default function RestaurantMenu() {
   if (!menuData) return null;
 
   return (
-    <div className="min-h-screen transition-colors duration-300" 
-         style={{ backgroundColor: 'hsl(var(--background))' }}>
-      <Navbar />
-      <MobileHeader title={menuData.restaurant.name} showLogo={false} />
-      
-      {/* Restaurant Header - Rounded Container */}
-      <div className="px-4 pt-4 md:px-6 md:pt-6">
-        <div className="relative h-64 md:h-80 overflow-hidden rounded-3xl shadow-lg">
-          <img
-            src={menuData.restaurant.image}
-            alt={menuData.restaurant.name}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent rounded-3xl" />
-          
-          {/* Back Button */}
-          <button
-            onClick={handleBackClick}
-            className="absolute top-4 left-4 w-10 h-10 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          {/* Cart Button - Hidden on mobile (bottom nav handles cart) */}
-          <button
-            onClick={() => navigate('/cart')}
-            className="hidden md:flex absolute top-4 right-4 bg-[#ff6600] text-white px-4 py-2 rounded-lg items-center space-x-2 hover:bg-[#e55a00] transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6m-8 0V9a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h4" />
-            </svg>
-            <span>{totalItems}</span>
-          </button>
-          
-          {/* Restaurant Info Overlay */}
-          <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6 text-white">
-            <h1 className="text-2xl md:text-4xl font-bold mb-2">{menuData.restaurant.name}</h1>
-            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm">
-              <div className="flex items-center space-x-1">
-                <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                </svg>
-                <span>{menuData.restaurant.rating}</span>
-                <span className="hidden sm:inline">({menuData.restaurant.reviewCount}+ reviews)</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12,6 12,12 16,14"/>
-                </svg>
-                <span>{menuData.restaurant.deliveryTime}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>Open Now</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Menu Content - Responsive layout */}
-      <div className="md:flex min-h-screen">
-        {/* Desktop - Left Page Categories */}
-        <div className="hidden md:block w-1/3 bg-card border-r border-border">
-          <CategoryList
-            categories={menuData.categories}
-            selectedCategory={selectedCategory}
-            onCategorySelect={handleCategorySelect}
-          />
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 pb-20 md:pb-6">
-          {/* Mobile - Horizontal Categories */}
-          <div className="md:hidden bg-card border-b border-border">
-            <div className="p-4 pb-2">
-              <h2 className="text-lg font-bold text-foreground mb-3">Menu Categories</h2>
-            </div>
-            <div className="flex space-x-3 overflow-x-auto px-4 pb-4 scrollbar-hide">
-              {menuData.categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategorySelect(category)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    selectedCategory?.id === category.id
-                      ? 'bg-[#ff6600] text-white'
-                      : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground'
-                  }`}
-                >
-                  {category.name} ({category.itemCount || 0})
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="p-4 md:p-6">
-            {/* Bestsellers Section - Only show if there are bestseller items */}
-            {bestsellerItems.length > 0 && (
-              <Bestsellers
-                items={bestsellerItems}
-                onAddToCart={handleAddToCart}
-                getItemQuantity={getItemQuantity}
-                onUpdateQuantity={handleUpdateQuantity}
-              />
-            )}
-
-            {/* Category Header */}
-            <div className="mb-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-xl md:text-2xl">
-                  {selectedCategory?.name.toLowerCase().includes('main') ? '🍽️' : 
-                   selectedCategory?.name.toLowerCase().includes('starter') ? '🥗' :
-                   selectedCategory?.name.toLowerCase().includes('bread') ? '🥖' :
-                   selectedCategory?.name.toLowerCase().includes('rice') ? '🍚' :
-                   selectedCategory?.name.toLowerCase().includes('dal') ? '🍛' :
-                   selectedCategory?.name.toLowerCase().includes('dessert') ? '🧁' :
-                   selectedCategory?.name.toLowerCase().includes('beverage') ? '🥤' :
-                   selectedCategory?.name.toLowerCase().includes('sandwich') ? '🥪' :
-                   selectedCategory?.name.toLowerCase().includes('wrap') ? '🌯' :
-                   selectedCategory?.name.toLowerCase().includes('salad') ? '🥗' :
-                   selectedCategory?.name.toLowerCase().includes('side') ? '🍟' : '🍽️'}
-                </span>
-                <h2 className="text-xl md:text-2xl font-bold text-foreground">
-                  {selectedCategory?.name}
-                </h2>
-              </div>
-              <p className="text-muted-foreground text-sm md:text-base">
-                {filteredMenuItems.length} items available
-              </p>
-            </div>
-
-            {/* Menu Items */}
-            {filteredMenuItems.length > 0 ? (
-              <div className="space-y-4">
-                {filteredMenuItems.map((item) => (
-                  <MenuItemCard
-                    key={item.id}
-                    item={item}
-                    onAddToCart={handleAddToCart}
-                    quantity={getItemQuantity(item.id)}
-                    onUpdateQuantity={handleUpdateQuantity}
-                    isSoldOut={!item.isAvailable}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="text-4xl md:text-6xl mb-4">🍽️</div>
-                <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">No items available</h3>
-                <p className="text-muted-foreground text-sm md:text-base">
-                  This category doesn't have any items at the moment.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Toast Notification */}
-      <Toast
-        message={toast.message}
-        isVisible={toast.isVisible}
-        onClose={() => setToast({ ...toast, isVisible: false })}
-        type={toast.type}
+    <div 
+      className="min-h-screen font-['Poppins',sans-serif] text-[#222] relative"
+    >
+      {/* Notebook background pattern - matching HTML exactly */}
+      <div 
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          width: '100%',
+          height: '100%',
+          backgroundImage: `repeating-linear-gradient(
+            to bottom, 
+            #ffffff,       
+            #ffffff 44px,  
+            #e0e0e0 45px   
+          )`,
+          zIndex: -1
+        }}
       />
+
+      {/* Navigation */}
+      <Navbar />
+      <MobileHeader />
+      
+      {/* HTML-style Bottom Navigation - exactly matching HTML */}
+      <div 
+        className="md:hidden fixed left-1/2 transform -translate-x-1/2 bg-white/70 backdrop-blur-sm z-[100] flex justify-around"
+        style={{
+          bottom: '12px',
+          width: 'calc(100% - 32px)',
+          maxWidth: '500px',
+          padding: '6px 0',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+          borderRadius: '15px'
+        }}
+      >
+        <Link 
+          to="/home" 
+          className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
+          style={{ fontSize: '1.5rem' }}
+        >
+          <i className="fas fa-home"></i>
+          <span className="text-[0.6rem] mt-0.5 text-[#444]">Home</span>
+        </Link>
+        
+        <Link 
+          to="/restaurants" 
+          className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
+          style={{ fontSize: '1.5rem' }}
+        >
+          <i className="fas fa-utensils"></i>
+          <span className="text-[0.6rem] mt-0.5 text-[#444]">Eats</span>
+        </Link>
+        
+        <button 
+          onClick={toggleCategoryPanel}
+          className="flex flex-col items-center justify-center text-[#ff7e2d] bg-transparent border-none cursor-pointer relative"
+          style={{ fontSize: '1.5rem' }}
+        >
+          <i className="fas fa-list"></i>
+          <span className="text-[0.6rem] mt-0.5 text-[#444]">Categories</span>
+        </button>
+        
+        <Link 
+          to="/search" 
+          className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
+          style={{ fontSize: '1.5rem' }}
+        >
+          <i className="fas fa-search"></i>
+          <span className="text-[0.6rem] mt-0.5 text-[#444]">Search</span>
+        </Link>
+
+        <Link 
+          to="/cart" 
+          className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
+          style={{ fontSize: '1.5rem' }}
+        >
+          <i className="fas fa-shopping-cart"></i>
+          {totalItems > 0 && (
+            <span 
+              className="absolute text-white text-xs font-semibold"
+              style={{
+                top: '-8px',
+                right: '-12px',
+                background: '#ff3d00',
+                padding: '2px 6px',
+                borderRadius: '50%'
+              }}
+            >
+              {totalItems}
+            </span>
+          )}
+          <span className="text-[0.6rem] mt-0.5 text-[#444]">Cart</span>
+        </Link>
+      </div>
+
+      {/* Banner */}
+      <div className="w-full flex justify-center mt-16 md:mt-16">
+        <img 
+          src={menuData.restaurant.image} 
+          alt="Banner" 
+          className="w-full h-[40vh] object-cover"
+        />
+      </div>
+
+      {/* Menu Section */}
+      <div className="max-w-4xl mx-auto my-10 px-4">
+        {/* Bestsellers */}
+        <h2 className="text-3xl font-bold mb-4">Bestsellers</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {menuData.bestsellers.map(item => {
+            const qty = getItemQuantity(item.id);
+            return (
+              <div key={item.id} className="flex flex-col bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-md text-center">
+                <img src={item.image} alt={item.name} className="w-full aspect-square object-cover" />
+                <div className="p-2.5 pb-4">
+                  <div className="font-semibold text-base mb-1">{item.name}</div>
+                  <div className="text-xs text-[#555] mb-1.5">{item.desc}</div>
+                  <div className="font-bold text-[#2e7d32] mb-2">₹{item.price}</div>
+                  {qty === 0 ? (
+                    <button 
+                      onClick={() => handleAddToCart(item.id)}
+                      className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm"
+                    >
+                      Add
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 bg-white/90 p-1 rounded-[20px] shadow-sm justify-center">
+                      <button 
+                        onClick={() => handleDecreaseQty(item.id)}
+                        className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <span className="min-w-5 text-center">{qty}</span>
+                      <button 
+                        onClick={() => handleIncreaseQty(item.id)}
+                        className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Categories */}
+        <h2 className="text-3xl font-bold mb-4">Categories</h2>
+        
+        {/* Category Bar */}
+        <div className="flex gap-2.5 overflow-x-auto py-2.5 mb-5 scrollbar-hide">
+          {Object.keys(menuData.categories).map(categoryName => (
+            <button
+              key={categoryName}
+              onClick={() => scrollToCategory(categoryName)}
+              className="flex-shrink-0 px-4 py-2 rounded-[20px] border border-[#ddd] bg-white/70 backdrop-blur-sm text-sm font-medium cursor-pointer whitespace-nowrap hover:bg-[#ff7e2d] hover:text-white hover:border-[#ff7e2d] transition-colors"
+            >
+              {categoryName}
+            </button>
+          ))}
+        </div>
+
+        {/* Category Items */}
+        <div className="space-y-6">
+          {Object.entries(menuData.categories).map(([categoryName, items]) => (
+            <div 
+              key={categoryName}
+              id={`cat-${categoryName}`}
+              className="mb-6 rounded-xl shadow-sm overflow-hidden"
+            >
+              <div 
+                onClick={() => toggleCategory(categoryName)}
+                className={`bg-[#050505] text-white p-3.5 font-semibold cursor-pointer flex justify-between items-center ${
+                  collapsedCategories.has(categoryName) ? 'active' : ''
+                }`}
+              >
+                {categoryName}
+                <i className={`fas fa-chevron-down transition-transform duration-300 ${
+                  collapsedCategories.has(categoryName) ? 'rotate-180' : ''
+                }`}></i>
+              </div>
+              
+              {!collapsedCategories.has(categoryName) && (
+                <div className="bg-transparent">
+                  {items.map((item, index) => {
+                    const qty = getItemQuantity(item.id);
+                    return (
+                      <div 
+                        key={item.id}
+                        className={`flex justify-between gap-3 p-4 ${
+                          index < items.length - 1 ? 'border-b border-[#eee]' : ''
+                        }`}
+                      >
+                        <div className="flex-[2] text-left">
+                          <div className="font-semibold text-lg mb-1.5">{item.name}</div>
+                          <div className="text-sm text-[#555] mb-1.5">{item.desc}</div>
+                          <div className="font-bold text-[#2e7d32]">₹{item.price}</div>
+                        </div>
+                        <div className="flex-1 relative text-center">
+                          <img 
+                            src={item.image} 
+                            alt={item.name}
+                            className="w-full rounded-[10px] object-cover h-[120px]"
+                          />
+                          <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
+                            {qty === 0 ? (
+                              <button 
+                                onClick={() => handleAddToCart(item.id)}
+                                className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm"
+                              >
+                                Add
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-2 bg-white/90 p-1 rounded-[20px] shadow-sm">
+                                <button 
+                                  onClick={() => handleDecreaseQty(item.id)}
+                                  className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
+                                >
+                                  -
+                                </button>
+                                <span className="min-w-5 text-center">{qty}</span>
+                                <button 
+                                  onClick={() => handleIncreaseQty(item.id)}
+                                  className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Floating Hamburger Menu - Desktop */}
+      <div className="hidden md:block">
+        {/* Category Panel (HTML style) */}
+        <div 
+          className={`fixed top-1/2 transform -translate-y-1/2 w-60 bg-white/90 backdrop-blur-sm p-4 transition-all duration-300 ease-in-out z-[350] ${
+            showCategoryPanel ? 'right-0' : '-right-60'
+          }`}
+          style={{ 
+            boxShadow: '-4px 0 12px rgba(0,0,0,0.15)',
+            borderRadius: '12px 0 0 12px'
+          }}
+        >
+          <h3 className="mt-0 mb-3 text-lg font-semibold text-[#ff7e2d]">Categories</h3>
+          <div className="flex flex-col gap-2">
+            {menuData && Object.keys(menuData.categories).map(categoryName => (
+              <button
+                key={categoryName}
+                onClick={() => scrollToCategory(categoryName)}
+                className="px-2.5 py-2 border-none bg-[#f5f5f5] rounded-md text-left text-sm cursor-pointer transition-colors duration-200 hover:bg-[#ff7e2d] hover:text-white"
+              >
+                {categoryName}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Overlay to close panel - Desktop only */}
+        {showCategoryPanel && (
+          <div 
+            className="hidden md:block fixed inset-0 z-[240]" 
+            onClick={() => setShowCategoryPanel(false)}
+          />
+        )}
+
+        {/* Floating Category Button - Desktop only (HTML style) */}
+        <button
+          onClick={toggleCategoryPanel}
+          className="hidden md:flex fixed right-5 bottom-[150px] bg-[#ff7e2d] text-white rounded-full w-14 h-14 items-center justify-center text-xl cursor-pointer z-[300] hover:bg-[#e85d00] transition-colors"
+          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
+          aria-label="Toggle Categories"
+        >
+          <i className="fas fa-list"></i>
+        </button>
+      </div>
+
+      {/* Mobile Category Panel */}
+      <div className={`md:hidden fixed top-1/2 right-0 transform -translate-y-1/2 transition-transform duration-300 z-[350] ${
+        showCategoryPanel ? 'translate-x-0' : 'translate-x-full'
+      }`}>
+        <div className="bg-white/90 backdrop-blur-sm rounded-l-xl shadow-lg p-4 min-w-[240px]" style={{ boxShadow: '-4px 0 12px rgba(0,0,0,0.15)' }}>
+          <h3 className="text-[#ff7e2d] font-semibold text-lg mb-3">Categories</h3>
+          <div className="space-y-2">
+            {menuData && Object.keys(menuData.categories).map(categoryName => (
+              <button
+                key={categoryName}
+                onClick={() => scrollToCategory(categoryName)}
+                className="block w-full text-left px-2.5 py-2 text-[#333] bg-[#f5f5f5] rounded-md hover:bg-[#ff7e2d] hover:text-white transition-all text-sm font-medium"
+              >
+                {categoryName}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Category Panel Overlay - transparent */}
+      {showCategoryPanel && (
+        <div 
+          className="md:hidden fixed inset-0 z-[340]" 
+          onClick={() => setShowCategoryPanel(false)}
+        />
+      )}
+
+      {/* Floating View Cart - Mobile (HTML style) */}
+      {totalItems > 0 && (
+        <div 
+          onClick={() => navigate('/cart')}
+          className="fixed bottom-[70px] left-1/2 transform -translate-x-1/2 bg-[#ff7e2d] text-white font-semibold px-4 py-3 rounded-[30px] cursor-pointer z-[200] w-[80vw] max-w-[500px] flex justify-between items-center text-[0.95rem]"
+          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
+        >
+          <span>View Cart ({totalItems})</span>
+          <i className="fas fa-arrow-right text-base"></i>
+        </div>
+      )}
     </div>
   );
 }
