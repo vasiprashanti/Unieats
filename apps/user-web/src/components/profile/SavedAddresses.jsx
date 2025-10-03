@@ -78,8 +78,8 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
       setIsModalOpen(false);
       
       // Call parent callback if provided
-      if (onAddAddress && data.data) {
-        onAddAddress(data.data);
+      if (onAddAddress) {
+        onAddAddress();
       }
     } catch (error) {
       console.error('Failed to add address:', error);
