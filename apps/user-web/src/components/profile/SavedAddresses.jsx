@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapPin, Edit3, Trash2, Plus, Star } from 'lucide-react';
 import AddAddressModal from './AddAddressModal';
-import { auth } from '../../config/firebase'; // Import your firebase auth instance
+import { auth } from '../../config/firebase';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -9,6 +9,7 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
   const [addresses, setAddresses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
   const [deletingAddressId, setDeletingAddressId] = useState(null);
   const [settingDefaultId, setSettingDefaultId] = useState(null);
   const [error, setError] = useState(null);
@@ -36,16 +37,11 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
       });
       
       const data = await res.json();
-      
       if (!res.ok) {
         throw new Error(data.message || 'Failed to fetch addresses');
       }
       
-      if (data.success) {
-        setAddresses(data.data || []);
-      } else {
-        setAddresses([]);
-      }
+      setAddresses(data.addresses || []);
     } catch (error) {
       console.error('Failed to fetch addresses:', error);
       setError(error.message);
@@ -78,22 +74,57 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
         throw new Error(data.message || 'Failed to add address');
       }
       
-      if (data.success) {
-        // Use the address from response or refresh all addresses
-        if (data.data) {
-          setAddresses(prev => [...prev, data.data]);
-        } else {
-          await fetchAddresses(); // Refresh all addresses
-        }
-        setIsModalOpen(false);
-        
-        // Call parent callback if provided
-        if (onAddAddress) {
-          onAddAddress(data.data);
-        }
+      // Only throw error if success is explicitly false
+      if (data.success === false) {
+        throw new Error(data.message || 'Failed to add address');
+      }
+      
+      // Refresh addresses to get latest data
+      await fetchAddresses();
+      setIsModalOpen(false);
+      
+      // Call parent callback if provided
+      if (onAddAddress) {
+        onAddAddress();
       }
     } catch (error) {
       console.error('Failed to add address:', error);
+      throw error;
+    }
+  };
+
+  // Update address handler
+  const handleUpdateAddress = async (addressId, addressData) => {
+    try {
+      const token = await getAuthToken();
+      const res = await fetch(`${BASE_URL}/api/v1/users/addresses/${addressId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(addressData),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to update address');
+      }
+      
+      // Only throw error if success is explicitly false
+      if (data.success === false) {
+        throw new Error(data.message || 'Failed to update address');
+      }
+      
+      // Refresh addresses to get latest data
+      await fetchAddresses();
+      setIsModalOpen(false);
+      setEditingAddress(null);
+      
+      return data;
+    } catch (error) {
+      console.error('Failed to update address:', error);
       throw error;
     }
   };
@@ -122,60 +153,23 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
         throw new Error(data.message || 'Failed to delete address');
       }
       
-      if (data.success) {
-        setAddresses(prev => prev.filter(a => a._id !== addressId && a.id !== addressId));
-        
-        // Call parent callback if provided
-        if (onDeleteAddress) {
-          onDeleteAddress(addressId);
-        }
+      // Only throw error if success is explicitly false
+      if (data.success === false) {
+        throw new Error(data.message || 'Failed to delete address');
+      }
+      
+      // Refresh addresses to get latest data
+      await fetchAddresses();
+      
+      // Call parent callback if provided
+      if (onDeleteAddress) {
+        onDeleteAddress(addressId);
       }
     } catch (error) {
       console.error('Failed to delete address:', error);
       alert(error.message || 'Failed to delete address');
     } finally {
       setDeletingAddressId(null);
-    }
-  };
-
-  // Set default address handler
-  const handleSetDefaultAddress = async (addressId) => {
-    // Don't allow setting already default address
-    const address = addresses.find(a => (a._id || a.id) === addressId);
-    if (address?.isDefault) {
-      return;
-    }
-
-    try {
-      setSettingDefaultId(addressId);
-      const token = await getAuthToken();
-      
-      const res = await fetch(`${BASE_URL}/api/v1/users/addresses/${addressId}/default`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to set default address');
-      }
-      
-      if (data.success) {
-        // Update local state to reflect the new default address
-        setAddresses(data.addresses || addresses.map(addr => ({
-          ...addr,
-          isDefault: (addr._id || addr.id) === addressId
-        })));
-      }
-    } catch (error) {
-      console.error('Failed to set default address:', error);
-      alert(error.message || 'Failed to set default address');
-    } finally {
-      setSettingDefaultId(null);
     }
   };
 
@@ -228,7 +222,10 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
           <h2 className="text-xl font-semibold text-gray-900">Saved Addresses</h2>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingAddress(null);
+            setIsModalOpen(true);
+          }}
           className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
         >
           <Plus className="w-4 h-4" />
@@ -287,6 +284,7 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
                     </button>
                   )}
                   <button
+                    onClick={() => handleEditClick(address)}
                     className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                     title="Edit Address"
                   >
@@ -313,8 +311,13 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
 
       <AddAddressModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingAddress(null);
+        }}
         onAddAddress={handleAddAddress}
+        onUpdateAddress={handleUpdateAddress}
+        editingAddress={editingAddress}
       />
     </div>
   );

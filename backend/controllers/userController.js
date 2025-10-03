@@ -13,28 +13,37 @@ const updateMe = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    // Only allow updating name, email, and phone
+    // Prepare update object with only the fields being updated
+    const updateFields = {};
     if (req.body.name !== undefined) {
-      user.name = req.body.name;
+      updateFields.name = req.body.name;
     }
     if (req.body.email !== undefined) {
-      user.email = req.body.email;
+      updateFields.email = req.body.email;
     }
     if (req.body.phone !== undefined) {
-      user.phone = req.body.phone;
+      updateFields.phone = req.body.phone;
     }
 
-    await user.save();
+    // Update only the specified fields
+    await User.findOneAndUpdate(
+      { firebaseUid },
+      updateFields,
+      { runValidators: true } // Validate only the fields being updated
+    );
+
+    // Refresh user object with updated data
+    const updatedUser = await User.findOne({ firebaseUid });
 
     res.status(200).json({
       message: "Profile updated successfully.",
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt,
       },
     });
   } catch (error) {
@@ -77,7 +86,15 @@ const addAddress = async (req, res) => {
     };
 
     user.addresses.push(newAddress);
-    await user.save();
+
+    // Save only the addresses array to avoid full document validation
+    await User.findOneAndUpdate(
+      { firebaseUid },
+      {
+        addresses: user.addresses,
+      },
+      { runValidators: false } // Skip validation for other fields
+    );
 
     res.status(201).json({
       message: "Address added successfully.",
@@ -124,7 +141,8 @@ const updateAddress = async (req, res) => {
     if (label !== undefined) address.label = label;
     if (landmark !== undefined) address.landmark = landmark;
 
-    await user.save();
+    // Save the user document to persist address changes
+  await user.save({ validateModifiedOnly: true });
 
     res.status(200).json({
       message: "Address updated successfully.",
@@ -160,7 +178,14 @@ const deleteAddress = async (req, res) => {
       user.addresses[0].isDefault = true;
     }
 
-    await user.save();
+    // Save only the addresses array to avoid full document validation
+    await User.findOneAndUpdate(
+      { firebaseUid },
+      {
+        addresses: user.addresses,
+      },
+      { runValidators: false } // Skip validation for other fields
+    );
 
     res.status(200).json({
       message: "Address deleted successfully.",
@@ -211,8 +236,14 @@ const setDefaultAddress = async (req, res) => {
     // Make the selected address default
     targetAddress.isDefault = true;
 
-    // Save changes
-    await user.save();
+    // Save only the addresses array to avoid full document validation
+    await User.findOneAndUpdate(
+      { firebaseUid: req.user.firebaseUid },
+      {
+        addresses: user.addresses,
+      },
+      { runValidators: false } // Skip validation for other fields
+    );
 
     res.status(200).json({
       message: "Default address updated successfully.",

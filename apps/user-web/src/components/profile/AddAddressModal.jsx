@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, MapPin } from 'lucide-react';
 
-const AddAddressModal = ({ isOpen, onClose, onAddAddress, isLoading = false }) => {
+const AddAddressModal = ({ isOpen, onClose, onAddAddress, isLoading = false, onUpdateAddress, editingAddress }) => {
   const [formData, setFormData] = useState({
     label: '',
     street: '',
@@ -17,17 +17,28 @@ const AddAddressModal = ({ isOpen, onClose, onAddAddress, isLoading = false }) =
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        label: '',
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        phone: '',
-      });
+      if (editingAddress) {
+        setFormData({
+          label: editingAddress.label || '',
+          street: editingAddress.street || '',
+          city: editingAddress.city || '',
+          state: editingAddress.state || '',
+          zipCode: editingAddress.zipCode || '',
+          phone: editingAddress.phone || '',
+        });
+      } else {
+        setFormData({
+          label: '',
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          phone: '',
+        });
+      }
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, editingAddress]);
 
   // Handle backdrop click to close modal
   const handleBackdropClick = (e) => {
@@ -96,11 +107,15 @@ const AddAddressModal = ({ isOpen, onClose, onAddAddress, isLoading = false }) =
 
     try {
       setIsSubmitting(true);
-      await onAddAddress(formData);
+      if (editingAddress && onUpdateAddress) {
+        await onUpdateAddress(editingAddress._id || editingAddress.id, formData);
+      } else {
+        await onAddAddress(formData);
+      }
       onClose();
     } catch (error) {
-      console.error('Failed to add address:', error);
-      setErrors({ submit: 'Failed to add address. Please try again.' });
+      console.error('Failed to save address:', error);
+      setErrors({ submit: 'Failed to save address. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -271,7 +286,9 @@ const AddAddressModal = ({ isOpen, onClose, onAddAddress, isLoading = false }) =
               disabled={isSubmitting}
               className="w-full bg-orange-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Adding Address...' : 'Add Address'}
+              {isSubmitting
+                ? (editingAddress ? 'Updating Address...' : 'Adding Address...')
+                : (editingAddress ? 'Update Address' : 'Add Address')}
             </button>
           </div>
         </form>
