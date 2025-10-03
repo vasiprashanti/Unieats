@@ -141,14 +141,8 @@ const updateAddress = async (req, res) => {
     if (label !== undefined) address.label = label;
     if (landmark !== undefined) address.landmark = landmark;
 
-    // Save only the addresses array to avoid full document validation
-    await User.findOneAndUpdate(
-      { firebaseUid },
-      {
-        addresses: user.addresses,
-      },
-      { runValidators: false } // Skip validation for other fields
-    );
+    // Save the user document to persist address changes
+    await user.save();
 
     res.status(200).json({
       message: "Address updated successfully.",
