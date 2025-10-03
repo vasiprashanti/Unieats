@@ -69,7 +69,12 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
       
       const data = await res.json();
       
-      if (!res.ok || !data.success) {
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to add address');
+      }
+      
+      // Only throw error if success is explicitly false
+      if (data.success === false) {
         throw new Error(data.message || 'Failed to add address');
       }
       
@@ -102,7 +107,12 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
       
       const data = await res.json();
       
-      if (!res.ok || !data.success) {
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to update address');
+      }
+      
+      // Only throw error if success is explicitly false
+      if (data.success === false) {
         throw new Error(data.message || 'Failed to update address');
       }
       
@@ -138,7 +148,12 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
       
       const data = await res.json();
       
-      if (!res.ok || !data.success) {
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to delete address');
+      }
+      
+      // Only throw error if success is explicitly false
+      if (data.success === false) {
         throw new Error(data.message || 'Failed to delete address');
       }
       
