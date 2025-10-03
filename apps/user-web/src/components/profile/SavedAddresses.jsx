@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapPin, Edit3, Trash2, Plus } from 'lucide-react';
+import { MapPin, Edit3, Trash2, Plus, Star } from 'lucide-react';
 import AddAddressModal from './AddAddressModal';
 import { auth } from '../../config/firebase'; // Import your firebase auth instance
 
@@ -10,6 +10,7 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingAddressId, setDeletingAddressId] = useState(null);
+  const [settingDefaultId, setSettingDefaultId] = useState(null);
   const [error, setError] = useState(null);
 
   // Get auth token helper
@@ -137,6 +138,47 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
     }
   };
 
+  // Set default address handler
+  const handleSetDefaultAddress = async (addressId) => {
+    // Don't allow setting already default address
+    const address = addresses.find(a => (a._id || a.id) === addressId);
+    if (address?.isDefault) {
+      return;
+    }
+
+    try {
+      setSettingDefaultId(addressId);
+      const token = await getAuthToken();
+      
+      const res = await fetch(`${BASE_URL}/api/v1/users/addresses/${addressId}/default`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to set default address');
+      }
+      
+      if (data.success) {
+        // Update local state to reflect the new default address
+        setAddresses(data.addresses || addresses.map(addr => ({
+          ...addr,
+          isDefault: (addr._id || addr.id) === addressId
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to set default address:', error);
+      alert(error.message || 'Failed to set default address');
+    } finally {
+      setSettingDefaultId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
@@ -230,6 +272,20 @@ const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
                 </div>
 
                 <div className="flex items-center gap-2 ml-4">
+                  {!address.isDefault && (
+                    <button
+                      onClick={() => handleSetDefaultAddress(address._id || address.id)}
+                      disabled={settingDefaultId === (address._id || address.id)}
+                      className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Set as Default"
+                    >
+                      {settingDefaultId === (address._id || address.id) ? (
+                        <div className="w-4 h-4 border-2 border-orange-300 border-t-orange-500 rounded-full animate-spin"></div>
+                      ) : (
+                        <Star className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
                   <button
                     className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                     title="Edit Address"
