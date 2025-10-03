@@ -28,12 +28,20 @@ const orderSchema = new mongoose.Schema(
     items: [orderItemSchema],
     totalPrice: { type: Number, required: true },
     status: {
-        type: String,
-        enum: ['payment_pending', 'pending', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'],
-        default: 'payment_pending',
-        index: true, // Heavily indexed for filtering and monitoring
+      type: String,
+      enum: [
+        "payment_pending",
+        "pending",
+        "preparing",
+        "ready",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+      ],
+      default: "payment_pending",
+      index: true, // Heavily indexed for filtering and monitoring
     },
-    
+
     deliveryAddress: {
       street: { type: String, required: true },
       city: { type: String, required: true },
@@ -42,28 +50,34 @@ const orderSchema = new mongoose.Schema(
     },
 
     paymentDetails: {
-        method: { type: String, enum: ['UPI', 'COD'], default: 'UPI' },
-        transactionId: { type: String },
-        status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending'}
+      method: { type: String, enum: ["UPI", "COD"], default: "UPI" },
+      transactionId: { type: String },
+      status: {
+        type: String,
+        enum: ["pending", "completed", "failed"],
+        default: "pending",
+      },
     },
 
     rating: {
-        type: Number,
-        min: 1,
-        max: 5,
+      type: Number,
+      min: 1,
+      max: 5,
     },
     acceptedAt: { type: Date },
     readyAt: { type: Date },
-}, { timestamps: true });
+  },
+  { timestamps: true }
+);
 
 // Compound index for efficient monitoring queries
 orderSchema.index({ status: 1, createdAt: -1 });
 
-orderSchema.pre('save', function(next) {
-    if (this.isNew) {
-        this.statusHistory.push({ status: this.status, timestamp: new Date() });
-    }
-    next();
+orderSchema.pre("save", function (next) {
+  if (this.isNew) {
+    this.statusHistory.push({ status: this.status, timestamp: new Date() });
+  }
+  next();
 });
 
 const Order = mongoose.model("Order", orderSchema);

@@ -46,7 +46,8 @@ const updateMe = async (req, res) => {
 // ADD a new address
 const addAddress = async (req, res) => {
   try {
-    const { street, city, state, zipCode, isDefault } = req.body;
+    const { street, city, state, zipCode, isDefault, label, landmark } =
+      req.body;
     // Validation is handled in the route middleware
 
     const firebaseUid = req.user.firebaseUid;
@@ -71,6 +72,8 @@ const addAddress = async (req, res) => {
       state,
       zipCode,
       isDefault: isDefault || isFirstAddress,
+      ...(label && { label }),
+      ...(landmark && { landmark }),
     };
 
     user.addresses.push(newAddress);
@@ -90,7 +93,8 @@ const addAddress = async (req, res) => {
 // UPDATE an address by ID
 const updateAddress = async (req, res) => {
   try {
-    const { street, city, state, zipCode, isDefault } = req.body;
+    const { street, city, state, zipCode, isDefault, label, landmark } =
+      req.body;
     // Validation is handled in the route middleware
 
     const firebaseUid = req.user.firebaseUid;
@@ -112,11 +116,13 @@ const updateAddress = async (req, res) => {
     }
 
     // Update address fields
-    if (street) address.street = street;
-    if (city) address.city = city;
-    if (state) address.state = state;
-    if (zipCode) address.zipCode = zipCode;
+    if (street !== undefined) address.street = street;
+    if (city !== undefined) address.city = city;
+    if (state !== undefined) address.state = state;
+    if (zipCode !== undefined) address.zipCode = zipCode;
     if (isDefault !== undefined) address.isDefault = isDefault;
+    if (label !== undefined) address.label = label;
+    if (landmark !== undefined) address.landmark = landmark;
 
     await user.save();
 

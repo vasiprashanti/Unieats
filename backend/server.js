@@ -6,8 +6,8 @@ import morgan from "morgan";
 import connectDB from "./config/db.js";
 import initializeFirebaseAdmin from "./config/firebaseAdmin.js";
 import { cloudinaryConfig } from "./config/cloudinary.js";
-import { Server } from 'socket.io';
-import http from 'http';
+import { Server } from "socket.io";
+import http from "http";
 import rateLimiter from "./middleware/rateLimiter.js";
 // import errorHandler from './middleware/errorHandler.js';
 
@@ -21,9 +21,9 @@ import preLaunchUserRoutes from "./routes/preLaunchUserRoutes.js";
 import devAuth from "./middleware/devAuth.js";
 import orderRouter from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-import publicRoutes from './routes/publicRoutes.js'; 
-import userRoutes from './routes/userRoutes.js';
-import cartRoutes from './routes/cartRoutes.js';
+import publicRoutes from "./routes/publicRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -34,10 +34,10 @@ const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
-    cors: {
-        origin: "*", // In production, restrict this to your frontend URL
-        methods: ["GET", "POST"]
-    }
+  cors: {
+    origin: "*", // In production, restrict this to your frontend URL
+    methods: ["GET", "POST"],
+  },
 });
 
 const corsOptions = {
@@ -140,6 +140,8 @@ app.use("/api/v1/prelaunch", preLaunchUserRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/payments", paymentRoutes);
+app.use("/api/v1/public", publicRoutes);
+app.use("/api/v1/cart", cartRoutes);
 
 // Error handling for CORS
 app.use((err, req, res, next) => {
@@ -152,36 +154,27 @@ app.use((err, req, res, next) => {
   } else {
     next(err);
   }
-  }); 
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/vendors', vendorRoutes);
-app.use('/api/v1/content', contentRoutes);
-app.use('/api/v1/prelaunch', preLaunchUserRoutes);
-app.use('/api/v1/public', publicRoutes);
-app.use('/api/v1/user', userRoutes);
-app.use('/api/v1/cart', cartRoutes);
+});
 
 // app.use(errorHandler);
 
 // Make the 'io' instance available to all routes by attaching it to the app
-app.set('socketio', io);
+app.set("socketio", io);
 
-io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
 
-    // When a user or vendor connects, they should join a room named after their own ID.
-    // This allows us to send them targeted, private notifications.
-    socket.on('join_room', (id) => {
-        socket.join(id);
-        console.log(`Socket ${socket.id} joined room ${id}`);
-    });
+  // When a user or vendor connects, they should join a room named after their own ID.
+  // This allows us to send them targeted, private notifications.
+  socket.on("join_room", (id) => {
+    socket.join(id);
+    console.log(`Socket ${socket.id} joined room ${id}`);
+  });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-    });
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
 });
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>

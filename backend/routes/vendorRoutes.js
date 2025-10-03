@@ -1,12 +1,29 @@
-import express from 'express';
-import { registerVendor, updateVendorProfile, getVendorProfile, getAllVendors, getVendorDetails } from '../controllers/vendorController.js';
-import { verifyFirebaseToken } from '../middleware/authMiddleware.js';
-import { cacheMiddleware } from '../middleware/cacheMiddleware.js';
-import { uploadDocuments, uploadImage } from '../middleware/fileUpload.js';
-import { getVendorOrders, updateOrderStatus } from '../controllers/vendorController.js';
-import { createMenuItem, getVendorMenu, updateMenuItem, deleteMenuItem } from '../controllers/menuController.js';
-import { getVendorAnalytics } from '../controllers/vendorAnalyticsController.js';
-import { getPayoutHistory, calculateCurrentPayout } from '../controllers/paymentController.js';
+import express from "express";
+import {
+  registerVendor,
+  updateVendorProfile,
+  getVendorProfile,
+  getAllVendors,
+  getVendorDetails,
+} from "../controllers/vendorController.js";
+import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
+import { cacheMiddleware } from "../middleware/cacheMiddleware.js";
+import { uploadDocuments, uploadImage } from "../middleware/fileUpload.js";
+import {
+  getVendorOrders,
+  updateOrderStatus,
+} from "../controllers/vendorController.js";
+import {
+  createMenuItem,
+  getVendorMenu,
+  updateMenuItem,
+  deleteMenuItem,
+} from "../controllers/menuController.js";
+import { getVendorAnalytics } from "../controllers/vendorAnalyticsController.js";
+import {
+  getPayoutHistory,
+  calculateCurrentPayout,
+} from "../controllers/paymentController.js";
 
 const router = express.Router();
 
@@ -18,7 +35,7 @@ router.get("/restaurants", verifyFirebaseToken, getAllVendors); // Will support 
 router.get(
   "/restaurants/:id",
   verifyFirebaseToken,
-  cacheMiddleware,
+  cacheMiddleware(300), // Cache for 5 minutes
   getVendorDetails
 );
 
@@ -39,47 +56,51 @@ router.post(
 // @route   GET /api/v1/vendors/profile
 // @desc    Get the vendor profile
 // @access  Private (requires user to be logged in)
-router.get(
-    '/profile',
-    verifyFirebaseToken,
-    getVendorProfile,
-);
-
+router.get("/profile", verifyFirebaseToken, getVendorProfile);
 
 // @route   POST /api/v1/vendors/profile
 // @desc    Update existing vendor profile
 // @access  Private (requires user to be logged in)
 router.patch(
-    '/profile',
-    verifyFirebaseToken, // Ensure user is logged in
-    updateVendorProfile,
+  "/profile",
+  verifyFirebaseToken, // Ensure user is logged in
+  updateVendorProfile
 );
 
 // @route   POST /api/v1/vendors/menu
 // @desc    Adding menu item
 // @access  Private (requires user to be logged in)
 router.post(
-    '/menu',
-    verifyFirebaseToken, // Ensure user is logged in
-    uploadImage.single('image'),
-    createMenuItem 
+  "/menu",
+  verifyFirebaseToken, // Ensure user is logged in
+  uploadImage.single("image"),
+  createMenuItem
 );
 
 // Get all orders for the logged-in vendor (with filtering)
-router.get('/orders', verifyFirebaseToken, getVendorOrders);
+router.get("/orders", verifyFirebaseToken, getVendorOrders);
 
 // Update the status of a specific order
-router.patch('/orders/:orderId/status', verifyFirebaseToken, updateOrderStatus);
+router.patch("/orders/:orderId/status", verifyFirebaseToken, updateOrderStatus);
 
-router.post('/menu', verifyFirebaseToken, uploadImage.single('image'), createMenuItem);
-router.get('/menu', verifyFirebaseToken, getVendorMenu);
-router.patch('/menu/:itemId', verifyFirebaseToken, uploadImage.single('image'), updateMenuItem);
-router.delete('/menu/:itemId', verifyFirebaseToken, deleteMenuItem);
+router.post(
+  "/menu",
+  verifyFirebaseToken,
+  uploadImage.single("image"),
+  createMenuItem
+);
+router.get("/menu", verifyFirebaseToken, getVendorMenu);
+router.patch(
+  "/menu/:itemId",
+  verifyFirebaseToken,
+  uploadImage.single("image"),
+  updateMenuItem
+);
+router.delete("/menu/:itemId", verifyFirebaseToken, deleteMenuItem);
 
-router.get('/analytics', verifyFirebaseToken, getVendorAnalytics);
+router.get("/analytics", verifyFirebaseToken, getVendorAnalytics);
 
-router.get('/payouts', verifyFirebaseToken, getPayoutHistory);
-router.get('/payouts/current', verifyFirebaseToken, calculateCurrentPayout);
-
+router.get("/payouts", verifyFirebaseToken, getPayoutHistory);
+router.get("/payouts/current", verifyFirebaseToken, calculateCurrentPayout);
 
 export default router;

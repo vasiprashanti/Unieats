@@ -43,7 +43,9 @@ const verifyFirebaseToken = async (req, res, next) => {
         .status(401)
         .json({ message: "Unauthorized: Token has expired." });
     }
-      return res.status(403).json({ message: "Forbidden: Invalid token." ,payLoad:{error}});
+    return res
+      .status(403)
+      .json({ message: "Forbidden: Invalid token.", payLoad: { error } });
   }
 };
 
@@ -62,7 +64,7 @@ const checkRole = (...allowedRoles) => {
       // send a 'Forbidden' error.
       return res.status(403).json({
         message: `Forbidden: Access requires one of the following roles: ${allowedRoles.join(
-          ', '
+          ", "
         )}`,
       });
     }

@@ -3,63 +3,82 @@ import { validationResult } from "express-validator";
 
 // REGISTRATION CONTROLLER
 const registerUser = async (req, res) => {
-    const {
-        firebaseUid,
-        email,
-        phone,
-        name, // { first, last }
-        yearOfStudy,
-        accommodation,
-        hostelDetails, // { block, room }
-        offCampusAddress // { addressLine1, landmark }
-    } = req.body;
+  const {
+    firebaseUid,
+    email,
+    phone,
+    name, // { first, last }
+    yearOfStudy,
+    accommodation,
+    hostelDetails, // { block, room }
+    offCampusAddress, // { addressLine1, landmark }
+  } = req.body;
 
-    // Basic validation
-    if (!firebaseUid || !email || !phone || !name || !yearOfStudy || !accommodation) {
-        return res.status(400).json({ message: 'Missing required fields for registration.' });
+  // Basic validation
+  if (
+    !firebaseUid ||
+    !email ||
+    !phone ||
+    !name ||
+    !yearOfStudy ||
+    !accommodation
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Missing required fields for registration." });
+  }
+
+  try {
+    // Check if user already exists
+    let user = await User.findOne({ $or: [{ email }, { firebaseUid }] });
+    if (user) {
+      return res.status(400).json({ message: "User already exists." });
     }
 
-    try {
-        // Check if user already exists
-        let user = await User.findOne({ $or: [{ email }, { firebaseUid }] });
-        if (user) {
-            return res.status(400).json({ message: 'User already exists.' });
-        }
+    // Build the new user object based on the schema
+    const newUserPayload = {
+      firebaseUid,
+      email,
+      phone,
+      name,
+      yearOfStudy,
+      accommodation,
+    };
 
-        // Build the new user object based on the schema
-        const newUserPayload = {
-            firebaseUid,
-            email,
-            phone,
-            name,
-            yearOfStudy,
-            accommodation,
-        };
-
-        // Conditionally add address details
-        if (accommodation === 'Hosteller') {
-            newUserPayload.hostelDetails = hostelDetails;
-        } else if (accommodation === 'Non-Hosteller') {
-            newUserPayload.offCampusAddress = offCampusAddress;
-        }
-
-        user = new User(newUserPayload);
-        await user.save();
-
-        res.status(201).json({
-            message: 'User registered successfully!',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            },
-        });
-
-    } catch (error) {
-        console.error('Error during user registration:', error);
-        res.status(500).json({ message: 'Server error during registration.' });
+    // Conditionally add address details
+    if (accommodation === "Hosteller") {
+      newUserPayload.hostelDetails = hostelDetails;
+    } else if (accommodation === "Non-Hosteller" && offCampusAddress) {
+      // Convert old offCampusAddress format to new addresses array format
+      newUserPayload.addresses = [
+        {
+          street: offCampusAddress.addressLine1 || "",
+          city: offCampusAddress.city || "",
+          state: offCampusAddress.state || "",
+          zipCode: offCampusAddress.zipCode || "",
+          landmark: offCampusAddress.landmark || "",
+          isDefault: true,
+          label: "Home",
+        },
+      ];
     }
+
+    user = new User(newUserPayload);
+    await user.save();
+
+    res.status(201).json({
+      message: "User registered successfully!",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Error during user registration:", error);
+    res.status(500).json({ message: "Server error during registration." });
+  }
 };
 
 // GET USER PROFILE CONTROLLER
