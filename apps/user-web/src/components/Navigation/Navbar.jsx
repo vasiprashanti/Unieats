@@ -130,7 +130,7 @@ const Navbar = () => {
                   <button
                     type="button"
                     onClick={toggleSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-muted hover:text-[hsl(var(--foreground))] transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-[#ff7e2d] hover:text-[#ff6600] transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -140,7 +140,7 @@ const Navbar = () => {
               ) : (
                 <button
                   onClick={toggleSearch}
-                  className="p-2 rounded-lg transition-all duration-200 text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent"
+                  className="p-2 rounded-lg transition-all duration-200 text-[#ff7e2d] hover:text-[#ff6600] hover:bg-accent"
                   aria-label="Search restaurants"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +153,7 @@ const Navbar = () => {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg transition-all duration-200 text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent"
+              className="p-2 rounded-lg transition-all duration-200 text-[#ff7e2d] hover:text-[#ff6600] hover:bg-accent"
               aria-label="Toggle theme"
             >
               {isDarkMode ? (
@@ -170,7 +170,7 @@ const Navbar = () => {
             {/* Cart Button */}
             <Link
               to="/cart"
-              className="p-2 rounded-lg transition-all duration-200 relative text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent"
+              className="p-2 rounded-lg transition-all duration-200 relative text-[#ff7e2d] hover:text-[#ff6600] hover:bg-accent"
             >
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
@@ -186,7 +186,7 @@ const Navbar = () => {
             {user ? (
               <DropdownMenu
                 trigger={
-                  <div className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 text-muted hover:text-[hsl(var(--foreground))] hover:bg-accent">
+                  <div className="flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 text-[#ff7e2d] hover:text-[#ff6600] hover:bg-accent">
                     <div className="w-8 h-8 bg-[#FF6B35] rounded-full flex items-center justify-center">
                       <span className="text-white text-sm font-medium">
                         {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
