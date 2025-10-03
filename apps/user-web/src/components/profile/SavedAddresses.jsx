@@ -1,33 +1,139 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin, Edit3, Trash2, Plus } from 'lucide-react';
 import AddAddressModal from './AddAddressModal';
+import { auth } from '../../config/firebase'; // Import your firebase auth instance
 
-const SavedAddresses = ({ 
-  addresses, 
-  onAddAddress, 
-  onDeleteAddress, 
-  isLoading = false 
-}) => {
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const SavedAddresses = ({ onAddAddress, onDeleteAddress }) => {
+  const [addresses, setAddresses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingAddressId, setDeletingAddressId] = useState(null);
+  const [error, setError] = useState(null);
 
-  const handleDeleteAddress = async (addressId) => {
+  // Get auth token helper
+  const getAuthToken = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    return await user.getIdToken();
+  };
+
+  // Fetch addresses
+  const fetchAddresses = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setDeletingAddressId(addressId);
-      await onDeleteAddress(addressId);
+      const token = await getAuthToken();
+      const res = await fetch(`${BASE_URL}/api/v1/users/addresses`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to fetch addresses');
+      }
+      
+      if (data.success) {
+        setAddresses(data.data || []);
+      } else {
+        setAddresses([]);
+      }
     } catch (error) {
-      console.error('Failed to delete address:', error);
+      console.error('Failed to fetch addresses:', error);
+      setError(error.message);
+      setAddresses([]);
     } finally {
-      setDeletingAddressId(null);
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  // Add address handler
   const handleAddAddress = async (addressData) => {
     try {
-      await onAddAddress(addressData);
+      const token = await getAuthToken();
+      const res = await fetch(`${BASE_URL}/api/v1/users/addresses`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(addressData),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to add address');
+      }
+      
+      if (data.success) {
+        // Use the address from response or refresh all addresses
+        if (data.data) {
+          setAddresses(prev => [...prev, data.data]);
+        } else {
+          await fetchAddresses(); // Refresh all addresses
+        }
+        setIsModalOpen(false);
+        
+        // Call parent callback if provided
+        if (onAddAddress) {
+          onAddAddress(data.data);
+        }
+      }
     } catch (error) {
       console.error('Failed to add address:', error);
       throw error;
+    }
+  };
+
+  // Delete address handler
+  const handleDeleteAddress = async (addressId) => {
+    if (!window.confirm('Are you sure you want to delete this address?')) {
+      return;
+    }
+
+    try {
+      setDeletingAddressId(addressId);
+      const token = await getAuthToken();
+      
+      const res = await fetch(`${BASE_URL}/api/v1/users/addresses/${addressId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to delete address');
+      }
+      
+      if (data.success) {
+        setAddresses(prev => prev.filter(a => a._id !== addressId && a.id !== addressId));
+        
+        // Call parent callback if provided
+        if (onDeleteAddress) {
+          onDeleteAddress(addressId);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete address:', error);
+      alert(error.message || 'Failed to delete address');
+    } finally {
+      setDeletingAddressId(null);
     }
   };
 
@@ -54,9 +160,26 @@ const SavedAddresses = ({
     );
   }
 
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg border border-red-200 p-6">
+        <div className="text-center py-8">
+          <div className="text-red-500 mb-4">⚠️</div>
+          <p className="text-red-600 font-medium mb-2">Failed to load addresses</p>
+          <p className="text-gray-600 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchAddresses}
+            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
-      {/* Section Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <MapPin className="w-6 h-6 text-gray-600" />
@@ -71,24 +194,23 @@ const SavedAddresses = ({
         </button>
       </div>
 
-      {/* Address List */}
       <div className="space-y-4">
-        {addresses?.length === 0 ? (
+        {addresses.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <MapPin className="w-12 h-12 mx-auto mb-3 text-gray-300" />
             <p className="text-lg font-medium">No addresses saved</p>
             <p className="text-sm">Add your first address to get started</p>
           </div>
         ) : (
-          addresses?.map((address) => (
+          addresses.map((address) => (
             <div
-              key={address.id}
+              key={address._id || address.id}
               className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-gray-900">{address.label}</h3>
+                    <h3 className="font-semibold text-gray-900">{address.label || 'Address'}</h3>
                     {address.isDefault && (
                       <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
                         Default
@@ -107,7 +229,6 @@ const SavedAddresses = ({
                   )}
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex items-center gap-2 ml-4">
                   <button
                     className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -116,12 +237,12 @@ const SavedAddresses = ({
                     <Edit3 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteAddress(address.id)}
-                    disabled={deletingAddressId === address.id}
+                    onClick={() => handleDeleteAddress(address._id || address.id)}
+                    disabled={deletingAddressId === (address._id || address.id)}
                     className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Delete Address"
                   >
-                    {deletingAddressId === address.id ? (
+                    {deletingAddressId === (address._id || address.id) ? (
                       <div className="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin"></div>
                     ) : (
                       <Trash2 className="w-4 h-4" />
@@ -134,7 +255,6 @@ const SavedAddresses = ({
         )}
       </div>
 
-      {/* Add Address Modal */}
       <AddAddressModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

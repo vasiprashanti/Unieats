@@ -1,24 +1,31 @@
 import admin from 'firebase-admin';
-import { readFileSync } from 'fs';
 
 const initializeFirebaseAdmin = () => {
   try {
-    // --- The Single Source of Truth ---
-    // Get the path to the complete credentials file from the environment variable.
-    // This is the official, recommended way to do this.
-    const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    // --- Construct service account object from environment variables ---
+    const serviceAccount = {
+      type: process.env.FIREBASE_TYPE,
+      project_id: process.env.FIREBASE_PROJECT_ID,
+      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+      private_key: process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+        : undefined,
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      client_id: process.env.FIREBASE_CLIENT_ID,
+      auth_uri: process.env.FIREBASE_AUTH_URI,
+      token_uri: process.env.FIREBASE_TOKEN_URI,
+      auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+    };
 
-    // Add a clear check to ensure the variable is actually set.
-    if (!serviceAccountPath) {
+    // Check that all required fields are set
+    if (!serviceAccount.private_key || !serviceAccount.client_email) {
       throw new Error(
-        'CRITICAL: The GOOGLE_APPLICATION_CREDENTIALS environment variable is not set. Please point it to your serviceAccountKey.json file.'
+        'CRITICAL: Firebase environment variables are not properly set.'
       );
     }
 
-    // Read and parse the file. This method is robust and handles all formatting correctly.
-    const serviceAccount = JSON.parse(readFileSync(serviceAccountPath));
-
-    // Initialize the app with the credentials from the file.
+    // Initialize Firebase Admin
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
@@ -26,7 +33,6 @@ const initializeFirebaseAdmin = () => {
     console.log("Firebase Admin SDK initialized successfully.");
   } catch (error) {
     console.error(`Firebase Admin SDK initialization error: ${error.message}`);
-    // Exit the process with a failure code, as the app cannot run without this.
     process.exit(1);
   }
 };
