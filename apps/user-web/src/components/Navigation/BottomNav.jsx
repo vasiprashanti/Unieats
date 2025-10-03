@@ -8,6 +8,11 @@ const BottomNav = () => {
   const { totalItems } = useCart();
   const { user } = useAuth();
 
+  // Don't show global bottom nav on restaurant menu pages - they have their own custom navigation
+  if (location.pathname.match(/^\/restaurants\/[a-zA-Z0-9]+$/)) {
+    return null;
+  }
+
   const navItems = [
     {
       name: 'Home',
