@@ -106,7 +106,7 @@ export default function Home() {
       const progress = window.scrollY / waveScrollHeight;
 
       waveSpans.forEach((span, i) => {
-        const baseX = window.innerWidth - progress * (window.innerWidth + waveSpans.length * 30);
+        const baseX = window.innerWidth - progress * (window.innerWidth + waveSpans.length * 30) * 1.5;
         const x = baseX + i * 28;
         const amplitude = 60;
         const wavelength = 180;
@@ -146,9 +146,9 @@ export default function Home() {
         <h1 className="text-[8vw] leading-none font-semibold relative z-[2] md:text-[6rem]">
           Ordering<br />
           <span 
-            className="text-[#FF4500] inline-block pr-0.5"
+            className="text-[#ff5c21] inline-block pr-0.5"
             style={{
-              borderRight: '3px solid #FF4500',
+              borderRight: '3px solid #ff5c21',
               animation: 'blink 0.7s infinite'
             }}
           >

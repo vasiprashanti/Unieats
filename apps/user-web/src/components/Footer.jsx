@@ -19,7 +19,7 @@ function Footer() {
               <img 
               src="/images/Unieats Insta.png" 
               alt="Unieats Instagram" 
-              className="w-56 md:w-64 object-contain hover:scale-105 transition-transform duration-300 shadow-lg"
+              className="w-72 md:w-80 object-contain hover:scale-105 transition-transform duration-300 shadow-lg"
             />
             </div>
           </div>
