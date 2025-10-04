@@ -8,6 +8,58 @@ import Footer from '../components/Footer';
 export default function Home() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeCard, setActiveCard] = useState(2); // Middle card active by default
+
+  // Categories data
+  const categories = [
+    { title: 'PIZZA', restaurants: ["Domino's", "Pizza Hut", "La Pino'z"] },
+    { title: 'BURGER', restaurants: ["Burger King", "McDonald's", "Wendy's"] },
+    { title: 'MOMOS', restaurants: ["Wow! Momo", "Himalayan Bites", "Tandoori Momo Hub"] },
+    { title: 'COFFEE', restaurants: ["Starbucks", "CCD", "Blue Tokai"] },
+    { title: 'CAKE', restaurants: ["Theobroma", "CakeZone", "Monginis"] }
+  ];
+
+  // Mobile swipe functionality
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+
+    const handleTouchStart = (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e) => {
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+
+      // Only handle horizontal swipes (ignore vertical)
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+        if (diffX > 0) {
+          // Swipe left - next card
+          setActiveCard((prev) => (prev + 1) % categories.length);
+        } else {
+          // Swipe right - previous card
+          setActiveCard((prev) => (prev - 1 + categories.length) % categories.length);
+        }
+      }
+    };
+
+    const mobileSection = document.querySelector('.poker-hand-mobile');
+    if (mobileSection) {
+      mobileSection.addEventListener('touchstart', handleTouchStart);
+      mobileSection.addEventListener('touchend', handleTouchEnd);
+    }
+
+    return () => {
+      if (mobileSection) {
+        mobileSection.removeEventListener('touchstart', handleTouchStart);
+        mobileSection.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [categories.length]);
 
   // Typewriter effect
   const [typewriterText, setTypewriterText] = useState('');
@@ -40,7 +92,7 @@ export default function Home() {
           setWordIndex((wordIndex + 1) % words.length);
         }
       }
-    }, typing ? 150 : 100);
+    }, typing ? 200 : 120);
 
     return () => clearTimeout(timeout);
   }, [charIndex, wordIndex, typing]);
@@ -105,25 +157,7 @@ export default function Home() {
           Think UniEats.
         </h1>
 
-        {/* Floating Images */}
-        <img 
-          src="/Biryani.jpg" 
-          alt="Biryani"
-          className="absolute w-[220px] rounded-[10px] shadow-[0_12px_25px_rgba(0,0,0,0.25)] z-[1] top-[20%] left-[55%] animate-float"
-          style={{ animationDelay: '0s' }}
-        />
-        <img 
-          src="/images/pizza.png" 
-          alt="Pizza"
-          className="absolute w-[220px] rounded-[10px] shadow-[0_12px_25px_rgba(0,0,0,0.25)] z-[1] top-[65%] left-[25%] animate-float"
-          style={{ animationDelay: '2s' }}
-        />
-        <img 
-          src="/pasta.jpg" 
-          alt="Pasta"
-          className="absolute w-[220px] rounded-[10px] shadow-[0_12px_25px_rgba(0,0,0,0.25)] z-[1] top-[55%] left-[55%] animate-float"
-          style={{ animationDelay: '4s' }}
-        />
+
 
         {/* CTA Button */}
         {user ? (
@@ -163,6 +197,90 @@ export default function Home() {
             SCROLL TO DISCOVER
           </div>
           <div className="text-[1.2rem] text-[#FF4500]">↓</div>
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="categories-section">
+        <div className="text-center py-10" style={{ background: '#ff6a20', minHeight: '80vh' }}>
+          <h2 className="text-[3rem] mb-2.5 text-[#020202] font-bold">CATEGORIES</h2>
+          <p className="text-[1.2rem] mb-12 text-[#020202]">Pick your cravings, find your spot</p>
+          
+          {/* Desktop Poker Hand */}
+          <div className="poker-hand hidden md:flex relative justify-center mt-10">
+            {categories.map((category, index) => {
+              const rotations = ['-rotate-[15deg]', '-rotate-[7deg]', 'rotate-0', 'rotate-[7deg]', 'rotate-[15deg]'];
+              return (
+                <div
+                  key={category.title}
+                  className={`category-card relative w-[220px] h-[400px] p-5 rounded-2xl bg-[#fafafa] shadow-lg text-center transition-all duration-400 cursor-pointer -ml-[70px] ${rotations[index]} hover:rotate-0 hover:scale-110 hover:z-10`}
+                >
+                  <h3 className="text-[2.2rem] mb-2.5 text-[#ff6600] font-bold">{category.title}</h3>
+                  {category.restaurants.map((restaurant, idx) => (
+                    <Link
+                      key={idx}
+                      to={`/restaurants?search=${restaurant}`}
+                      className="block mt-5 text-[#111111] font-medium border-b border-[#e63e00] no-underline hover:text-[#ff6600] transition-colors"
+                    >
+                      {restaurant}
+                    </Link>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Mobile Stacked Cards */}
+          <div className="poker-hand-mobile md:hidden relative w-full h-[360px] flex justify-center items-center" style={{ perspective: '1000px' }}>
+            {categories.map((category, index) => {
+              let cardClass = 'category-card-mobile absolute w-[240px] h-[400px] rounded-2xl bg-[#fafafa] shadow-lg text-center cursor-pointer transition-all duration-500 opacity-50 z-[1]';
+              
+              if (index === activeCard) {
+                cardClass += ' translate-x-0 scale-105 z-10 opacity-100';
+              } else if (index === activeCard - 1 || (activeCard === 0 && index === 4)) {
+                cardClass += ' -translate-x-[70px] scale-90 z-[5] opacity-60';
+              } else if (index === activeCard + 1 || (activeCard === 4 && index === 0)) {
+                cardClass += ' translate-x-[70px] scale-90 z-[5] opacity-60';
+              } else {
+                cardClass += ' translate-x-[200px] scale-80 opacity-0 z-[1]';
+              }
+
+              return (
+                <div
+                  key={category.title}
+                  className={cardClass}
+                  onClick={() => setActiveCard(index)}
+                >
+                  <div className="p-5">
+                    <h3 className="text-[2.2rem] mb-2.5 text-[#ff6600] font-bold">{category.title}</h3>
+                    {category.restaurants.map((restaurant, idx) => (
+                      <Link
+                        key={idx}
+                        to={`/restaurants?search=${restaurant}`}
+                        className="block mt-5 text-[#111111] font-medium no-underline hover:text-[#ff6600] transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {restaurant}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Mobile Navigation Dots */}
+          <div className="md:hidden flex justify-center gap-2 mt-6">
+            {categories.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveCard(index)}
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
+                  index === activeCard ? 'bg-[#020202]' : 'bg-[#020202]/30'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -258,14 +376,7 @@ export default function Home() {
           25%, 75% { border-color: transparent; }
         }
 
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
-        }
 
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
 
         @media (max-width: 768px) {
           .hero h1 {
@@ -279,9 +390,7 @@ export default function Home() {
             padding: 2rem;
           }
           
-          .floating-img {
-            width: 140px;
-          }
+
           
           .menu-full {
             grid-template-columns: 1fr;
