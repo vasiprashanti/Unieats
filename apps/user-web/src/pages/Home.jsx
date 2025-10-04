@@ -267,17 +267,17 @@ export default function Home() {
                 let cardClass = 'category-card-mobile absolute w-full h-[380px] sm:h-[410px] max-w-[280px] rounded-2xl bg-[#fafafa] shadow-xl text-center cursor-pointer transition-all duration-700 ease-out';
                 
                 if (index === activeCard) {
-                  // Active card - centered, full opacity, on top
-                  cardClass += ' translate-x-0 scale-100 opacity-100 z-30';
+                  // Active card - centered, larger size, full opacity, on top, slight tilt
+                  cardClass += ' translate-x-0 scale-110 opacity-100 z-30 rotate-[2deg]';
                 } else if (index === activeCard - 1 || (activeCard === 0 && index === categories.length - 1)) {
-                  // Previous card - left side, partially visible
-                  cardClass += ' -translate-x-[120px] scale-90 opacity-70 z-20';
+                  // Previous card - left side, smaller and less visible, tilted left
+                  cardClass += ' -translate-x-[120px] scale-80 opacity-40 z-20 -rotate-[8deg]';
                 } else if (index === activeCard + 1 || (activeCard === categories.length - 1 && index === 0)) {
-                  // Next card - right side, partially visible
-                  cardClass += ' translate-x-[120px] scale-90 opacity-70 z-20';
+                  // Next card - right side, smaller and less visible, tilted right
+                  cardClass += ' translate-x-[120px] scale-80 opacity-40 z-20 rotate-[8deg]';
                 } else {
-                  // Hidden cards - completely behind
-                  cardClass += ' translate-x-0 scale-85 opacity-0 z-10 pointer-events-none';
+                  // Hidden cards - completely behind, neutral tilt
+                  cardClass += ' translate-x-0 scale-75 opacity-0 z-10 pointer-events-none rotate-0';
                 }
 
                 return (
