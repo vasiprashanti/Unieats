@@ -151,14 +151,18 @@ export default function Home() {
 
         {/* Scroll Indicator */}
         <div 
-          className="absolute bottom-8 right-8 text-[0.8rem] tracking-[2px] text-[#333]"
-          style={{
-            writingMode: 'vertical-rl',
-            transform: 'rotate(180deg)'
-          }}
+          className="absolute bottom-8 right-8 text-[0.8rem] tracking-[2px] text-[#333] flex flex-col items-center"
         >
-          SCROLL TO DISCOVER
-          <div className="block text-center mt-2 text-[1.2rem] text-[#FF4500]">↓</div>
+          <div 
+            className="mb-4"
+            style={{
+              writingMode: 'vertical-rl',
+              transform: 'rotate(180deg)'
+            }}
+          >
+            SCROLL TO DISCOVER
+          </div>
+          <div className="text-[1.2rem] text-[#FF4500]">↓</div>
         </div>
       </section>
 

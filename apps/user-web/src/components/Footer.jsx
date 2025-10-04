@@ -6,10 +6,10 @@ function Footer() {
   return (
     <footer className=" bg-[#141414] text-white py-16 px-6 md:px-12">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-16">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-16">
           
           {/* Left Section - Logo and Icon */}
-          <div className="flex flex-col items-start gap-6">
+          <div className="flex flex-col items-start gap-6 w-full md:w-[45%]">
             <img 
               src="/unilogo.png" 
               alt="Unieats Logo" 
@@ -17,15 +17,15 @@ function Footer() {
             />
             <div className="flex items-center justify-center">
               <img 
-              src="/footerlogo.png" 
-              alt="Unieats Logo" 
+              src="/images/Unieats Insta.png" 
+              alt="Unieats Instagram" 
               className="w-40 object-contain"
             />
             </div>
           </div>
 
           {/* Right Section - Navigation Links */}
-          <nav className="flex flex-col w-full md:w-auto">
+          <nav className="flex flex-col w-full md:w-[50%]">
             {[
               { id: "01", label: "ORDER", path: "/orders" },
               { id: "02", label: "ABOUT", path: "/" },
