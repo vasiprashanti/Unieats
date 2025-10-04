@@ -282,13 +282,14 @@ export function CartProvider({ children }) {
   };
 
   const getItemQuantity = (itemId) => {
-  const item = state.items.find(i => i._id === itemId);
+  const item = state.items.find(i => i.menuItem === itemId);
   return item ? item.quantity : 0;
-  };
+};
 
-  const isItemInCart = (itemId) => {
-  return state.items.some(i => i._id === itemId);
-  };
+   const isItemInCart = (itemId) => {
+  return state.items.some(i => i.menuItem === itemId);
+};
+
 
   // Add refreshCart function in CartProvider
   const refreshCart = async () => {

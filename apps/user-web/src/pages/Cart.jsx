@@ -119,7 +119,7 @@ export default function Cart() {
             Discover amazing food and start ordering!
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/restaurants')}
             className="px-8 py-3 rounded-2xl font-semibold shadow-xl transition-colors duration-200"
             style={{
               backgroundColor: "hsl(var(--primary))",

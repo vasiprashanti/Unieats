@@ -267,25 +267,27 @@ export default function RestaurantMenu() {
                   <div className="font-semibold text-base mb-1">{item.name}</div>
                   <div className="text-xs text-[#555] mb-1.5">{item.desc}</div>
                   <div className="font-bold text-[#2e7d32] mb-2">₹{item.price}</div>
-                  {qty === 0 ? (
-                    <button 
+                 {qty === 0 ? (
+                    <button
                       onClick={() => handleAddToCart(item._id)}
                       className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm"
                     >
                       Add
                     </button>
                   ) : (
-                    <div className="flex items-center gap-2 bg-white/90 p-1 rounded-[20px] shadow-sm justify-center">
-                      <button 
+                    <div className="inline-flex items-center gap-2 bg-white p-1.5 rounded-full shadow-md border border-gray-200">
+                      <button
                         onClick={() => handleDecreaseQty(item._id)}
-                        className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
+                        className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer flex items-center justify-center hover:bg-[#e85d00] transition-colors"
                       >
                         -
                       </button>
-                      <span className="min-w-5 text-center">{qty}</span>
-                      <button 
+                      <span className="min-w-6 text-center font-semibold text-sm px-1">
+                        {qty}
+                      </span>
+                      <button
                         onClick={() => handleIncreaseQty(item._id)}
-                        className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
+                        className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer flex items-center justify-center hover:bg-[#e85d00] transition-colors"
                       >
                         +
                       </button>

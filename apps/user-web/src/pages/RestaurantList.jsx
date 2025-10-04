@@ -4,6 +4,8 @@ import { getRestaurants } from '../api/restaurants';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navigation/Navbar';
 import MobileHeader from '../components/Navigation/MobileHeader';
+import Footer from '../components/Footer';
+
 
 export default function RestaurantList() {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -636,41 +638,7 @@ export default function RestaurantList() {
       </section>
 
       {/* Footer */}
-      <footer className="w-full bg-transparent p-0 box-border transition-all duration-300 mt-16">
-        <div className="mx-auto rounded-t-3xl p-6 md:p-10 shadow-lg flex flex-col md:flex-row md:flex-wrap justify-between items-center md:items-start gap-6 transition-all duration-300 text-center md:text-left"
-             style={{
-               backgroundColor: 'hsl(var(--card))',
-               borderRadius: '20px 20px 0 0',
-               boxShadow: '0 -6px 16px rgba(0,0,0,0.08)'
-             }}>
-          
-          {/* Site Section */}
-          <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
-            <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Site</h4>
-            <a href="/home" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Home</a>
-            <a href="/restaurants" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Restaurants</a>
-            <a href="/cart" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Cart</a>
-            <a href="/profile" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Profile</a>
-          </div>
-
-          {/* Legal Section */}
-          <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
-            <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Legal</h4>
-            <a href="#" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Privacy Policy</a>
-            <a href="#" className="no-underline transition-colors duration-200 hover:text-orange-500" style={{ color: 'hsl(var(--muted-foreground))' }}>Terms & Conditions</a>
-          </div>
-
-          {/* Follow Us Section */}
-          <div className="flex-1 min-w-[200px] flex flex-col gap-3 items-center md:items-start">
-            <h4 className="font-semibold text-base mb-2" style={{ color: 'hsl(var(--foreground))' }}>Follow Us</h4>
-            <div className="flex gap-4 justify-center md:justify-start">
-              <i className="fab fa-facebook-f text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
-              <i className="fab fa-instagram text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
-              <i className="fab fa-twitter text-xl cursor-pointer transition-all duration-200 hover:scale-125 hover:text-orange-500"></i>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer/>
 
       
     </div>
