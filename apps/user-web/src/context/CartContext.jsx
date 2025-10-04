@@ -69,6 +69,45 @@ export function CartProvider({ children }) {
     }
   }, [state]);
 
+  // Add fetching cart from backend on mount
+  useEffect(() => {
+    async function fetchBackendCart() {
+      const token = await getFirebaseToken();
+      if (!token) return;
+      try {
+        const response = await fetch(`${API_URL}/api/v1/cart`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const text = await response.text();
+        let data = text ? JSON.parse(text) : {};
+        if (response.ok && data.data) {
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: {
+              items: data.data.items.map(i => ({
+                _id: i._id,
+                menuItem: i.menuItem,
+                quantity: i.quantity,
+                price: i.price,
+                ...i
+              })),
+              totalItems: data.data.items.reduce((sum, i) => sum + i.quantity, 0),
+              totalPrice: data.data.total,
+              restaurantId: data.data.vendor
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching cart from backend:', error);
+      }
+    }
+    fetchBackendCart();
+  }, []);
+
   // ---------------------------
   // Cart Actions
   // ---------------------------
@@ -250,6 +289,42 @@ export function CartProvider({ children }) {
   return state.items.some(i => i._id === itemId);
   };
 
+  // Add refreshCart function in CartProvider
+  const refreshCart = async () => {
+    const token = await getFirebaseToken();
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL}/api/v1/cart`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const text = await response.text();
+      let data = text ? JSON.parse(text) : {};
+      if(response.ok && data.data) {
+        dispatch({
+          type: CART_ACTIONS.LOAD_CART,
+          payload: {
+            items: data.data.items.map(i => ({
+              _id: i._id,
+              menuItem: i.menuItem,
+              quantity: i.quantity,
+              price: i.price,
+              ...i
+            })),
+            totalItems: data.data.items.reduce((sum, i) => sum + i.quantity, 0),
+            totalPrice: data.data.total,
+            restaurantId: data.data.vendor
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error refreshing cart:', error);
+    }
+  };
+
   // Context value
   const value = {
     ...state,
@@ -259,6 +334,7 @@ export function CartProvider({ children }) {
     clearCart,
     getItemQuantity,
     isItemInCart,
+    refreshCart
   };
 
   return (

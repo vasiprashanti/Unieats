@@ -22,7 +22,8 @@ export default function Cart() {
     totalPrice: subtotal,
     updateQuantity,
     removeItem,
-    clearCart
+    clearCart,
+    refreshCart
   } = useCart();
   // Debug: log cartItems structure
   console.log('Cart items:', cartItems);
@@ -85,6 +86,13 @@ export default function Cart() {
     if (cartItems.length > 0) calculateDeliveryFee();
     else setDeliveryFee(0);
   }, [cartItems.length, subtotal]);
+
+  // Call refreshCart on mount if cart is empty
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      refreshCart();
+    }
+  }, []);
 
   return (
     <div
