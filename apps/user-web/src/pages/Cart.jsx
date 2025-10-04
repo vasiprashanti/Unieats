@@ -98,10 +98,8 @@ export default function Cart() {
 
   // Helper function to get item price (per unit)
   const getItemUnitPrice = (item) => {
-    // If the backend sends price per unit, use it directly
-    // Otherwise calculate it from total and quantity
-    if (item.unitPrice) return item.unitPrice;
-    return item.price / item.quantity;
+    // The backend sends price as the unit price
+    return item.price;
   };
 
   return (
