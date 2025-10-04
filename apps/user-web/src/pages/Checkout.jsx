@@ -121,7 +121,7 @@ export default function Checkout() {
     }
   };
 
-  const handlePlaceOrder = async () => {
+const handlePlaceOrder = async () => {
   if (!selectedAddress || !selectedPayment) {
     alert("Please select delivery address and payment method");
     return;
@@ -133,9 +133,10 @@ export default function Checkout() {
   if (!user) {
     throw new Error("User not authenticated");
   }
+
   const token = await user.getIdToken();
   try {
-    // POST /api/v1/payments/orders for UPI QR code
+    // POST /api/v1/payments/orders for UPI or COD
     const response = await fetch(`${API_BASE_URL}/api/v1/payments/orders`, {
       method: "POST",
       headers: {
@@ -143,14 +144,15 @@ export default function Checkout() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        addressId: selectedAddress._id || selectedAddress.id
+        addressId: selectedAddress._id || selectedAddress.id,
+        paymentMethod: selectedPayment, // ✅ added payment method
       }),
     });
+
     if (response.ok) {
       const result = await response.json();
       console.log("Order placed successfully:", result);
       setOrderSuccess(true);
-      // You can use result.data.orderId, result.data.amount, result.data.upiId for UPI QR code
     } else {
       const errorData = await response.json();
       throw new Error(errorData.message || "Failed to place order");
@@ -162,6 +164,7 @@ export default function Checkout() {
     setIsPlacingOrder(false);
   }
 };
+
 
 
   if (orderSuccess) {

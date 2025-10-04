@@ -25,8 +25,10 @@ export default function Cart() {
     clearCart,
     refreshCart
   } = useCart();
-  // Debug: log cartItems structure
+  
   console.log('Cart items:', cartItems);
+  console.log('Subtotal from context:', subtotal);
+  
   const navigate = useNavigate();
 
   const [deliveryFee, setDeliveryFee] = useState(5);
@@ -63,21 +65,21 @@ export default function Cart() {
     }
   };
 
-  const handleUpdateQuantity = (id, newQuantity) => {
-    if (!id) {
-      console.warn('Cart: Tried to update quantity with undefined id', id, newQuantity);
+  const handleUpdateQuantity = (menuItemId, newQuantity) => {
+    if (!menuItemId) {
+      console.warn('Cart: Tried to update quantity with undefined id', menuItemId, newQuantity);
       return;
     }
-    updateQuantity(id, newQuantity);
+    updateQuantity(menuItemId, newQuantity);
   };
 
-  const handleRemoveItem = (id) => {
-    console.log("emm id",id);
-    if (!id) {
-      console.warn('Cart: Tried to remove item with undefined id', id);
+  const handleRemoveItem = (menuItemId) => {
+    console.log("Removing item id:", menuItemId);
+    if (!menuItemId) {
+      console.warn('Cart: Tried to remove item with undefined id', menuItemId);
       return;
     }
-    removeItem(id);
+    removeItem(menuItemId);
   };
 
   const toggleWallet = () => setUseWallet(!useWallet);
@@ -93,6 +95,12 @@ export default function Cart() {
       refreshCart();
     }
   }, []);
+
+  // Helper function to get item price (per unit)
+  const getItemUnitPrice = (item) => {
+    // The backend sends price as the unit price
+    return item.price;
+  };
 
   return (
     <div
@@ -119,7 +127,7 @@ export default function Cart() {
             Discover amazing food and start ordering!
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/restaurants')}
             className="px-8 py-3 rounded-2xl font-semibold shadow-xl transition-colors duration-200"
             style={{
               backgroundColor: "hsl(var(--primary))",
@@ -134,93 +142,106 @@ export default function Cart() {
         <div className="p-4  pb-[280px] md:pb-6 pt-16 md:pt-24 space-y-6 max-w-2xl mx-auto">
           {/* Cart Items (stacked) */}
           <div className="space-y-3">
-            {cartItems.map((item) => (
-              <div
-                key={item._id}
-                className="rounded-2xl p-4 transition-colors duration-200"
-                style={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                }}
-              >
-                <div className="flex items-start justify-between">
-                  {/* Dish Info */}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3
-                        className="font-semibold text-sm md:text-base"
-                        style={{ color: "hsl(var(--card-foreground))" }}
-                      >
-                        {item.name}
-                      </h3>
-                      {item.veg !== undefined && (
-                        <div className={`w-4 h-4 border-2 flex items-center justify-center ${item.veg ? 'border-green-500' : 'border-red-500'}`}>
-                          <div className={`w-2 h-2 rounded-full ${item.veg ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                        </div>
+            {cartItems.map((item) => {
+              const unitPrice = getItemUnitPrice(item);
+              const itemTotal = unitPrice * item.quantity;
+              
+              return (
+                <div
+                  key={item._id}
+                  className="rounded-2xl p-4 transition-colors duration-200"
+                  style={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                  }}
+                >
+                  <div className="flex items-start justify-between">
+                    {/* Dish Info */}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3
+                          className="font-semibold text-sm md:text-base"
+                          style={{ color: "hsl(var(--card-foreground))" }}
+                        >
+                          {item.name}
+                        </h3>
+                        {item.veg !== undefined && (
+                          <div className={`w-4 h-4 border-2 flex items-center justify-center ${item.veg ? 'border-green-500' : 'border-red-500'}`}>
+                            <div className={`w-2 h-2 rounded-full ${item.veg ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                          </div>
+                        )}
+                      </div>
+                      {item.description && (
+                        <p
+                          className="text-xs md:text-sm mt-1"
+                          style={{ color: "hsl(var(--muted-foreground))" }}
+                        >
+                          {item.description}
+                        </p>
                       )}
-                    </div>
-                    {item.description && (
                       <p
-                        className="text-xs md:text-sm mt-1"
+                        className="text-xs mt-1"
                         style={{ color: "hsl(var(--muted-foreground))" }}
                       >
-                        {item.description}
+                        ₹{unitPrice.toFixed(0)} each
                       </p>
-                    )}
 
-                    {/* Quantity Controls */}
-                    <div className="flex items-center space-x-2 mt-2">
-                      <button
-                        onClick={() =>
-                          handleUpdateQuantity(item.menuItem, item.quantity - 1)
-                        }
-                        className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:border-[hsl(var(--primary))] transition-colors duration-200"
-                        style={{ borderColor: "hsl(var(--primary) / 0.5)" }}
-                      >
-                        <Minus
-                          className="h-3 w-3"
-                          style={{ color: "hsl(var(--primary))" }}
-                        />
-                      </button>
-                      <span
-                        className="w-7 text-center font-semibold text-sm"
+                      {/* Quantity Controls */}
+                      <div className="flex items-center space-x-2 mt-2">
+                        <button
+                          onClick={() => {
+                            console.log("Decreasing quantity for item:", item);
+                            handleUpdateQuantity(item.menuItem, item.quantity - 1);
+                          }}
+                          className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:border-[hsl(var(--primary))] transition-colors duration-200"
+                          style={{ borderColor: "hsl(var(--primary) / 0.5)" }}
+                        >
+                          <Minus
+                            className="h-3 w-3"
+                            style={{ color: "hsl(var(--primary))" }}
+                          />
+                        </button>
+                        <span
+                          className="w-7 text-center font-semibold text-sm"
+                          style={{ color: "hsl(var(--card-foreground))" }}
+                        >
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => {
+                            console.log("Increasing quantity for item:", item);
+                            handleUpdateQuantity(item.menuItem, item.quantity + 1);
+                          }}
+                          className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:border-[hsl(var(--primary))] transition-colors duration-200"
+                          style={{ borderColor: "hsl(var(--primary) / 0.5)" }}
+                        >
+                          <Plus
+                            className="h-3 w-3"
+                            style={{ color: "hsl(var(--primary))" }}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Price + Delete */}
+                    <div className="flex flex-col items-end space-y-2">
+                      <p
+                        className="text-base md:text-lg font-bold"
                         style={{ color: "hsl(var(--card-foreground))" }}
                       >
-                        {item.quantity}
-                      </span>
+                        ₹{itemTotal.toFixed(0)}
+                      </p>
                       <button
-                        onClick={() =>{
-                          handleUpdateQuantity(item.menuItem, item.quantity + 1)}
-                        }
-                        className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:border-[hsl(var(--primary))] transition-colors duration-200"
-                        style={{ borderColor: "hsl(var(--primary) / 0.5)" }}
+                        onClick={() => handleRemoveItem(item.menuItem)}
+                        className="p-1 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors duration-200"
                       >
-                        <Plus
-                          className="h-3 w-3"
-                          style={{ color: "hsl(var(--primary))" }}
-                        />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
-
-                  {/* Price + Delete */}
-                  <div className="flex flex-col items-end space-y-2">
-                    <p
-                      className="text-base md:text-lg font-bold"
-                      style={{ color: "hsl(var(--card-foreground))" }}
-                    >
-                      ₹{(item.price * item.quantity).toFixed(0)}
-                    </p>
-                    <button
-                      onClick={() => handleRemoveItem(item.menuItem)}
-                      className="p-1 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors duration-200"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Order Summary (desktop only) */}

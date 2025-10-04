@@ -11,7 +11,7 @@ function Footer() {
           {/* Left Section - Logo and Icon */}
           <div className="flex flex-col items-start gap-8 w-full md:w-[45%]">
             <img 
-              src="/unilogo.png" 
+              src="/unilogo.jpg" 
               alt="Unieats Logo" 
               className="w-56 md:w-64 object-contain hover:scale-105 transition-transform duration-300"
             />

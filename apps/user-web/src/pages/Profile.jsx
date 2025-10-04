@@ -8,6 +8,7 @@ import SavedAddresses from '../components/profile/SavedAddresses';
 import PaymentMethods from '../components/profile/PaymentMethods';
 import AccountActions from '../components/profile/AccountActions';
 import { getUserProfile, updateUserProfile, addUserAddress, deleteUserAddress, deletePaymentMethod } from '../api/user';
+import Footer from '../components/Footer';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -205,6 +206,7 @@ export default function Profile() {
           />
         </div>
       </div>
+      <Footer/>
     </div>
   );
 }
