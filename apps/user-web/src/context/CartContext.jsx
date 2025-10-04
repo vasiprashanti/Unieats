@@ -83,6 +83,7 @@ export function CartProvider({ children }) {
           }
         });
         const text = await response.text();
+        console.log("resss-",response);
         let data = text ? JSON.parse(text) : {};
         if (response.ok && data.data) {
           dispatch({

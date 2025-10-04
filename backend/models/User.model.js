@@ -1,13 +1,12 @@
 import mongoose, { Schema } from "mongoose";
 
 const addressSchema = new Schema({
-  label: { type: String, trim: true }, // e.g., "Home", "PG" - made optional
-  street: { type: String, required: true, trim: true },
-  city: { type: String, required: true, trim: true },
-  state: { type: String, required: true, trim: true },
-  zipCode: { type: String, required: true, trim: true },
-  landmark: { type: String, trim: true },
-  isDefault: { type: Boolean, default: false },
+    label: { type: String, required: true, trim: true },
+    addressLine1: { type: String, required: true, trim: true },
+    landmark: { type: String, trim: true },
+    city: { type: String, required: true, trim: true },
+    state: { type: String, required: true, trim: true },
+    zipCode: { type: String, required: true, trim: true },
 });
 
 const userSchema = new Schema(

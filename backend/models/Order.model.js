@@ -18,13 +18,13 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
       index: true,
-    }, // Indexed for user order history
+    },
     vendor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vendor",
       required: true,
       index: true,
-    }, // Indexed for vendor dashboards
+    },
     items: [orderItemSchema],
     totalPrice: { type: Number, required: true },
     status: {
@@ -39,11 +39,10 @@ const orderSchema = new mongoose.Schema(
         "cancelled",
       ],
       default: "payment_pending",
-      index: true, // Heavily indexed for filtering and monitoring
+      index: true,
     },
 
     deliveryAddress: {
-      street: { type: String, required: true },
       city: { type: String, required: true },
       state: { type: String, required: true },
       zipCode: { type: String, required: true },
@@ -66,6 +65,14 @@ const orderSchema = new mongoose.Schema(
     },
     acceptedAt: { type: Date },
     readyAt: { type: Date },
+
+    // Added statusHistory to fix pre-save push error
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
@@ -73,6 +80,7 @@ const orderSchema = new mongoose.Schema(
 // Compound index for efficient monitoring queries
 orderSchema.index({ status: 1, createdAt: -1 });
 
+// Pre-save middleware for status history
 orderSchema.pre("save", function (next) {
   if (this.isNew) {
     this.statusHistory.push({ status: this.status, timestamp: new Date() });

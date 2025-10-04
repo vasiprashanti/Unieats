@@ -172,7 +172,10 @@ export default function Cart() {
                     <div className="flex items-center space-x-2 mt-2">
                       <button
                         onClick={() =>
+                        {
+                          console.log("Itemm-",item);
                           handleUpdateQuantity(item.menuItem, item.quantity - 1)
+                        }
                         }
                         className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:border-[hsl(var(--primary))] transition-colors duration-200"
                         style={{ borderColor: "hsl(var(--primary) / 0.5)" }}

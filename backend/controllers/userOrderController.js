@@ -5,90 +5,50 @@ import Vendor from "../models/Vendor.model.js";
 
 // Step 1 - Place Order & Initiate Payment
 const placeOrder = async (req, res) => {
-    console.log("🟢 [START] placeOrder endpoint hit");
-    console.log("➡️ Request body:", req.body);
-
-    const { addressId, paymentMethod } = req.body;
+    let { addressId, paymentMethod } = req.body;
     const userId = req.user._id;
-    console.log("👤 User ID:", userId);
-    console.log("💳 Payment method:", paymentMethod);
-    console.log("🏠 Address ID:", addressId);
+    paymentMethod = paymentMethod ? paymentMethod.toUpperCase() : null;
 
-    // Basic validation
     if (!paymentMethod) {
-        console.log("❌ Missing payment method");
-        return res.status(400).json({ message: 'Payment method is required.' });
+        return res.status(400).json({ message: "Payment method is required." });
     }
 
     try {
         // 1️⃣ Find the user's cart
-        console.log("🛒 Fetching cart for user...");
-        const cart = await Cart.findOne({ user: userId }).populate('items.menuItem', 'name');
-        console.log("📦 Cart data:", cart);
+        const cart = await Cart.findOne({ user: userId }).populate("items.menuItem", "name");
 
         if (!cart || cart.items.length === 0) {
-            console.log("❌ Cart empty or not found");
-            return res.status(400).json({ message: 'Your cart is empty.' });
+            return res.status(400).json({ message: "Your cart is empty." });
         }
 
         const user = await User.findById(userId);
-        console.log("👤 User fetched:", user);
-
         if (!user) {
-            console.log("❌ User not found");
-            return res.status(404).json({ message: 'User not found.' });
+            return res.status(404).json({ message: "User not found." });
         }
 
         // 2️⃣ Determine the delivery address
-        console.log("📍 Determining delivery address...");
-        let deliveryAddressObject;
-
-        if (user.accommodation === 'Hosteller' && user.hostelDetails) {
-            console.log("🏫 User is a hosteller, using hostel details:", user.hostelDetails);
-            deliveryAddressObject = {
-                street: `Hostel Block ${user.hostelDetails.block}, Room ${user.hostelDetails.room}`,
-                city: process.env.CAMPUS_CITY,
-                state: process.env.CAMPUS_STATE,
-                zipCode: process.env.CAMPUS_ZIP_CODE,
-            };
-        } else if (user.accommodation === 'Non-Hosteller') {
-            console.log("🏠 User is a non-hosteller");
-
-            if (!addressId) {
-                console.log("❌ Missing addressId for non-hosteller");
-                return res.status(400).json({ message: 'Address ID is required for non-hostellers.' });
-            }
-
-            const address = user.addresses.id(addressId);
-            console.log("📦 Address found:", address);
-
-            if (!address) {
-                console.log("❌ Address not found for given addressId");
-                return res.status(404).json({ message: 'Selected address not found.' });
-            }
-
-            deliveryAddressObject = {
-                street: address.addressLine1 || address.street,
-                city: address.city,
-                state: address.state,
-                zipCode: address.zipCode,
-            };
-        } else {
-            console.log("❌ Cannot determine user accommodation type");
-            return res.status(400).json({ message: 'Cannot determine delivery address. Please complete your profile.' });
+        if (!addressId) {
+            return res.status(400).json({ message: "Address ID is required." });
         }
 
-        console.log("✅ Final delivery address object:", deliveryAddressObject);
+        const address = user.addresses.id(addressId);
+        if (!address) {
+            return res.status(404).json({ message: "Selected address not found." });
+        }
+
+        const deliveryAddressObject = {
+            city: address.city,
+            state: address.state,
+            zipCode: address.zipCode,
+        };
 
         // 3️⃣ Create snapshot items array
-        console.log("🧾 Creating order items snapshot...");
-        const orderItems = cart.items.map(item => ({
+        const orderItems = cart.items.map((item) => ({
             menuItem: item.menuItem._id,
             name: item.menuItem.name,
             price: item.price,
             quantity: item.quantity,
         }));
-        console.log("🧾 Order items:", orderItems);
 
         // 4️⃣ Create order payload
         const orderPayload = {
@@ -99,79 +59,67 @@ const placeOrder = async (req, res) => {
             deliveryAddress: deliveryAddressObject,
             paymentDetails: { method: paymentMethod },
         };
-        console.log("📦 Order payload before save:", orderPayload);
 
         // 5️⃣ Handle payment logic
-        if (paymentMethod === 'upi') {
-            console.log("💰 Handling UPI payment...");
+        if (paymentMethod === "UPI") {
             const vendor = await Vendor.findById(cart.vendor);
-            console.log("🏪 Vendor fetched:", vendor);
 
             if (!vendor || !vendor.upiId) {
-                console.log("❌ Vendor missing UPI ID");
-                return res.status(400).json({ message: 'This vendor is not currently accepting UPI payments.' });
+                return res.status(400).json({
+                    message: "This vendor is not currently accepting UPI payments.",
+                });
             }
 
-            orderPayload.status = 'payment_pending';
+            orderPayload.status = "payment_pending";
             const order = new Order(orderPayload);
             await order.save();
-            console.log("✅ UPI order created:", order);
 
             return res.status(201).json({
                 success: true,
-                message: 'Order placed. Please complete the payment.',
+                message: "Order placed. Please complete the payment.",
                 data: {
                     orderId: order._id,
                     amount: order.totalPrice,
                     upiId: vendor.upiId,
                 },
             });
-        } 
-        else if (paymentMethod === 'cod') {
-            console.log("💵 Handling Cash on Delivery...");
-            orderPayload.status = 'pending';
-            orderPayload.paymentDetails.status = 'pending';
+        } else if (paymentMethod === "COD") {
+            orderPayload.status = "pending";
+            orderPayload.paymentDetails.status = "pending";
 
             const order = new Order(orderPayload);
             await order.save();
-            console.log("✅ COD order created:", order);
 
             // Clear cart
-            console.log("🧹 Clearing cart...");
             await Cart.deleteOne({ user: userId });
 
             // Notify vendor
-            console.log("📢 Emitting new_order event to vendor:", order.vendor);
-            const io = req.app.get('socketio');
-            io.to(order.vendor.toString()).emit('new_order', order);
+            const io = req.app.get("socketio");
+            io.to(order.vendor.toString()).emit("new_order", order);
 
             return res.status(201).json({
                 success: true,
-                message: 'Order placed successfully!',
+                message: "Order placed successfully!",
                 data: order,
             });
         }
 
-        console.log("❌ Invalid payment method provided:", paymentMethod);
-        return res.status(400).json({ message: 'Invalid payment method provided.' });
-
+        return res.status(400).json({ message: "Invalid payment method provided." });
     } catch (error) {
-        console.error("🔥 Error caught in placeOrder:", error);
-
-        if (error.name === 'ValidationError') {
-            console.error("⚠️ Mongoose Validation Error Details:", error.message);
+        if (error.name === "ValidationError") {
             return res.status(400).json({
                 success: false,
-                message: 'Order validation failed.',
+                message: "Order validation failed.",
                 details: error.message,
             });
         }
 
-        res.status(500).json({ success: false, message: 'Server error while placing order.' });
+        res.status(500).json({
+            success: false,
+            message: "Server error while placing order.",
+        });
     }
 };
-
-
 
 
 // Step 2 - Confirm UPI Payment
