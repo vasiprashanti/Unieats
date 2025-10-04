@@ -168,35 +168,34 @@ const handlePlaceOrder = async () => {
 
 
   if (orderSuccess) {
-    return (
-      <div className="min-h-screen transition-colors duration-300 bg-white/92">
-          
-        <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md w-full">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Check className="h-8 w-8 text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Order Placed Successfully!
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Your order will be delivered in 30-45 minutes
-          </p>
-          <div className="bg-green-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-green-800">
-              Order ID: #FD{Math.floor(Math.random() * 10000)}
-            </p>
-            <p className="text-sm text-green-800">Total: ₹{total}</p>
-          </div>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-colors"
-          >
-            Place Another Order
-          </button>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white/90 px-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md w-full">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Check className="h-8 w-8 text-green-600" />
         </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Order Placed Successfully!
+        </h2>
+        <p className="text-gray-600 mb-6">
+          Your order will be delivered in 30-45 minutes
+        </p>
+        <div className="bg-green-50 rounded-lg p-4 mb-6">
+          <p className="text-sm text-green-800">
+            Order ID: #FD{Math.floor(Math.random() * 10000)}
+          </p>
+          <p className="text-sm text-green-800">Total: ₹{total}</p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-colors"
+        >
+          Place Another Order
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <>

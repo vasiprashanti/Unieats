@@ -9,17 +9,17 @@ function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-start gap-16">
           
           {/* Left Section - Logo and Icon */}
-          <div className="flex flex-col items-start gap-6 w-full md:w-[45%]">
+          <div className="flex flex-col items-start gap-8 w-full md:w-[45%]">
             <img 
               src="/unilogo.jpg" 
               alt="Unieats Logo" 
-              className="w-40 object-contain"
+              className="w-56 md:w-64 object-contain hover:scale-105 transition-transform duration-300"
             />
             <div className="flex items-center justify-center">
               <img 
               src="/images/Unieats Insta.png" 
               alt="Unieats Instagram" 
-              className="w-40 object-contain"
+              className="w-72 md:w-80 object-contain hover:scale-105 transition-transform duration-300 shadow-lg"
             />
             </div>
           </div>

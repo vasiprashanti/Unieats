@@ -1,10 +1,90 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getRestaurantMenu } from '../api/restaurants';
 import { useCart } from '../context/CartContext';
 
 import Navbar from '../components/Navigation/Navbar';
 import MobileHeader from '../components/Navigation/MobileHeader';
+
+// Memoized MenuItem component for better performance
+const MenuItem = React.memo(({ item, qty, onAdd, onIncrease, onDecrease, isBestseller = false }) => {
+  if (isBestseller) {
+    return (
+      <div className="flex flex-col bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-md text-center">
+        <img src={item.image} alt={item.name} className="w-full aspect-square object-cover" />
+        <div className="p-2.5 pb-4">
+          <div className="font-semibold text-base mb-1">{item.name}</div>
+          <div className="text-xs text-[#555] mb-1.5">{item.desc}</div>
+          <div className="font-bold text-[#2e7d32] mb-2">₹{item.price}</div>
+          {qty === 0 ? (
+            <button
+              onClick={() => onAdd(item._id)}
+              className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm hover:bg-[#e85d00] transition-colors"
+            >
+              Add
+            </button>
+          ) : (
+            <div className="inline-flex items-center gap-2 bg-white p-1.5 rounded-full shadow-md border border-gray-200">
+              <button
+                onClick={() => onDecrease(item._id)}
+                className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer flex items-center justify-center hover:bg-[#e85d00] transition-colors"
+              >
+                -
+              </button>
+              <span className="min-w-6 text-center font-semibold text-sm px-1">
+                {qty}
+              </span>
+              <button
+                onClick={() => onIncrease(item._id)}
+                className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer flex items-center justify-center hover:bg-[#e85d00] transition-colors"
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 relative text-center">
+      <img 
+        src={item.image} 
+        alt={item.name}
+        className="w-full rounded-[10px] object-cover h-[120px]"
+      />
+      <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
+        {qty === 0 ? (
+          <button 
+            onClick={() => onAdd(item._id)}
+            className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm hover:bg-[#e85d00] transition-colors"
+          >
+            Add
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 bg-white/90 p-1 rounded-[20px] shadow-sm">
+            <button 
+              onClick={() => onDecrease(item._id)}
+              className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer hover:bg-[#e85d00] transition-colors"
+            >
+              -
+            </button>
+            <span className="min-w-5 text-center">{qty}</span>
+            <button 
+              onClick={() => onIncrease(item._id)}
+              className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer hover:bg-[#e85d00] transition-colors"
+            >
+              +
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+MenuItem.displayName = 'MenuItem';
 
 export default function RestaurantMenu() {
   const { id: restaurantId } = useParams();
@@ -17,13 +97,12 @@ export default function RestaurantMenu() {
   const [collapsedCategories, setCollapsedCategories] = useState(new Set());
   const [showCategoryPanel, setShowCategoryPanel] = useState(false);
 
-  // Remove SAMPLE_MENU and fetch from backend
+  // Fetch menu data
   useEffect(() => {
     const loadMenuData = async () => {
       try {
         setLoading(true);
         const response = await getRestaurantMenu(restaurantId);
-        // Transform menu array to categories object
         const categories = {};
         (response.data.menu || []).forEach(category => {
           categories[category.name] = category.items;
@@ -44,42 +123,52 @@ export default function RestaurantMenu() {
     }
   }, [restaurantId]);
 
-  // Handle adding items to cart
-  const handleAddToCart = (itemId) => {
-    const item = getAllItems().find(item => item._id === itemId);
+  // Memoize all items to avoid recalculation
+  const allItems = useMemo(() => {
+    if (!menuData) return [];
+    return [
+      ...(menuData.bestsellers || []),
+      ...Object.values(menuData.categories || {}).flat()
+    ];
+  }, [menuData]);
+
+  // Create item lookup map for O(1) access
+  const itemsMap = useMemo(() => {
+    const map = new Map();
+    allItems.forEach(item => map.set(item._id, item));
+    return map;
+  }, [allItems]);
+
+  // Optimized handlers with useCallback
+  const handleAddToCart = useCallback((itemId) => {
+    const item = itemsMap.get(itemId);
     if (item) {
       addItem(item, restaurantId);
     }
-  };
+  }, [itemsMap, addItem, restaurantId]);
 
-  const handleIncreaseQty = (itemId) => {
+  const handleIncreaseQty = useCallback((itemId) => {
     const currentQty = getItemQuantity(itemId);
     if (currentQty > 0) {
-      console.log('IncreaseQty itemId:', itemId, 'currentQty:', currentQty);
       updateQuantity(itemId, currentQty + 1);
     } else {
-      // If not in cart, add item
-      const item = getAllItems().find(item => item._id === itemId);
+      const item = itemsMap.get(itemId);
       if (item) {
-        console.log('IncreaseQty addItem:', itemId);
         addItem(item, restaurantId);
       }
     }
-  };
+  }, [itemsMap, getItemQuantity, updateQuantity, addItem, restaurantId]);
 
-  const handleDecreaseQty = (itemId) => {
+  const handleDecreaseQty = useCallback((itemId) => {
     const currentQty = getItemQuantity(itemId);
     if (currentQty > 1) {
-      console.log('DecreaseQty itemId:', itemId, 'currentQty:', currentQty);
       updateQuantity(itemId, currentQty - 1);
     } else if (currentQty === 1) {
-      // Remove item from cart
-      console.log('DecreaseQty removeItem:', itemId);
       updateQuantity(itemId, 0);
     }
-  };
+  }, [getItemQuantity, updateQuantity]);
 
-  const toggleCategory = (categoryName) => {
+  const toggleCategory = useCallback((categoryName) => {
     setCollapsedCategories(prev => {
       const newSet = new Set(prev);
       if (newSet.has(categoryName)) {
@@ -89,31 +178,19 @@ export default function RestaurantMenu() {
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const scrollToCategory = (categoryName) => {
+  const scrollToCategory = useCallback((categoryName) => {
     const element = document.getElementById(`cat-${categoryName}`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
-    // Close the category panel after scrolling
     setShowCategoryPanel(false);
-  };
+  }, []);
 
-  const toggleCategoryPanel = () => {
-    setShowCategoryPanel(!showCategoryPanel);
-  };
-
-  // Use backend data structure
-  const getAllItems = () => {
-    if (!menuData) return [];
-    return [
-      ...(menuData.bestsellers || []),
-      ...Object.values(menuData.categories || {}).flat()
-    ];
-  };
-
-
+  const toggleCategoryPanel = useCallback(() => {
+    setShowCategoryPanel(prev => !prev);
+  }, []);
 
   if (loading) {
     return (
@@ -152,7 +229,7 @@ export default function RestaurantMenu() {
     <div 
       className="min-h-screen font-['Poppins',sans-serif] text-[#222] relative"
     >
-      {/* Notebook background pattern - matching HTML exactly */}
+      {/* Notebook background pattern */}
       <div 
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -172,7 +249,7 @@ export default function RestaurantMenu() {
       <Navbar />
       <MobileHeader />
       
-      {/* HTML-style Bottom Navigation - exactly matching HTML */}
+      {/* Bottom Navigation */}
       <div 
         className="md:hidden fixed left-1/2 transform -translate-x-1/2 bg-white/70 backdrop-blur-sm z-[100] flex justify-around"
         style={{
@@ -258,45 +335,17 @@ export default function RestaurantMenu() {
         {/* Bestsellers */}
         <h2 className="text-3xl font-bold mb-4">Bestsellers</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {(menuData.bestsellers || []).map(item => {
-            const qty = getItemQuantity(item._id);
-            return (
-              <div key={item._id} className="flex flex-col bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-md text-center">
-                <img src={item.image} alt={item.name} className="w-full aspect-square object-cover" />
-                <div className="p-2.5 pb-4">
-                  <div className="font-semibold text-base mb-1">{item.name}</div>
-                  <div className="text-xs text-[#555] mb-1.5">{item.desc}</div>
-                  <div className="font-bold text-[#2e7d32] mb-2">₹{item.price}</div>
-                 {qty === 0 ? (
-                    <button
-                      onClick={() => handleAddToCart(item._id)}
-                      className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm"
-                    >
-                      Add
-                    </button>
-                  ) : (
-                    <div className="inline-flex items-center gap-2 bg-white p-1.5 rounded-full shadow-md border border-gray-200">
-                      <button
-                        onClick={() => handleDecreaseQty(item._id)}
-                        className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer flex items-center justify-center hover:bg-[#e85d00] transition-colors"
-                      >
-                        -
-                      </button>
-                      <span className="min-w-6 text-center font-semibold text-sm px-1">
-                        {qty}
-                      </span>
-                      <button
-                        onClick={() => handleIncreaseQty(item._id)}
-                        className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer flex items-center justify-center hover:bg-[#e85d00] transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {(menuData.bestsellers || []).map(item => (
+            <MenuItem
+              key={item._id}
+              item={item}
+              qty={getItemQuantity(item._id)}
+              onAdd={handleAddToCart}
+              onIncrease={handleIncreaseQty}
+              onDecrease={handleDecreaseQty}
+              isBestseller={true}
+            />
+          ))}
         </div>
 
         {/* Categories */}
@@ -351,39 +400,13 @@ export default function RestaurantMenu() {
                           <div className="text-sm text-[#555] mb-1.5">{item.desc}</div>
                           <div className="font-bold text-[#2e7d32]">₹{item.price}</div>
                         </div>
-                        <div className="flex-1 relative text-center">
-                          <img 
-                            src={item.image} 
-                            alt={item.name}
-                            className="w-full rounded-[10px] object-cover h-[120px]"
-                          />
-                          <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
-                            {qty === 0 ? (
-                              <button 
-                                onClick={() => handleAddToCart(item._id)}
-                                className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm"
-                              >
-                                Add
-                              </button>
-                            ) : (
-                              <div className="flex items-center gap-2 bg-white/90 p-1 rounded-[20px] shadow-sm">
-                                <button 
-                                  onClick={() => handleDecreaseQty(item._id)}
-                                  className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
-                                >
-                                  -
-                                </button>
-                                <span className="min-w-5 text-center">{qty}</span>
-                                <button 
-                                  onClick={() => handleIncreaseQty(item._id)}
-                                  className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
-                                >
-                                  +
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        <MenuItem
+                          item={item}
+                          qty={qty}
+                          onAdd={handleAddToCart}
+                          onIncrease={handleIncreaseQty}
+                          onDecrease={handleDecreaseQty}
+                        />
                       </div>
                     );
                   })}
@@ -396,7 +419,7 @@ export default function RestaurantMenu() {
 
       {/* Floating Hamburger Menu - Desktop */}
       <div className="hidden md:block">
-        {/* Category Panel (HTML style) */}
+        {/* Category Panel */}
         <div 
           className={`fixed top-1/2 transform -translate-y-1/2 w-60 bg-white/90 backdrop-blur-sm p-4 transition-all duration-300 ease-in-out z-[350] ${
             showCategoryPanel ? 'right-0' : '-right-60'
@@ -428,7 +451,7 @@ export default function RestaurantMenu() {
           />
         )}
 
-        {/* Floating Category Button - Desktop only (HTML style) */}
+        {/* Floating Category Button - Desktop only */}
         <button
           onClick={toggleCategoryPanel}
           className="hidden md:flex fixed right-5 bottom-[150px] bg-[#ff7e2d] text-white rounded-full w-14 h-14 items-center justify-center text-xl cursor-pointer z-[300] hover:bg-[#e85d00] transition-colors"
@@ -459,7 +482,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* Mobile Category Panel Overlay - transparent */}
+      {/* Mobile Category Panel Overlay */}
       {showCategoryPanel && (
         <div 
           className="md:hidden fixed inset-0 z-[340]" 
@@ -467,7 +490,7 @@ export default function RestaurantMenu() {
         />
       )}
 
-      {/* Floating View Cart - Mobile (HTML style) */}
+      {/* Floating View Cart - Mobile */}
       {totalItems > 0 && (
         <div 
           onClick={() => navigate('/cart')}
