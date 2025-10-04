@@ -7,6 +7,7 @@ import Vendor from "../models/Vendor.model.js";
 const placeOrder = async (req, res) => {
   const { addressId } = req.body;
   const userId = req.user._id;
+  console.log("evar user-",userId);
 
   try {
     const cart = await Cart.findOne({ user: userId });
@@ -16,21 +17,38 @@ const placeOrder = async (req, res) => {
 
     const user = await User.findById(userId);
 
-    // use the user's primary residence, not a list of addresses
     let deliveryAddressString = "";
-    if (user.accommodation === "Hosteller" && user.hostelDetails) {
-      deliveryAddressString = `Block ${user.hostelDetails.block}, Room ${user.hostelDetails.room}`;
+    const accommodationType = user.accommodation
+      ? user.accommodation.toLowerCase()
+      : "";
+
+
+    if (accommodationType === "hosteller" && user.hostelDetails) {
+      const { block, room } = user.hostelDetails;
+      if (block && room) {
+        deliveryAddressString = `Block ${block}, Room ${room}`;
+      } else {
+        return res
+          .status(400)
+          .json({ message: "Please complete your hostel details in your profile before ordering." });
+      }
     } else if (
-      user.accommodation === "Non-Hosteller" &&
-      user.addresses &&
+      accommodationType === "non-hosteller" &&
+      Array.isArray(user.addresses) &&
       user.addresses.length > 0
     ) {
-      // Find default address or use the first one
       const defaultAddress =
         user.addresses.find((addr) => addr.isDefault) || user.addresses[0];
-      deliveryAddressString = `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.state} ${defaultAddress.zipCode}`;
-      if (defaultAddress.landmark) {
-        deliveryAddressString += `, near ${defaultAddress.landmark}`;
+      if (defaultAddress.street && defaultAddress.city && defaultAddress.state && defaultAddress.zipCode) {
+        deliveryAddressString = `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.state} ${defaultAddress.zipCode}`;
+        if (defaultAddress.landmark) {
+          deliveryAddressString += `, near ${defaultAddress.landmark}`;
+        }
+      } else {
+        return res.status(400).json({
+          message:
+            "Please complete all fields of your address before ordering.",
+        });
       }
     } else {
       return res.status(400).json({
@@ -38,8 +56,6 @@ const placeOrder = async (req, res) => {
           "Please complete your address details in your profile before ordering.",
       });
     }
-
-    // Find the vendor to get their UPI ID
     const vendor = await Vendor.findById(cart.vendor);
     if (!vendor || !vendor.upiId) {
       return res
@@ -52,13 +68,12 @@ const placeOrder = async (req, res) => {
       vendor: cart.vendor,
       items: cart.items,
       totalAmount: cart.total,
-      deliveryAddress: deliveryAddressString, // Use the generated address string
-      status: "payment_pending", // Set initial status
+      deliveryAddress: deliveryAddressString,
+      status: "payment_pending",
     });
 
     await order.save();
 
-    // Respond with the details needed for the frontend to show the QR code
     res.status(201).json({
       success: true,
       message: "Order placed. Please complete the payment.",
@@ -69,9 +84,11 @@ const placeOrder = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Error placing order:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 
 // Step 2 - Confirm UPI Payment
 const confirmUpiPayment = async (req, res) => {

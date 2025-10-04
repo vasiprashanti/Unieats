@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Navbar from '../components/Navigation/Navbar';
 import MobileHeader from '../components/Navigation/MobileHeader';
+import { useCart } from "../context/CartContext";
 
 import { getAuth } from "firebase/auth";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -68,18 +69,10 @@ export default function Checkout() {
     fetchAddresses();
   }, []);
 
-  const [cartItems] = useState([
-    { id: 1, name: "Margherita Pizza", quantity: 1, price: 299 },
-    { id: 2, name: "Garlic Bread", quantity: 2, price: 149 },
-    { id: 3, name: "Cold Coffee", quantity: 1, price: 99 },
-  ]);
-
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  // Use cart context for order summary
+  const { items: cartItems, totalItems, totalPrice } = useCart();
   const platformfee = 5;
-
+  const subtotal = totalPrice;
   const total = subtotal + platformfee;
 
   useEffect(() => {
@@ -137,47 +130,27 @@ export default function Checkout() {
   setIsPlacingOrder(true);
   const auth = getAuth();
   const user = auth.currentUser;
-  
-    if (!user) {
-        throw new Error("User not authenticated");
-      }
-  
-      // 🔑 Get fresh Firebase ID token
-    const token = await user.getIdToken();
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+  const token = await user.getIdToken();
   try {
-    const orderData = {
-      vendorId: "68daaf5d9f9f5d74183a3294", // Replace dynamically if needed
-      items: cartItems.map(item => ({
-        menuItem: item.id, // Assuming cartItems have id field
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-      deliveryAddress: selectedAddress,
-      paymentMethod: selectedPayment,
-      totalPrice: total,
-    };
-
-    // Use URL from .env
-    console.log("order data we are sending--",orderData);
-    const response = await fetch(`${API_BASE_URL }api/v1/payments/orders`, {
+    // POST /api/v1/payments/orders for UPI QR code
+    const response = await fetch(`${API_BASE_URL}/api/v1/payments/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Replace with actual token
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(orderData),
+      body: JSON.stringify({
+        addressId: selectedAddress._id || selectedAddress.id
+      }),
     });
-
     if (response.ok) {
       const result = await response.json();
       console.log("Order placed successfully:", result);
-
       setOrderSuccess(true);
-
-      // Optional: store orderId or redirect
-      const orderId = result.data.orderId;
-      console.log("Order ID:", orderId);
+      // You can use result.data.orderId, result.data.amount, result.data.upiId for UPI QR code
     } else {
       const errorData = await response.json();
       throw new Error(errorData.message || "Failed to place order");

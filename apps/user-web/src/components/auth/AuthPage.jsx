@@ -236,7 +236,6 @@ function SignupForm({ onSwitch }) {
       setSubmitting(false);
       return;
     }
-    console.log("ideee-",res);
     // Extract Firebase UID (depends on your signup implementation)
     const user = res.user;
     const firebaseUid = user?.uid;
@@ -246,19 +245,37 @@ function SignupForm({ onSwitch }) {
     }
 
     // Step 2: Call your backend API to register user in MongoDB
-    const apiRes = await fetch(
-  `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name: fullName,
-      email,
+    const registrationPayload = {
       firebaseUid,
-    }),
-  }
+      email,
+      phone: formData.emailOrPhone, // assuming phone is entered here
+      name: { first: formData.firstName, last: formData.lastName },
+      yearOfStudy: formData.yearOfStudy,
+      accommodation: formData.accommodation === 'hosteller' ? 'Hosteller' : 'Non-Hosteller',
+    };
+    if (formData.accommodation === 'hosteller') {
+      registrationPayload.hostelDetails = {
+        block: formData.hostelBlock,
+        room: formData.hostelRoom,
+      };
+    } else if (formData.accommodation === 'non-hosteller') {
+      registrationPayload.offCampusAddress = {
+        addressLine1: formData.addressLine1,
+        landmark: formData.landmark,
+        city: formData.city || '',
+        state: formData.state || '',
+        zipCode: formData.zipCode || '',
+      };
+    }
+    const apiRes = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(registrationPayload),
+      }
     );
 
 
