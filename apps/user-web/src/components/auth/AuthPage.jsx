@@ -351,7 +351,9 @@ function Field({ label, type = "text", value, onChange, onBlur, required, enable
     return (
         <div className="relative mb-5 w-full">
             <input
-                className={`w-full px-3 py-3.5 text-[15px] bg-white border rounded-xl transition-all duration-200 outline-none ${error ? "border-red-400 focus:border-red-500" : "border-black/8 focus:border-orange-500 focus:shadow-[0_0_0_4px_rgba(255,106,0,0.12)]"}`}
+                className={`w-full px-3 text-[15px] bg-white border rounded-xl transition-all duration-200 outline-none leading-normal ${
+                    value ? "pt-6 pb-2" : "py-3.5"
+                } ${error ? "border-red-400 focus:border-red-500" : "border-black/8 focus:border-orange-500 focus:shadow-[0_0_0_4px_rgba(255,106,0,0.12)]"}`}
                 type={actualType}
                 placeholder=" "
                 value={value}
@@ -377,7 +379,9 @@ function SelectField({ label, value, onChange, options, error, required }) {
     return (
         <div className="relative mb-5 w-full">
             <select
-                className={`w-full px-3 py-3.5 text-[15px] bg-white border rounded-xl transition-all duration-200 outline-none appearance-none ${error ? "border-red-400 focus:border-red-500" : "border-black/8 focus:border-orange-500 focus:shadow-[0_0_0_4px_rgba(255,106,0,0.12)]"}`}
+                className={`w-full px-3 text-[15px] bg-white border rounded-xl transition-all duration-200 outline-none appearance-none leading-normal ${
+                    value ? "pt-6 pb-2" : "py-3.5"
+                } ${error ? "border-red-400 focus:border-red-500" : "border-black/8 focus:border-orange-500 focus:shadow-[0_0_0_4px_rgba(255,106,0,0.12)]"}`}
                 value={value}
                 onChange={(e) => onChange?.(e.target.value)}
                 required={required}
