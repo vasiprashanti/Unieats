@@ -113,7 +113,7 @@ export default function Home() {
         const y = Math.sin((x + i * 15) / wavelength) * amplitude * (1 - progress);
 
         span.style.transform = `translate(${x}px, ${y}px)`;
-        span.style.opacity = x > -40 ? 1 : 0;
+        span.style.opacity = x > -800 ? 1 : 0;
       });
     };
 
@@ -202,9 +202,21 @@ export default function Home() {
 
       {/* Categories Section */}
       <section className="categories-section">
-        <div className="text-center py-10" style={{ background: '#ff6a20', minHeight: '80vh' }}>
+        <div className="text-center pt-10 pb-20" style={{ background: '#ff6a20', minHeight: '90vh' }}>
           <h2 className="text-[3rem] mb-2.5 text-[#020202] font-bold">CATEGORIES</h2>
           <p className="text-[1.2rem] mb-12 text-[#020202]">Pick your cravings, find your spot</p>
+          
+          {/* Wave Text */}
+          <div className="hero-text relative mt-8 h-32 overflow-visible" id="waveText">
+            {Array.from("Every memory, every favorite bite, every flavor you love — curated into one platform.").map((char, index) => (
+              <span
+                key={index}
+                className="absolute text-[1.8rem] font-extrabold whitespace-pre opacity-0 pointer-events-none text-[#020202]"
+              >
+                {char}
+              </span>
+            ))}
+          </div>
           
           {/* Desktop Poker Hand */}
           <div className="poker-hand hidden md:flex relative justify-center mt-10">
@@ -343,22 +355,7 @@ export default function Home() {
         </button>
       </div>
 
-      {/* About Section with Wave Track Text */}
-      <section 
-        className="relative h-screen overflow-hidden bg-white pt-[100px]"
-        id="about"
-      >
-        <div className="hero-text" id="waveText">
-          {Array.from("Every memory, every favorite bite, every flavor you love — curated into one platform.").map((char, index) => (
-            <span
-              key={index}
-              className="absolute text-[2rem] font-extrabold whitespace-pre opacity-0 pointer-events-none"
-            >
-              {char}
-            </span>
-          ))}
-        </div>
-      </section>
+
 
       {/* Hamburger Menu Button (only show if using top nav instead of existing navbar) */}
       <div className="md:hidden fixed top-4 right-4 z-[20]">
