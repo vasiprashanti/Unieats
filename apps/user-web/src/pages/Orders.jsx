@@ -11,85 +11,63 @@ import {
   Bike,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../config/firebase"; // Adjust path to your firebase config
 import Navbar from "../components/Navigation/Navbar";
 import MobileHeader from "../components/Navigation/MobileHeader";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL;
 
-  // Mock user orders - replace with actual API call
-  const mockOrders = [
-    {
-      id: "ORD-001",
-      restaurantId: "REST-101",
-      date: "2025-09-10T14:30:00Z",
-      status: "delivered",
-      total: 680,
-      items: [
-        { name: "Butter Chicken", quantity: 1, price: 320 },
-        { name: "Naan", quantity: 2, price: 60 },
-        { name: "Basmati Rice", quantity: 1, price: 120 },
-      ],
-      restaurant: {
-        name: "Spice Garden",
-        address: "MG Road, Bangalore",
-      },
-      orderNumber: "12345",
-      deliveryTime: "45 mins",
-      paymentMethod: "Pay using UPI",
-    },
-    {
-      id: "ORD-002",
-      restaurantId: "REST-102",
-      date: "2025-09-09T19:15:00Z",
-      status: "out_for_delivery",
-      total: 450,
-      items: [
-        { name: "Masala Dosa", quantity: 2, price: 180 },
-        { name: "Filter Coffee", quantity: 2, price: 90 },
-      ],
-      restaurant: {
-        name: "South Spice",
-        address: "Koramangala, Bangalore",
-      },
-      orderNumber: "12346",
-      deliveryTime: "30 mins",
-      paymentMethod: "Cash on Delivery",
-    },
-    {
-      id: "ORD-003",
-      restaurantId: "REST-103",
-      date: "2025-09-08T19:15:00Z",
-      status: "preparing",
-      total: 350,
-      items: [
-        { name: "Biryani", quantity: 1, price: 250 },
-        { name: "Raita", quantity: 1, price: 100 },
-      ],
-      restaurant: {
-        name: "Hyderabadi House",
-        address: "Banjara Hills, Hyderabad",
-      },
-      orderNumber: "12347",
-      deliveryTime: "35 mins",
-      paymentMethod: "Credit Card",
-    },
-  ];
-
-  // Simulate API call
+  // Fetch orders from API
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
+      setError(null);
 
-      setTimeout(() => {
-        let filteredOrders = mockOrders;
+      try {
+        // Get Firebase auth token
+        const user = auth.currentUser;
+        if (!user) {
+          throw new Error("User not authenticated");
+        }
+
+        const token = await user.getIdToken();
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/orders/prevOrders`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("emm orrderss--",data);
+        
+        // Apply filters - ensure we always have an array
+        let allOrders = [];
+        if (Array.isArray(data)) {
+          allOrders = data;
+        } else if (data.orders && Array.isArray(data.orders)) {
+          allOrders = data.orders;
+        } else if (data.data && Array.isArray(data.data)) {
+          allOrders = data.data;
+        }
+
+        let filteredOrders = allOrders;
 
         if (statusFilter !== "all") {
           filteredOrders = filteredOrders.filter(
@@ -101,22 +79,26 @@ export default function Orders() {
           filteredOrders = filteredOrders.filter(
             (order) =>
               order.orderNumber
-                .toLowerCase()
+                ?.toLowerCase()
                 .includes(searchQuery.toLowerCase()) ||
-              order.restaurant.name
-                .toLowerCase()
+              order.restaurant?.name
+                ?.toLowerCase()
                 .includes(searchQuery.toLowerCase())
           );
         }
 
         setOrders(filteredOrders);
         setTotalPages(Math.ceil(filteredOrders.length / 10));
+      } catch (err) {
+        console.error('Failed to fetch orders:', err);
+        setError(err.message);
+      } finally {
         setLoading(false);
-      }, 800);
+      }
     };
 
     fetchOrders();
-  }, [statusFilter, searchQuery]);
+  }, [statusFilter, searchQuery, API_BASE_URL]);
 
   const getStatusInfo = (status) => {
     switch (status) {
@@ -180,6 +162,39 @@ export default function Orders() {
         className="animate-spin rounded-full h-8 w-8 border-b-2"
         style={{ borderColor: "hsl(var(--primary))" }}
       ></div>
+    </div>
+  );
+
+  const ErrorMessage = () => (
+    <div 
+      className="rounded-lg shadow-sm text-center py-16 transition-colors duration-200"
+      style={{ backgroundColor: "hsl(var(--card))" }}
+    >
+      <XCircle 
+        className="w-16 h-16 mx-auto mb-4 text-red-500"
+      />
+      <h3 
+        className="text-xl font-medium mb-2"
+        style={{ color: "hsl(var(--card-foreground))" }}
+      >
+        Failed to load orders
+      </h3>
+      <p 
+        className="mb-6"
+        style={{ color: "hsl(var(--muted-foreground))" }}
+      >
+        {error || "Something went wrong. Please try again."}
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        className="px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+        style={{ 
+          backgroundColor: "hsl(var(--primary))",
+          color: "hsl(var(--primary-foreground))"
+        }}
+      >
+        Retry
+      </button>
     </div>
   );
 
@@ -254,6 +269,8 @@ export default function Orders() {
         {/* Orders List */}
         {loading ? (
           <LoadingSpinner />
+        ) : error ? (
+          <ErrorMessage />
         ) : orders.length === 0 ? (
           <div 
             className="rounded-lg shadow-sm text-center py-16 transition-colors duration-200"
@@ -307,14 +324,14 @@ export default function Orders() {
                           className="font-semibold"
                           style={{ color: "hsl(var(--card-foreground))" }}
                         >
-                          {order.restaurant.name}
+                          {order.restaurant?.name || "Restaurant"}
                         </h3>
                         <div 
                           className="flex items-center gap-2 text-sm"
                           style={{ color: "hsl(var(--muted-foreground))" }}
                         >
                           <MapPin className="w-3 h-3" />
-                          {order.restaurant.address}
+                          {order.restaurant?.address || "Address not available"}
                         </div>
                       </div>
                       <div className="text-right">
@@ -351,7 +368,7 @@ export default function Orders() {
                   {/* Order Items */}
                   <div className="p-4">
                     <div className="space-y-2 mb-4">
-                      {order.items.map((item, index) => (
+                      {order.items?.map((item, index) => (
                         <div
                           key={index}
                           className="flex justify-between items-center text-sm"
@@ -380,7 +397,7 @@ export default function Orders() {
                       >
                         <span>{formatTime(order.date)}</span>
                         <span>•</span>
-                        <span>{order.paymentMethod}</span>
+                        <span>{order.paymentMethod || "Online Payment"}</span>
                       </div>
                       <div 
                         className="text-lg font-bold"
