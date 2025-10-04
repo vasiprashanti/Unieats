@@ -23,20 +23,24 @@ export default function Home() {
   useEffect(() => {
     let startX = 0;
     let startY = 0;
+    let startTime = 0;
 
     const handleTouchStart = (e) => {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
+      startTime = Date.now();
     };
 
     const handleTouchEnd = (e) => {
       const endX = e.changedTouches[0].clientX;
       const endY = e.changedTouches[0].clientY;
+      const endTime = Date.now();
       const diffX = startX - endX;
       const diffY = startY - endY;
+      const timeDiff = endTime - startTime;
 
-      // Only handle horizontal swipes (ignore vertical)
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+      // Only handle horizontal swipes (ignore vertical) with reasonable timing
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 30 && timeDiff < 300) {
         if (diffX > 0) {
           // Swipe left - next card
           setActiveCard((prev) => (prev + 1) % categories.length);
@@ -47,16 +51,30 @@ export default function Home() {
       }
     };
 
+    const handleTouchMove = (e) => {
+      // Prevent default scrolling during horizontal swipe
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const diffX = Math.abs(currentX - startX);
+      const diffY = Math.abs(currentY - startY);
+      
+      if (diffX > diffY && diffX > 10) {
+        e.preventDefault();
+      }
+    };
+
     const mobileSection = document.querySelector('.poker-hand-mobile');
     if (mobileSection) {
-      mobileSection.addEventListener('touchstart', handleTouchStart);
-      mobileSection.addEventListener('touchend', handleTouchEnd);
+      mobileSection.addEventListener('touchstart', handleTouchStart, { passive: true });
+      mobileSection.addEventListener('touchend', handleTouchEnd, { passive: true });
+      mobileSection.addEventListener('touchmove', handleTouchMove, { passive: false });
     }
 
     return () => {
       if (mobileSection) {
         mobileSection.removeEventListener('touchstart', handleTouchStart);
         mobileSection.removeEventListener('touchend', handleTouchEnd);
+        mobileSection.removeEventListener('touchmove', handleTouchMove);
       }
     };
   }, [categories.length]);
@@ -242,56 +260,58 @@ export default function Home() {
             })}
           </div>
 
-          {/* Mobile Stacked Cards */}
-          <div className="poker-hand-mobile md:hidden relative w-full h-[360px] flex justify-center items-center" style={{ perspective: '1000px' }}>
-            {categories.map((category, index) => {
-              let cardClass = 'category-card-mobile absolute w-[240px] h-[400px] rounded-2xl bg-[#fafafa] shadow-lg text-center cursor-pointer transition-all duration-500 opacity-50 z-[1]';
-              
-              if (index === activeCard) {
-                cardClass += ' translate-x-0 scale-105 z-10 opacity-100';
-              } else if (index === activeCard - 1 || (activeCard === 0 && index === 4)) {
-                cardClass += ' -translate-x-[70px] scale-90 z-[5] opacity-60';
-              } else if (index === activeCard + 1 || (activeCard === 4 && index === 0)) {
-                cardClass += ' translate-x-[70px] scale-90 z-[5] opacity-60';
-              } else {
-                cardClass += ' translate-x-[200px] scale-80 opacity-0 z-[1]';
-              }
+          {/* Mobile Carousel Cards */}
+          <div className="poker-hand-mobile md:hidden relative w-full h-[420px] sm:h-[450px] flex justify-center items-center overflow-hidden px-4">
+            <div className="relative w-full max-w-[320px] h-full flex justify-center items-center">
+              {categories.map((category, index) => {
+                let cardClass = 'category-card-mobile absolute w-full h-[380px] sm:h-[410px] max-w-[300px] rounded-2xl bg-[#fafafa] shadow-xl text-center cursor-pointer transition-all duration-700 ease-out';
+                
+                if (index === activeCard) {
+                  // Active card - centered, full opacity
+                  cardClass += ' translate-x-0 scale-100 opacity-100 z-20';
+                } else if (index === activeCard - 1 || (activeCard === 0 && index === categories.length - 1)) {
+                  // Previous card - left side preview
+                  cardClass += ' -translate-x-[280px] scale-75 opacity-30 z-10';
+                } else if (index === activeCard + 1 || (activeCard === categories.length - 1 && index === 0)) {
+                  // Next card - right side preview
+                  cardClass += ' translate-x-[280px] scale-75 opacity-30 z-10';
+                } else {
+                  // Hidden cards
+                  cardClass += ' translate-x-[400px] scale-60 opacity-0 z-5 pointer-events-none';
+                }
 
-              return (
-                <div
-                  key={category.title}
-                  className={cardClass}
-                  onClick={() => setActiveCard(index)}
-                >
-                  <div className="p-5">
-                    <h3 className="text-[2.2rem] mb-2.5 text-[#ff6600] font-bold">{category.title}</h3>
-                    {category.restaurants.map((restaurant, idx) => (
-                      <Link
-                        key={idx}
-                        to={`/restaurants?search=${restaurant}`}
-                        className="block mt-5 text-[#111111] font-medium no-underline hover:text-[#ff6600] transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {restaurant}
-                      </Link>
-                    ))}
+                return (
+                  <div
+                    key={category.title}
+                    className={cardClass}
+                    onClick={() => setActiveCard(index)}
+                  >
+                    <div className="p-6 h-full flex flex-col justify-between bg-gradient-to-br from-[#fafafa] to-[#f0f0f0] rounded-2xl shadow-lg border border-[#e0e0e0]">
+                      <div className="flex-1 flex flex-col justify-center">
+                        <h3 className="text-[2rem] sm:text-[2.2rem] mb-6 text-[#ff6600] font-extrabold tracking-wider">
+                          {category.title}
+                        </h3>
+                        <div className="space-y-3">
+                          {category.restaurants.map((restaurant, idx) => (
+                            <Link
+                              key={idx}
+                              to={`/restaurants?search=${restaurant}`}
+                              className="block text-[1rem] sm:text-[1.1rem] text-[#333] font-semibold no-underline hover:text-[#ff6600] transition-all duration-300 py-2 px-3 rounded-lg hover:bg-[#ff6600]/10 hover:shadow-md transform hover:translate-x-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {restaurant}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-4 text-[0.8rem] text-[#666] font-medium">
+                        Swipe or tap to explore
+                      </div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Mobile Navigation Dots */}
-          <div className="md:hidden flex justify-center gap-2 mt-6">
-            {categories.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setActiveCard(index)}
-                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
-                  index === activeCard ? 'bg-[#020202]' : 'bg-[#020202]/30'
-                }`}
-              />
-            ))}
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
