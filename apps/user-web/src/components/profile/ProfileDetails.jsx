@@ -1,15 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone } from 'lucide-react';
+import { getAuth } from 'firebase/auth';
 
-const ProfileDetails = ({ user, onUpdateProfile, isLoading = false }) => {
+const ProfileDetails = ({ user, isLoading = false}) => {
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    firstName: user?.name?.first || '',
+    lastName: user?.name?.last || '',
     email: user?.email || '',
     phone: user?.phone || '',
   });
-  
+  const baseUrl=import.meta.env.VITE_API_BASE_URL;
+
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Keep formData in sync if user prop changes
+  useEffect(() => {
+    setFormData({
+      firstName: user?.name?.first || '',
+      lastName: user?.name?.last || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+    });
+  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,19 +35,59 @@ const ProfileDetails = ({ user, onUpdateProfile, isLoading = false }) => {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      await onUpdateProfile(formData);
+
+      const auth = getAuth();
+      if (!auth.currentUser) throw new Error('User not authenticated');
+
+      const userToken = await auth.currentUser.getIdToken();
+
+      const payload = {
+        name: {
+          first: formData.firstName,
+          last: formData.lastName,
+        },
+        email: formData.email,
+        phone: formData.phone,
+      };
+
+      const res = await fetch(`${baseUrl}/api/v1/users/me`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('API response:', data);
+        throw new Error(data.message || 'Failed to update profile');
+      }
+
+      console.log('Profile updated:', data);
+
+      // Update local state with API response
+      setFormData({
+        firstName: data.user.name.first,
+        lastName: data.user.name.last,
+        email: data.user.email,
+        phone: data.user.phone,
+      });
+
       setIsEditing(false);
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      console.error('Error updating profile:', error);
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
     setFormData({
-      name: user?.name || '',
+      firstName: user?.name?.first || '',
+      lastName: user?.name?.last || '',
       email: user?.email || '',
       phone: user?.phone || '',
     });
@@ -49,18 +102,12 @@ const ProfileDetails = ({ user, onUpdateProfile, isLoading = false }) => {
           <div className="h-7 bg-gray-300 rounded w-48"></div>
         </div>
         <div className="space-y-4">
-          <div>
-            <div className="h-4 bg-gray-300 rounded w-16 mb-2"></div>
-            <div className="h-12 bg-gray-300 rounded w-full"></div>
-          </div>
-          <div>
-            <div className="h-4 bg-gray-300 rounded w-16 mb-2"></div>
-            <div className="h-12 bg-gray-300 rounded w-full"></div>
-          </div>
-          <div>
-            <div className="h-4 bg-gray-300 rounded w-16 mb-2"></div>
-            <div className="h-12 bg-gray-300 rounded w-full"></div>
-          </div>
+          {[...Array(3)].map((_, i) => (
+            <div key={i}>
+              <div className="h-4 bg-gray-300 rounded w-16 mb-2"></div>
+              <div className="h-12 bg-gray-300 rounded w-full"></div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -76,24 +123,41 @@ const ProfileDetails = ({ user, onUpdateProfile, isLoading = false }) => {
 
       {/* Form Fields */}
       <div className="space-y-4">
-        {/* Name Field */}
+        {/* First Name */}
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
             <User className="w-4 h-4" />
-            Name
+            First Name
           </label>
           <input
             type="text"
-            name="name"
-            value={formData.name}
+            name="firstName"
+            value={formData.firstName}
             onChange={handleInputChange}
             disabled={!isEditing}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors disabled:bg-gray-50 disabled:text-gray-700"
-            placeholder="Enter your name"
+            placeholder="Enter first name"
           />
         </div>
 
-        {/* Email Field */}
+        {/* Last Name */}
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+            <User className="w-4 h-4" />
+            Last Name
+          </label>
+          <input
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            disabled={!isEditing}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors disabled:bg-gray-50 disabled:text-gray-700"
+            placeholder="Enter last name"
+          />
+        </div>
+
+        {/* Email */}
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
             <Mail className="w-4 h-4" />
@@ -106,11 +170,11 @@ const ProfileDetails = ({ user, onUpdateProfile, isLoading = false }) => {
             onChange={handleInputChange}
             disabled={!isEditing}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors disabled:bg-gray-50 disabled:text-gray-700"
-            placeholder="Enter your email"
+            placeholder="Enter email"
           />
         </div>
 
-        {/* Phone Field */}
+        {/* Phone */}
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
             <Phone className="w-4 h-4" />
@@ -123,7 +187,7 @@ const ProfileDetails = ({ user, onUpdateProfile, isLoading = false }) => {
             onChange={handleInputChange}
             disabled={!isEditing}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors disabled:bg-gray-50 disabled:text-gray-700"
-            placeholder="Enter your phone number"
+            placeholder="Enter phone number"
           />
         </div>
       </div>
