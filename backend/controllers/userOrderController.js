@@ -5,89 +5,173 @@ import Vendor from "../models/Vendor.model.js";
 
 // Step 1 - Place Order & Initiate Payment
 const placeOrder = async (req, res) => {
-  const { addressId } = req.body;
-  const userId = req.user._id;
-  console.log("evar user-",userId);
+    console.log("🟢 [START] placeOrder endpoint hit");
+    console.log("➡️ Request body:", req.body);
 
-  try {
-    const cart = await Cart.findOne({ user: userId });
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: "Your cart is empty." });
+    const { addressId, paymentMethod } = req.body;
+    const userId = req.user._id;
+    console.log("👤 User ID:", userId);
+    console.log("💳 Payment method:", paymentMethod);
+    console.log("🏠 Address ID:", addressId);
+
+    // Basic validation
+    if (!paymentMethod) {
+        console.log("❌ Missing payment method");
+        return res.status(400).json({ message: 'Payment method is required.' });
     }
 
-    const user = await User.findById(userId);
+    try {
+        // 1️⃣ Find the user's cart
+        console.log("🛒 Fetching cart for user...");
+        const cart = await Cart.findOne({ user: userId }).populate('items.menuItem', 'name');
+        console.log("📦 Cart data:", cart);
 
-    let deliveryAddressString = "";
-    const accommodationType = user.accommodation
-      ? user.accommodation.toLowerCase()
-      : "";
-
-
-    if (accommodationType === "hosteller" && user.hostelDetails) {
-      const { block, room } = user.hostelDetails;
-      if (block && room) {
-        deliveryAddressString = `Block ${block}, Room ${room}`;
-      } else {
-        return res
-          .status(400)
-          .json({ message: "Please complete your hostel details in your profile before ordering." });
-      }
-    } else if (
-      accommodationType === "non-hosteller" &&
-      Array.isArray(user.addresses) &&
-      user.addresses.length > 0
-    ) {
-      const defaultAddress =
-        user.addresses.find((addr) => addr.isDefault) || user.addresses[0];
-      if (defaultAddress.street && defaultAddress.city && defaultAddress.state && defaultAddress.zipCode) {
-        deliveryAddressString = `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.state} ${defaultAddress.zipCode}`;
-        if (defaultAddress.landmark) {
-          deliveryAddressString += `, near ${defaultAddress.landmark}`;
+        if (!cart || cart.items.length === 0) {
+            console.log("❌ Cart empty or not found");
+            return res.status(400).json({ message: 'Your cart is empty.' });
         }
-      } else {
-        return res.status(400).json({
-          message:
-            "Please complete all fields of your address before ordering.",
-        });
-      }
-    } else {
-      return res.status(400).json({
-        message:
-          "Please complete your address details in your profile before ordering.",
-      });
+
+        const user = await User.findById(userId);
+        console.log("👤 User fetched:", user);
+
+        if (!user) {
+            console.log("❌ User not found");
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        // 2️⃣ Determine the delivery address
+        console.log("📍 Determining delivery address...");
+        let deliveryAddressObject;
+
+        if (user.accommodation === 'Hosteller' && user.hostelDetails) {
+            console.log("🏫 User is a hosteller, using hostel details:", user.hostelDetails);
+            deliveryAddressObject = {
+                street: `Hostel Block ${user.hostelDetails.block}, Room ${user.hostelDetails.room}`,
+                city: process.env.CAMPUS_CITY,
+                state: process.env.CAMPUS_STATE,
+                zipCode: process.env.CAMPUS_ZIP_CODE,
+            };
+        } else if (user.accommodation === 'Non-Hosteller') {
+            console.log("🏠 User is a non-hosteller");
+
+            if (!addressId) {
+                console.log("❌ Missing addressId for non-hosteller");
+                return res.status(400).json({ message: 'Address ID is required for non-hostellers.' });
+            }
+
+            const address = user.addresses.id(addressId);
+            console.log("📦 Address found:", address);
+
+            if (!address) {
+                console.log("❌ Address not found for given addressId");
+                return res.status(404).json({ message: 'Selected address not found.' });
+            }
+
+            deliveryAddressObject = {
+                street: address.addressLine1 || address.street,
+                city: address.city,
+                state: address.state,
+                zipCode: address.zipCode,
+            };
+        } else {
+            console.log("❌ Cannot determine user accommodation type");
+            return res.status(400).json({ message: 'Cannot determine delivery address. Please complete your profile.' });
+        }
+
+        console.log("✅ Final delivery address object:", deliveryAddressObject);
+
+        // 3️⃣ Create snapshot items array
+        console.log("🧾 Creating order items snapshot...");
+        const orderItems = cart.items.map(item => ({
+            menuItem: item.menuItem._id,
+            name: item.menuItem.name,
+            price: item.price,
+            quantity: item.quantity,
+        }));
+        console.log("🧾 Order items:", orderItems);
+
+        // 4️⃣ Create order payload
+        const orderPayload = {
+            user: userId,
+            vendor: cart.vendor,
+            items: orderItems,
+            totalPrice: cart.total,
+            deliveryAddress: deliveryAddressObject,
+            paymentDetails: { method: paymentMethod },
+        };
+        console.log("📦 Order payload before save:", orderPayload);
+
+        // 5️⃣ Handle payment logic
+        if (paymentMethod === 'upi') {
+            console.log("💰 Handling UPI payment...");
+            const vendor = await Vendor.findById(cart.vendor);
+            console.log("🏪 Vendor fetched:", vendor);
+
+            if (!vendor || !vendor.upiId) {
+                console.log("❌ Vendor missing UPI ID");
+                return res.status(400).json({ message: 'This vendor is not currently accepting UPI payments.' });
+            }
+
+            orderPayload.status = 'payment_pending';
+            const order = new Order(orderPayload);
+            await order.save();
+            console.log("✅ UPI order created:", order);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Order placed. Please complete the payment.',
+                data: {
+                    orderId: order._id,
+                    amount: order.totalPrice,
+                    upiId: vendor.upiId,
+                },
+            });
+        } 
+        else if (paymentMethod === 'cod') {
+            console.log("💵 Handling Cash on Delivery...");
+            orderPayload.status = 'pending';
+            orderPayload.paymentDetails.status = 'pending';
+
+            const order = new Order(orderPayload);
+            await order.save();
+            console.log("✅ COD order created:", order);
+
+            // Clear cart
+            console.log("🧹 Clearing cart...");
+            await Cart.deleteOne({ user: userId });
+
+            // Notify vendor
+            console.log("📢 Emitting new_order event to vendor:", order.vendor);
+            const io = req.app.get('socketio');
+            io.to(order.vendor.toString()).emit('new_order', order);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Order placed successfully!',
+                data: order,
+            });
+        }
+
+        console.log("❌ Invalid payment method provided:", paymentMethod);
+        return res.status(400).json({ message: 'Invalid payment method provided.' });
+
+    } catch (error) {
+        console.error("🔥 Error caught in placeOrder:", error);
+
+        if (error.name === 'ValidationError') {
+            console.error("⚠️ Mongoose Validation Error Details:", error.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Order validation failed.',
+                details: error.message,
+            });
+        }
+
+        res.status(500).json({ success: false, message: 'Server error while placing order.' });
     }
-    const vendor = await Vendor.findById(cart.vendor);
-    if (!vendor || !vendor.upiId) {
-      return res
-        .status(400)
-        .json({ message: "This vendor is not currently accepting payments." });
-    }
-
-    const order = new Order({
-      user: userId,
-      vendor: cart.vendor,
-      items: cart.items,
-      totalAmount: cart.total,
-      deliveryAddress: deliveryAddressString,
-      status: "payment_pending",
-    });
-
-    await order.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Order placed. Please complete the payment.",
-      data: {
-        orderId: order._id,
-        amount: order.totalAmount,
-        upiId: vendor.upiId,
-      },
-    });
-  } catch (error) {
-    console.error("Error placing order:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
 };
+
+
 
 
 // Step 2 - Confirm UPI Payment
