@@ -45,37 +45,37 @@ export default function RestaurantMenu() {
   }, [restaurantId]);
 
   // Handle adding items to cart
-  const handleAddToCart = (itemId) => {
-    const item = getAllItems().find(item => item._id === itemId);
+  const handleAddToCart = async (itemId) => {
+    const item = getAllItems().find((item) => item._id === itemId);
     if (item) {
-      addItem(item, restaurantId);
+      await addItem(item, restaurantId);
     }
   };
 
-  const handleIncreaseQty = (itemId) => {
+ const handleIncreaseQty = async (itemId) => {
     const currentQty = getItemQuantity(itemId);
     if (currentQty > 0) {
-      console.log('IncreaseQty itemId:', itemId, 'currentQty:', currentQty);
-      updateQuantity(itemId, currentQty + 1);
+      console.log("IncreaseQty itemId:", itemId, "currentQty:", currentQty);
+      await updateQuantity(itemId, currentQty + 1);
     } else {
       // If not in cart, add item
-      const item = getAllItems().find(item => item._id === itemId);
+      const item = getAllItems().find((item) => item._id === itemId);
       if (item) {
-        console.log('IncreaseQty addItem:', itemId);
-        addItem(item, restaurantId);
+        console.log("IncreaseQty addItem:", itemId);
+        await addItem(item, restaurantId);
       }
     }
   };
 
-  const handleDecreaseQty = (itemId) => {
+  const handleDecreaseQty = async (itemId) => {
     const currentQty = getItemQuantity(itemId);
     if (currentQty > 1) {
-      console.log('DecreaseQty itemId:', itemId, 'currentQty:', currentQty);
-      updateQuantity(itemId, currentQty - 1);
+      console.log("DecreaseQty itemId:", itemId, "currentQty:", currentQty);
+      await updateQuantity(itemId, currentQty - 1);
     } else if (currentQty === 1) {
       // Remove item from cart
-      console.log('DecreaseQty removeItem:', itemId);
-      updateQuantity(itemId, 0);
+      console.log("DecreaseQty removeItem:", itemId);
+      await updateQuantity(itemId, 0);
     }
   };
 
