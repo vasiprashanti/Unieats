@@ -262,22 +262,22 @@ export default function Home() {
 
           {/* Mobile Carousel Cards */}
           <div className="poker-hand-mobile md:hidden relative w-full h-[420px] sm:h-[450px] flex justify-center items-center overflow-hidden px-4">
-            <div className="relative w-full max-w-[320px] h-full flex justify-center items-center">
+            <div className="relative w-full max-w-[350px] h-full flex justify-center items-center">
               {categories.map((category, index) => {
-                let cardClass = 'category-card-mobile absolute w-full h-[380px] sm:h-[410px] max-w-[300px] rounded-2xl bg-[#fafafa] shadow-xl text-center cursor-pointer transition-all duration-700 ease-out';
+                let cardClass = 'category-card-mobile absolute w-full h-[380px] sm:h-[410px] max-w-[280px] rounded-2xl bg-[#fafafa] shadow-xl text-center cursor-pointer transition-all duration-700 ease-out';
                 
                 if (index === activeCard) {
-                  // Active card - centered, full opacity
-                  cardClass += ' translate-x-0 scale-100 opacity-100 z-20';
+                  // Active card - centered, full opacity, on top
+                  cardClass += ' translate-x-0 scale-100 opacity-100 z-30';
                 } else if (index === activeCard - 1 || (activeCard === 0 && index === categories.length - 1)) {
-                  // Previous card - left side preview
-                  cardClass += ' -translate-x-[280px] scale-75 opacity-30 z-10';
+                  // Previous card - left side, partially visible
+                  cardClass += ' -translate-x-[120px] scale-90 opacity-70 z-20';
                 } else if (index === activeCard + 1 || (activeCard === categories.length - 1 && index === 0)) {
-                  // Next card - right side preview
-                  cardClass += ' translate-x-[280px] scale-75 opacity-30 z-10';
+                  // Next card - right side, partially visible
+                  cardClass += ' translate-x-[120px] scale-90 opacity-70 z-20';
                 } else {
-                  // Hidden cards
-                  cardClass += ' translate-x-[400px] scale-60 opacity-0 z-5 pointer-events-none';
+                  // Hidden cards - completely behind
+                  cardClass += ' translate-x-0 scale-85 opacity-0 z-10 pointer-events-none';
                 }
 
                 return (
