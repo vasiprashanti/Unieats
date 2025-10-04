@@ -16,7 +16,6 @@ import Navbar from "../components/Navigation/Navbar";
 import MobileHeader from "../components/Navigation/MobileHeader";
 
 export default function Cart() {
-  const navigate = useNavigate();
   const { 
     items: cartItems, 
     totalItems,
@@ -25,6 +24,9 @@ export default function Cart() {
     removeItem,
     clearCart
   } = useCart();
+  // Debug: log cartItems structure
+  console.log('Cart items:', cartItems);
+  const navigate = useNavigate();
 
   const [deliveryFee, setDeliveryFee] = useState(5);
   const [walletBalance] = useState(850);
@@ -61,10 +63,19 @@ export default function Cart() {
   };
 
   const handleUpdateQuantity = (id, newQuantity) => {
+    if (!id) {
+      console.warn('Cart: Tried to update quantity with undefined id', id, newQuantity);
+      return;
+    }
     updateQuantity(id, newQuantity);
   };
 
   const handleRemoveItem = (id) => {
+    console.log("emm id",id);
+    if (!id) {
+      console.warn('Cart: Tried to remove item with undefined id', id);
+      return;
+    }
     removeItem(id);
   };
 
@@ -117,7 +128,7 @@ export default function Cart() {
           <div className="space-y-3">
             {cartItems.map((item) => (
               <div
-                key={item.id}
+                key={item._id}
                 className="rounded-2xl p-4 transition-colors duration-200"
                 style={{
                   backgroundColor: "hsl(var(--card))",
@@ -153,7 +164,7 @@ export default function Cart() {
                     <div className="flex items-center space-x-2 mt-2">
                       <button
                         onClick={() =>
-                          handleUpdateQuantity(item.id, item.quantity - 1)
+                          handleUpdateQuantity(item.menuItem, item.quantity - 1)
                         }
                         className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:border-[hsl(var(--primary))] transition-colors duration-200"
                         style={{ borderColor: "hsl(var(--primary) / 0.5)" }}
@@ -170,8 +181,8 @@ export default function Cart() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() =>
-                          handleUpdateQuantity(item.id, item.quantity + 1)
+                        onClick={() =>{
+                          handleUpdateQuantity(item.menuItem, item.quantity + 1)}
                         }
                         className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:border-[hsl(var(--primary))] transition-colors duration-200"
                         style={{ borderColor: "hsl(var(--primary) / 0.5)" }}
@@ -193,7 +204,7 @@ export default function Cart() {
                       ₹{(item.price * item.quantity).toFixed(0)}
                     </p>
                     <button
-                      onClick={() => handleRemoveItem(item.id)}
+                      onClick={() => handleRemoveItem(item.menuItem)}
                       className="p-1 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors duration-200"
                     >
                       <Trash2 className="h-4 w-4" />

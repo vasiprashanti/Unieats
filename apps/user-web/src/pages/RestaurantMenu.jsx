@@ -17,56 +17,21 @@ export default function RestaurantMenu() {
   const [collapsedCategories, setCollapsedCategories] = useState(new Set());
   const [showCategoryPanel, setShowCategoryPanel] = useState(false);
 
-  // Sample menu data structure to match HTML
-  const SAMPLE_MENU = {
-    restaurant: {
-      name: "Subway",
-      image: "/images/M1.png",
-      rating: 4.5,
-      reviewCount: 100,
-      deliveryTime: '30-40 min',
-    },
-    bestsellers: [
-      { id: 1, name: "Italian B.M.T.", desc: "Salami, Pepperoni & Ham with veggies", price: 299, image: "/images/pizza.png" },
-      { id: 2, name: "Veggie Delight", desc: "Lettuce, tomato, cucumber & olives", price: 249, image: "/images/burger.png" }
-    ],
-    categories: {
-      "Subs": Array.from({length: 10}, (_, i) => ({ 
-        id: 100 + i, 
-        name: `Sub Item ${i + 1}`, 
-        desc: "Delicious freshly made sub", 
-        price: 299 + i * 10, 
-        image: "/images/sub4.jpg" 
-      })),
-      "Salads": Array.from({length: 10}, (_, i) => ({ 
-        id: 200 + i, 
-        name: `Salad ${i + 1}`, 
-        desc: "Fresh greens with toppings", 
-        price: 199 + i * 5, 
-        image: "/images/sub5.jpg" 
-      })),
-      "Wraps": Array.from({length: 10}, (_, i) => ({ 
-        id: 300 + i, 
-        name: `Wrap ${i + 1}`, 
-        desc: "Tasty wrap with sauces", 
-        price: 249 + i * 7, 
-        image: "/images/burger.png" 
-      }))
-    }
-  };
-
-  // Load menu data
+  // Remove SAMPLE_MENU and fetch from backend
   useEffect(() => {
     const loadMenuData = async () => {
       try {
         setLoading(true);
-        // For now, use sample data. Replace with actual API call
-        // const response = await getRestaurantMenu(restaurantId);
-        
-        // Simulate loading time
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setMenuData(SAMPLE_MENU);
+        const response = await getRestaurantMenu(restaurantId);
+        // Transform menu array to categories object
+        const categories = {};
+        (response.data.menu || []).forEach(category => {
+          categories[category.name] = category.items;
+        });
+        setMenuData({
+          ...response.data,
+          categories
+        });
       } catch (err) {
         setError('Failed to load menu');
       } finally {
@@ -81,7 +46,7 @@ export default function RestaurantMenu() {
 
   // Handle adding items to cart
   const handleAddToCart = (itemId) => {
-    const item = getAllItems().find(item => item.id === itemId);
+    const item = getAllItems().find(item => item._id === itemId);
     if (item) {
       addItem(item, restaurantId);
     }
@@ -89,14 +54,27 @@ export default function RestaurantMenu() {
 
   const handleIncreaseQty = (itemId) => {
     const currentQty = getItemQuantity(itemId);
-    updateQuantity(itemId, currentQty + 1);
+    if (currentQty > 0) {
+      console.log('IncreaseQty itemId:', itemId, 'currentQty:', currentQty);
+      updateQuantity(itemId, currentQty + 1);
+    } else {
+      // If not in cart, add item
+      const item = getAllItems().find(item => item._id === itemId);
+      if (item) {
+        console.log('IncreaseQty addItem:', itemId);
+        addItem(item, restaurantId);
+      }
+    }
   };
 
   const handleDecreaseQty = (itemId) => {
     const currentQty = getItemQuantity(itemId);
     if (currentQty > 1) {
+      console.log('DecreaseQty itemId:', itemId, 'currentQty:', currentQty);
       updateQuantity(itemId, currentQty - 1);
-    } else {
+    } else if (currentQty === 1) {
+      // Remove item from cart
+      console.log('DecreaseQty removeItem:', itemId);
       updateQuantity(itemId, 0);
     }
   };
@@ -126,11 +104,12 @@ export default function RestaurantMenu() {
     setShowCategoryPanel(!showCategoryPanel);
   };
 
+  // Use backend data structure
   const getAllItems = () => {
     if (!menuData) return [];
     return [
-      ...menuData.bestsellers,
-      ...Object.values(menuData.categories).flat()
+      ...(menuData.bestsellers || []),
+      ...Object.values(menuData.categories || {}).flat()
     ];
   };
 
@@ -268,7 +247,7 @@ export default function RestaurantMenu() {
       {/* Banner */}
       <div className="w-full flex justify-center mt-16 md:mt-16">
         <img 
-          src={menuData.restaurant.image} 
+          src={menuData?.restaurant?.image || '/placeholder-restaurant.jpg'} 
           alt="Banner" 
           className="w-full h-[40vh] object-cover"
         />
@@ -279,10 +258,10 @@ export default function RestaurantMenu() {
         {/* Bestsellers */}
         <h2 className="text-3xl font-bold mb-4">Bestsellers</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {menuData.bestsellers.map(item => {
-            const qty = getItemQuantity(item.id);
+          {(menuData.bestsellers || []).map(item => {
+            const qty = getItemQuantity(item._id);
             return (
-              <div key={item.id} className="flex flex-col bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-md text-center">
+              <div key={item._id} className="flex flex-col bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-md text-center">
                 <img src={item.image} alt={item.name} className="w-full aspect-square object-cover" />
                 <div className="p-2.5 pb-4">
                   <div className="font-semibold text-base mb-1">{item.name}</div>
@@ -290,7 +269,7 @@ export default function RestaurantMenu() {
                   <div className="font-bold text-[#2e7d32] mb-2">₹{item.price}</div>
                   {qty === 0 ? (
                     <button 
-                      onClick={() => handleAddToCart(item.id)}
+                      onClick={() => handleAddToCart(item._id)}
                       className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm"
                     >
                       Add
@@ -298,14 +277,14 @@ export default function RestaurantMenu() {
                   ) : (
                     <div className="flex items-center gap-2 bg-white/90 p-1 rounded-[20px] shadow-sm justify-center">
                       <button 
-                        onClick={() => handleDecreaseQty(item.id)}
+                        onClick={() => handleDecreaseQty(item._id)}
                         className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
                       >
                         -
                       </button>
                       <span className="min-w-5 text-center">{qty}</span>
                       <button 
-                        onClick={() => handleIncreaseQty(item.id)}
+                        onClick={() => handleIncreaseQty(item._id)}
                         className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
                       >
                         +
@@ -323,7 +302,7 @@ export default function RestaurantMenu() {
         
         {/* Category Bar */}
         <div className="flex gap-2.5 overflow-x-auto py-2.5 mb-5 scrollbar-hide">
-          {Object.keys(menuData.categories).map(categoryName => (
+          {Object.keys(menuData?.categories || {}).map(categoryName => (
             <button
               key={categoryName}
               onClick={() => scrollToCategory(categoryName)}
@@ -336,7 +315,7 @@ export default function RestaurantMenu() {
 
         {/* Category Items */}
         <div className="space-y-6">
-          {Object.entries(menuData.categories).map(([categoryName, items]) => (
+          {Object.entries(menuData?.categories || {}).map(([categoryName, items]) => (
             <div 
               key={categoryName}
               id={`cat-${categoryName}`}
@@ -357,10 +336,10 @@ export default function RestaurantMenu() {
               {!collapsedCategories.has(categoryName) && (
                 <div className="bg-transparent">
                   {items.map((item, index) => {
-                    const qty = getItemQuantity(item.id);
+                    const qty = getItemQuantity(item._id);
                     return (
                       <div 
-                        key={item.id}
+                        key={item._id}
                         className={`flex justify-between gap-3 p-4 ${
                           index < items.length - 1 ? 'border-b border-[#eee]' : ''
                         }`}
@@ -379,7 +358,7 @@ export default function RestaurantMenu() {
                           <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
                             {qty === 0 ? (
                               <button 
-                                onClick={() => handleAddToCart(item.id)}
+                                onClick={() => handleAddToCart(item._id)}
                                 className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm"
                               >
                                 Add
@@ -387,14 +366,14 @@ export default function RestaurantMenu() {
                             ) : (
                               <div className="flex items-center gap-2 bg-white/90 p-1 rounded-[20px] shadow-sm">
                                 <button 
-                                  onClick={() => handleDecreaseQty(item.id)}
+                                  onClick={() => handleDecreaseQty(item._id)}
                                   className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
                                 >
                                   -
                                 </button>
                                 <span className="min-w-5 text-center">{qty}</span>
                                 <button 
-                                  onClick={() => handleIncreaseQty(item.id)}
+                                  onClick={() => handleIncreaseQty(item._id)}
                                   className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer"
                                 >
                                   +

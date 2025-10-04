@@ -21,8 +21,7 @@ const initialState = {
 };
 
 // Base API URL from .env
-const API_URL = import.meta.env.VITE_API_URL; // for Vite
-// const API_URL = process.env.REACT_APP_API_URL; // for CRA
+const API_URL = import.meta.env.VITE_API_BASE_URL; 
 
 // ✅ Helper to get fresh Firebase token
 async function getFirebaseToken() {
@@ -99,12 +98,16 @@ export function CartProvider({ children }) {
         dispatch({
           type: CART_ACTIONS.LOAD_CART,
           payload: {
-            items: data.data.items.map(i => ({
-              ...i.menuItem,
-              quantity: i.quantity,
-              id: i.menuItem._id,
-              price: i.menuItem.price
-            })),
+            items: data.data.items.map(i => {
+              // i._id is the cart item ID, i.menuItem is the menu item ID
+              return {
+                _id: i._id, // cart item unique ID
+                menuItem: i.menuItem,
+                quantity: i.quantity,
+                price: i.price,
+                ...i
+              };
+            }),
             totalItems: data.data.items.reduce((sum, i) => sum + i.quantity, 0),
             totalPrice: data.data.total,
             restaurantId: data.data.vendor,
@@ -120,6 +123,20 @@ export function CartProvider({ children }) {
   };
 
   const updateQuantity = async (itemId, quantity) => {
+  // Try to resolve _id from id if needed
+  console.log("first dhi", itemId);
+  console.log("second dhi", quantity);
+    let resolvedId = itemId;
+    if (!resolvedId) {
+      const item = state.items.find(i => i.id === itemId);
+      if (item && item._id) {
+        resolvedId = item._id;
+      }
+    }
+    if (!resolvedId) {
+      alert('Invalid item id for update');
+      return;
+    }
     try {
       const token = await getFirebaseToken();
       if (!token) {
@@ -133,7 +150,7 @@ export function CartProvider({ children }) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ menuItemId: itemId, quantity }),
+        body: JSON.stringify({ menuItemId: resolvedId, quantity }),
       });
 
       const text = await response.text();
@@ -141,12 +158,14 @@ export function CartProvider({ children }) {
       let data = text ? JSON.parse(text) : {};
 
       if (response.ok && data.data) {
-        const items = data.data.items.map(i => ({
-          ...i.menuItem,
-          quantity: i.quantity,
-          id: i.menuItem._id,
-          price: i.menuItem.price
-        }));
+        const items = data.data.items.map(i => {
+          return {
+            menuItem: i.menuItem,
+            quantity: i.quantity,
+            price: i.price,
+            ...i
+          };
+        });
         dispatch({
           type: CART_ACTIONS.LOAD_CART,
           payload: {
@@ -166,47 +185,56 @@ export function CartProvider({ children }) {
   };
 
   const removeItem = async (itemId) => {
-    try {
-      const token = await getFirebaseToken();
-      if (!token) {
-        alert("User not logged in");
-        return;
-      }
-
-      const response = await fetch(`${API_URL}/api/v1/cart/item/${itemId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const text = await response.text();
-      console.log('Raw remove response:', text);
-      let data = text ? JSON.parse(text) : {};
-
-      if (response.ok && data.data) {
-        const items = data.data.items.map(i => ({
-          ...i.menuItem,
-          quantity: i.quantity,
-          id: i.menuItem._id,
-          price: i.menuItem.price
-        }));
-        dispatch({
-          type: CART_ACTIONS.LOAD_CART,
-          payload: {
-            items,
-            totalItems: items.reduce((sum, i) => sum + i.quantity, 0),
-            totalPrice: data.data.total,
-            restaurantId: data.data.vendor,
+    // Use cart item's unique _id for removal
+        const menuItemId = itemId;
+        if (!menuItemId) {
+          alert('Invalid item id for removal');
+          return;
+        }
+        try {
+          const token = await getFirebaseToken();
+          if (!token) {
+            alert("User not logged in");
+            return;
           }
-        });
-      } else {
-        alert(data.message || 'Failed to remove item');
-      }
-    } catch (error) {
-      console.error('Error removing item:', error);
-      alert('Error removing item');
-    }
+
+          const response = await fetch(`${API_URL}/api/v1/cart/item`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ menuItemId, quantity: 0 }),
+          });
+
+          const text = await response.text();
+          console.log('Raw remove response:', text);
+          let data = text ? JSON.parse(text) : {};
+
+          if (response.ok && data.data) {
+            const items = data.data.items.map(i => ({
+              _id: i._id,
+              menuItem: i.menuItem,
+              quantity: i.quantity,
+              price: i.price,
+              ...i
+            }));
+            dispatch({
+              type: CART_ACTIONS.LOAD_CART,
+              payload: {
+                items,
+                totalItems: items.reduce((sum, i) => sum + i.quantity, 0),
+                totalPrice: data.data.total,
+                restaurantId: data.data.vendor,
+              }
+            });
+          } else {
+            alert(data.message || 'Failed to remove item');
+          }
+        } catch (error) {
+          console.error('Error removing item:', error);
+          alert('Error removing item');
+        }
   };
 
   const clearCart = () => {
@@ -214,12 +242,12 @@ export function CartProvider({ children }) {
   };
 
   const getItemQuantity = (itemId) => {
-    const item = state.items.find(i => i.id === itemId);
-    return item ? item.quantity : 0;
+  const item = state.items.find(i => i._id === itemId);
+  return item ? item.quantity : 0;
   };
 
   const isItemInCart = (itemId) => {
-    return state.items.some(i => i.id === itemId);
+  return state.items.some(i => i._id === itemId);
   };
 
   // Context value
