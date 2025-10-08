@@ -4,9 +4,8 @@ import {
   Plus,
   Minus,
   ShoppingBag,
-  Truck,
-  Wallet,
   Sparkles,
+  Wallet,
   Gift,
 } from "lucide-react";
 
@@ -16,19 +15,19 @@ import Navbar from "../components/Navigation/Navbar";
 import MobileHeader from "../components/Navigation/MobileHeader";
 
 export default function Cart() {
-  const { 
-    items: cartItems, 
+  const {
+    items: cartItems,
     totalItems,
     totalPrice: subtotal,
     updateQuantity,
     removeItem,
     clearCart,
-    refreshCart
+    refreshCart,
   } = useCart();
-  
-  console.log('Cart items:', cartItems);
-  console.log('Subtotal from context:', subtotal);
-  
+
+  console.log("Cart items:", cartItems);
+  console.log("Subtotal from context:", subtotal);
+
   const navigate = useNavigate();
 
   const [deliveryFee, setDeliveryFee] = useState(5);
@@ -67,7 +66,11 @@ export default function Cart() {
 
   const handleUpdateQuantity = (menuItemId, newQuantity) => {
     if (!menuItemId) {
-      console.warn('Cart: Tried to update quantity with undefined id', menuItemId, newQuantity);
+      console.warn(
+        "Cart: Tried to update quantity with undefined id",
+        menuItemId,
+        newQuantity
+      );
       return;
     }
     updateQuantity(menuItemId, newQuantity);
@@ -76,7 +79,7 @@ export default function Cart() {
   const handleRemoveItem = (menuItemId) => {
     console.log("Removing item id:", menuItemId);
     if (!menuItemId) {
-      console.warn('Cart: Tried to remove item with undefined id', menuItemId);
+      console.warn("Cart: Tried to remove item with undefined id", menuItemId);
       return;
     }
     removeItem(menuItemId);
@@ -127,7 +130,7 @@ export default function Cart() {
             Discover amazing food and start ordering!
           </p>
           <button
-            onClick={() => navigate('/restaurants')}
+            onClick={() => navigate("/restaurants")}
             className="px-8 py-3 rounded-2xl font-semibold shadow-xl transition-colors duration-200"
             style={{
               backgroundColor: "hsl(var(--primary))",
@@ -145,10 +148,10 @@ export default function Cart() {
             {cartItems.map((item) => {
               const unitPrice = getItemUnitPrice(item);
               const itemTotal = unitPrice * item.quantity;
-              
+
               return (
                 <div
-                  key={item._id}
+                  key={item._id || item.menuItem}
                   className="rounded-2xl p-4 transition-colors duration-200"
                   style={{
                     backgroundColor: "hsl(var(--card))",
@@ -163,11 +166,22 @@ export default function Cart() {
                           className="font-semibold text-sm md:text-base"
                           style={{ color: "hsl(var(--card-foreground))" }}
                         >
-                          {item.name}
+                          {/* Added item name display */}
+                          {item.name ? item.name.replace(/^"|"$/g, "") : "Unnamed Item"}
                         </h3>
                         {item.veg !== undefined && (
-                          <div className={`w-4 h-4 border-2 flex items-center justify-center ${item.veg ? 'border-green-500' : 'border-red-500'}`}>
-                            <div className={`w-2 h-2 rounded-full ${item.veg ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                          <div
+                            className={`w-4 h-4 border-2 flex items-center justify-center ${
+                              item.veg
+                                ? "border-green-500"
+                                : "border-red-500"
+                            }`}
+                          >
+                            <div
+                              className={`w-2 h-2 rounded-full ${
+                                item.veg ? "bg-green-500" : "bg-red-500"
+                              }`}
+                            ></div>
                           </div>
                         )}
                       </div>
@@ -191,10 +205,15 @@ export default function Cart() {
                         <button
                           onClick={() => {
                             console.log("Decreasing quantity for item:", item);
-                            handleUpdateQuantity(item.menuItem, item.quantity - 1);
+                            handleUpdateQuantity(
+                              item.menuItem,
+                              item.quantity - 1
+                            );
                           }}
                           className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:border-[hsl(var(--primary))] transition-colors duration-200"
-                          style={{ borderColor: "hsl(var(--primary) / 0.5)" }}
+                          style={{
+                            borderColor: "hsl(var(--primary) / 0.5)",
+                          }}
                         >
                           <Minus
                             className="h-3 w-3"
@@ -210,10 +229,15 @@ export default function Cart() {
                         <button
                           onClick={() => {
                             console.log("Increasing quantity for item:", item);
-                            handleUpdateQuantity(item.menuItem, item.quantity + 1);
+                            handleUpdateQuantity(
+                              item.menuItem,
+                              item.quantity + 1
+                            );
                           }}
                           className="w-6 h-6 rounded-full border-2 flex items-center justify-center hover:border-[hsl(var(--primary))] transition-colors duration-200"
-                          style={{ borderColor: "hsl(var(--primary) / 0.5)" }}
+                          style={{
+                            borderColor: "hsl(var(--primary) / 0.5)",
+                          }}
                         >
                           <Plus
                             className="h-3 w-3"
@@ -284,9 +308,7 @@ export default function Cart() {
             )}
 
             <div className="flex justify-between font-bold text-lg mt-4">
-              <span style={{ color: "hsl(var(--card-foreground))" }}>
-                Total
-              </span>
+              <span style={{ color: "hsl(var(--card-foreground))" }}>Total</span>
               <span style={{ color: "hsl(var(--card-foreground))" }}>
                 ₹{finalTotal.toFixed(0)}
               </span>
