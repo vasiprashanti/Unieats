@@ -615,7 +615,7 @@ export default function RestaurantList() {
       {/* Bottom Navbar (Mobile Only) */}
 
       {/* Banner Section */}
-      <div className="w-full flex justify-center overflow-hidden mb-0 pt-16 md:pt-20">
+      <div className="w-full flex justify-center overflow-hidden mb-0">
         <img
           src="/banner.jpg"
           alt="Food Banner"
@@ -707,8 +707,8 @@ export default function RestaurantList() {
               className={`px-4 py-2 rounded-full font-semibold transition-colors duration-300
             ${
               isVegOnly
-              ? "bg-green-500 text-white hover:bg-green-600"
-              : "bg-white-200 text-gray-800 hover:bg-white-300 border border-orange-300"
+              ? "bg-green-600 text-white hover:bg-green-600"
+              : "bg-white-200 text-white-800 hover:bg-white-300 border border-orange-300"
             }`}
             >
               {isVegOnly ? "Veg Only" : "Show All"}
