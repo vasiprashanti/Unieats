@@ -35,6 +35,8 @@ import Orders from '../pages/Orders';
 import OrderTracking from '../pages/OrderTracking';
 import Profile from '../pages/Profile';
 import Support from '../pages/Support';
+import TermsAndConditions from '../pages/TermsAndConditions';
+import PrivacyPolicy from '../pages/PrivacyPolicy';
 
 export default function AppRoutes() {
   const location = useLocation();
@@ -52,6 +54,7 @@ export default function AppRoutes() {
         <Route path="/home" element={<Home />} />
         <Route path="/restaurants" element={<RestaurantList />} />
         <Route path="/restaurants/:id" element={<RestaurantMenu />} />
+       
 
         {/* Protected user routes */}
         <Route path="/cart" element={<ProtectedUser><Cart /></ProtectedUser>} />
@@ -60,8 +63,10 @@ export default function AppRoutes() {
         <Route path="/orders/:id" element={<ProtectedUser><OrderTracking /></ProtectedUser>} />
         <Route path="/profile" element={<ProtectedUser><Profile /></ProtectedUser>} />
         <Route path="/support" element={<ProtectedUser><Support /></ProtectedUser>} />
-
+         <Route path="/terms" element={<ProtectedUser><TermsAndConditions /></ProtectedUser>} />
+        <Route path="/privacy" element={<ProtectedUser><PrivacyPolicy /></ProtectedUser>} />
         <Route path="*" element={<Navigate to="/home" replace />} />
+        
       </Routes>
       
       {!hideBottomNav && <BottomNav />}
