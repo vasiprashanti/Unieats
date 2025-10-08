@@ -16,7 +16,7 @@ export default function TermsAndConditions() {
         <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6 ">
           <h1
             className="text-4xl font-bold text-center mb-8"
-            style={{ color: "#ff8c00" }}
+            style={{ color: "#ff6600" }}
           >
             Terms and Conditions
           </h1>
@@ -27,7 +27,7 @@ export default function TermsAndConditions() {
             Terms. If you do not agree, please do not use our services.
           </p>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             1. Eligibility
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -42,7 +42,7 @@ export default function TermsAndConditions() {
             <li>You must provide accurate details when creating an account.</li>
           </ul>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             2. Account & Security
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -54,7 +54,7 @@ export default function TermsAndConditions() {
             <li>Notify us immediately if you suspect unauthorized access.</li>
           </ul>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             3. Ordering & Payments
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -71,7 +71,7 @@ export default function TermsAndConditions() {
             </li>
           </ul>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             4. Delivery
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -89,7 +89,7 @@ export default function TermsAndConditions() {
             </li>
           </ul>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             5. Refunds & Cancellations
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -107,7 +107,7 @@ export default function TermsAndConditions() {
             </li>
           </ul>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             6. User Conduct
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -122,7 +122,7 @@ export default function TermsAndConditions() {
             <li>We may suspend or terminate accounts violating these terms.</li>
           </ul>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             7. Restaurant & Partner Content
           </h2>
           <p>
@@ -131,7 +131,7 @@ export default function TermsAndConditions() {
             are the responsibility of restaurant partners.
           </p>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             8. Intellectual Property
           </h2>
           <p>
@@ -140,7 +140,7 @@ export default function TermsAndConditions() {
             permission.
           </p>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             9. Limitation of Liability
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -155,18 +155,18 @@ export default function TermsAndConditions() {
             </li>
           </ul>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             10. Privacy
           </h2>
           <p>
             Your use of UniEats is also governed by our{" "}
-            <span className="text-orange-500 underline">
+            <span className="text-orange-600 underline">
               <Link to="/privacy">Privacy Policy</Link>
             </span>
             Please review it to understand how we handle your data.
           </p>
 
-          <h2 className="text-xl font-bold text-orange-500 mt-6">
+          <h2 className="text-xl font-bold text-orange-600 mt-6">
             11. Changes to Terms
           </h2>
           <p>

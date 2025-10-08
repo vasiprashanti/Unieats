@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
         <div className="bg-white  rounded-2xl shadow-xl p-8 md:p-12 border border-gray-200">
           <h1
             className="text-4xl font-bold text-center mb-10"
-            style={{ color: "#ff8c00" }}
+            style={{ color: "#ff6600" }}
           >
             UniEats Privacy Policy
           </h1>
@@ -32,7 +32,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2
                 className="text-2xl font-bold mb-2 "
-                style={{ color: "#ff8c00" }}
+                style={{ color: "#ff6600" }}
               >
                 1. Information We Collect
               </h2>
@@ -62,7 +62,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2
                 className="text-2xl font-bold mb-2"
-                style={{ color: "#ff8c00" }}
+                style={{ color: "#ff6600" }}
               >
                 2. How We Use Your Information
               </h2>
@@ -85,7 +85,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2
                 className="text-2xl font-bold mb-2"
-                style={{ color: "#ff8c00" }}
+                style={{ color: "#ff6600" }}
               >
                 3. Sharing of Information
               </h2>
@@ -111,7 +111,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2
                 className="text-2xl font-bold mb-2"
-                style={{ color: "#ff8c00" }}
+                style={{ color: "#ff6600" }}
               >
                 4. Cookies & Tracking
               </h2>
@@ -128,7 +128,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2
                 className="text-2xl font-bold mb-2"
-                style={{ color: "#ff8c00" }}
+                style={{ color: "#ff6600" }}
               >
                 5. Data Retention
               </h2>
@@ -144,7 +144,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2
                 className="text-2xl font-bold mb-2"
-                style={{ color: "#ff8c00" }}
+                style={{ color: "#ff6600" }}
               >
                 6. Your Rights
               </h2>
@@ -170,7 +170,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2
                 className="text-2xl font-bold mb-2"
-                style={{ color: "#ff8c00" }}
+                style={{ color: "#ff6600" }}
               >
                 7. Security
               </h2>
@@ -185,7 +185,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2
                 className="text-2xl font-bold mb-2"
-                style={{ color: "#ff8c00" }}
+                style={{ color: "#ff6600" }}
               >
                 8. Third-Party Links
               </h2>
@@ -200,7 +200,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2
                 className="text-2xl font-bold mb-2"
-                style={{ color: "#ff8c00" }}
+                style={{ color: "#ff6600" }}
               >
                 9. Updates to This Policy
               </h2>
