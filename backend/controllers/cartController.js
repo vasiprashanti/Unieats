@@ -14,6 +14,31 @@ const calculateTotals = (cart) => {
   return cart;
 };
 
+// Helper function to format cart
+const formatCart = (cart) => {
+  if (!cart) return null;
+  return {
+    _id: cart._id,
+    user: cart.user,
+    vendor: cart.vendor,
+    subtotal: cart.subtotal,
+    deliveryFee: cart.deliveryFee,
+    total: cart.total,
+    items: cart.items
+      .map((item) => {
+        if (!item.menuItem) return null;
+        return {
+          menuItem: item.menuItem._id,
+          name: item.menuItem.name,
+          image: item.menuItem.image ? item.menuItem.image.url : null,
+          quantity: item.quantity,
+          price: item.price,
+        };
+      })
+      .filter((it) => it !== null),
+  };
+};
+
 // Get the user's current cart
 const getCart = async (req, res) => {
   try {
@@ -26,7 +51,8 @@ const getCart = async (req, res) => {
         .status(200)
         .json({ success: true, message: "Cart is empty.", data: null });
     }
-    res.status(200).json({ success: true, data: cart });
+    const formattedCart = formatCart(cart);
+    res.status(200).json({ success: true, data: formattedCart });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
   }
@@ -47,12 +73,10 @@ const addItemToCart = async (req, res) => {
     if (cart) {
       // If cart exists, check if it's for the same vendor
       if (cart.vendor.toString() !== menuItem.vendor.toString()) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "You can only order from one restaurant at a time. Please clear your cart first.",
-          });
+        return res.status(400).json({
+          message:
+            "You can only order from one restaurant at a time. Please clear your cart first.",
+        });
       }
 
       // Check if item already exists in cart
@@ -81,7 +105,12 @@ const addItemToCart = async (req, res) => {
 
     cart = calculateTotals(cart);
     await cart.save();
-    res.status(200).json({ success: true, data: cart });
+
+    // Populate menuItem data before formatting
+    await cart.populate("items.menuItem", "name image");
+
+    const formattedCart = formatCart(cart);
+    res.status(200).json({ success: true, data: formattedCart });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
   }
@@ -106,7 +135,12 @@ const updateCartItem = async (req, res) => {
       }
       cart = calculateTotals(cart);
       await cart.save();
-      res.status(200).json({ success: true, data: cart });
+
+      // Populate menuItem data before formatting
+      await cart.populate("items.menuItem", "name image");
+
+      const formattedCart = formatCart(cart);
+      res.status(200).json({ success: true, data: formattedCart });
     } else {
       res.status(404).json({ message: "Item not in cart." });
     }
