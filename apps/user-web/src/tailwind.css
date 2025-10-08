@@ -32,7 +32,7 @@
 /* Dark mode overrides */
 .dark {
   /* Main Layout */
-  --background: 0 0% 12%;
+  --background: 0 0% 9%;
   --foreground: 210 40% 98%;
   /* Cards & Surfaces */
   --card: 0 0% 16%;
@@ -52,7 +52,7 @@
   /* Borders */
   --border: 0 0% 25%;
   /* Sidebar */
-  --sidebar-background: 0 0% 10%;
+  --sidebar-background: 0 0% 9%;
   --sidebar-foreground: 240 4.8% 95.9%;
   --sidebar-primary: 24 100% 60%;
   --sidebar-accent: 0 0% 18%;
