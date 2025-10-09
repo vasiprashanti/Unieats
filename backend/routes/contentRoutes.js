@@ -1,4 +1,3 @@
-
 import express from 'express';
 import { createContent, getAllContent, getContentById, updateContent, deleteContent } from '../controllers/contentController.js';
 import { verifyFirebaseToken, checkRole } from '../middleware/authMiddleware.js';
@@ -18,7 +17,7 @@ router.get("/:id", cacheMiddleware, getContentById);
 const adminProtected = [checkRole("admin")];
 
 // Create new content
-router.post("/", ...adminProtected, uploadImage.single("image"), createContent);
+router.post("/", uploadImage.single("image"), createContent);
 // Update content
 router.put(
   "/:id",
