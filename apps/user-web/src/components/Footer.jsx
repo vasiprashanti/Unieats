@@ -28,7 +28,7 @@ function Footer() {
           <nav className="flex flex-col w-full md:w-[50%]">
             {[
               { id: "01", label: "ORDER", path: "/orders" },
-              { id: "02", label: "ABOUT", path: "/" },
+              { id: "02", label: "ABOUT", path: "/about" },
               { id: "03", label: "TEAM", path: "/team" },
               { id: "04", label: "CAREERS", path: "/careers" },
               { id: "05", label: "PARTNERS", path: "/partners" },
