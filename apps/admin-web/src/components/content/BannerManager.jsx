@@ -42,7 +42,14 @@ export default function BannerManager({ api }) {
 
   // Get image URL from various possible paths
   function getImageUrl(banner) {
-    return banner.image?.url || null;
+    // Support multiple possible shapes from different backends
+    return (
+      banner.image?.url ||
+      banner.image?.secure_url ||
+      banner.imageUrl ||
+      banner.url ||
+      null
+    );
   }
 
   // Handle file select + preview
@@ -201,7 +208,7 @@ export default function BannerManager({ api }) {
             src={imageUrl}
             alt={b.title || "banner"}
             className="w-full h-48 object-cover rounded"
-            onError={() => handleImageError(b._id, imageUrl(b))}
+            onError={() => handleImageError(b._id, imageUrl)}
           />
         ) : (
           <div className="w-full h-48 flex flex-col items-center justify-center bg-gray-200 text-gray-500">
@@ -223,7 +230,7 @@ export default function BannerManager({ api }) {
         )}
 
         {/* Overlay on hover with delete button */}
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
+  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center">
           <button
             className="opacity-0 group-hover:opacity-100 px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-opacity"
             onClick={() => onDelete(b._id)}
@@ -234,7 +241,7 @@ export default function BannerManager({ api }) {
         </div>
 
         {/* Drag handle indicator */}
-        <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 text-white bg-black bg-opacity-50 px-2 py-1 rounded text-xs">
+  <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 text-white bg-black/50 px-2 py-1 rounded text-xs">
           ⋮⋮ Drag to reorder
         </div>
       </div>
