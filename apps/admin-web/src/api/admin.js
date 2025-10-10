@@ -40,6 +40,7 @@ export async function listBanners() {
     });
     if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
     const data = await res.json();
+    console.log("List of banners--",data);
     return data;
   } catch (error) {
     console.error("Error fetching banners:", error);
