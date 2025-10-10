@@ -1,8 +1,6 @@
 import React, { useMemo, useState } from "react";
-import Modal from "../ui/Modal";
 import DocumentViewer from "./DocumentViewer";
 
-// Utility: simple sort by key
 function sortBy(items, key, dir = "asc") {
   const mult = dir === "asc" ? 1 : -1;
   return [...items].sort((a, b) => {
@@ -19,17 +17,13 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortKey, setSortKey] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
-
-  const [confirm, setConfirm] = useState({ open: false, id: null, action: null });
   const [docView, setDocView] = useState({ open: false, vendor: null });
 
   const filtered = useMemo(() => {
     let data = vendors || [];
-    // filter by status (approvalStatus in DB)
     if (statusFilter !== "all") {
       data = data.filter(v => v.approvalStatus === statusFilter);
     }
-    // filter by query (businessName/email)
     if (query.trim()) {
       const q = query.toLowerCase();
       data = data.filter(
@@ -38,12 +32,11 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
           v.email?.toLowerCase().includes(q)
       );
     }
-    // sort
     if (sortKey) data = sortBy(data, sortKey, sortDir);
     return data;
   }, [vendors, query, statusFilter, sortKey, sortDir]);
 
-  const toggleSort = (key) => {
+  const toggleSort = key => {
     if (sortKey === key) setSortDir(d => (d === "asc" ? "desc" : "asc"));
     else {
       setSortKey(key);
@@ -51,20 +44,7 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
     }
   };
 
-  const startConfirm = (id, action) => setConfirm({ open: true, id, action });
-  const closeConfirm = () => setConfirm({ open: false, id: null, action: null });
-
-  const proceedConfirm = async () => {
-    if (!confirm.id || !confirm.action) return;
-    try {
-      if (confirm.action === "approve") await onApprove(confirm.id);
-      else await onReject(confirm.id);
-    } finally {
-      closeConfirm();
-    }
-  };
-
-  const openDocs = (vendor) => setDocView({ open: true, vendor });
+  const openDocs = vendor => setDocView({ open: true, vendor });
   const closeDocs = () => setDocView({ open: false, vendor: null });
 
   const columns = [
@@ -83,13 +63,13 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
         <div className="flex gap-2">
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={e => setQuery(e.target.value)}
             placeholder="Search by name or email"
             className="border border-base rounded px-3 py-2 w-64 bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))]"
           />
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={e => setStatusFilter(e.target.value)}
             className="border border-base rounded px-2 py-2 bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))]"
           >
             <option value="all">All</option>
@@ -166,28 +146,32 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
                   </button>
                 </td>
                 <td className="px-3 py-2">
-                  {v.approvalStatus === "pending" ? (
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => startConfirm(v._id, "approve")}
-                        disabled={busyId === v._id}
-                        className="px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
-                      >
-                        {busyId === v._id ? "..." : "Approve"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => startConfirm(v._id, "reject")}
-                        disabled={busyId === v._id}
-                        className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
-                      >
-                        {busyId === v._id ? "..." : "Reject"}
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted">—</span>
-                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onApprove(v._id)}
+                      disabled={busyId === v._id}
+                      className={`px-2 py-1 rounded text-white ${
+                        v.approvalStatus === "approved"
+                          ? "bg-green-600"
+                          : "bg-gray-400 hover:bg-green-600"
+                      } disabled:opacity-60`}
+                    >
+                      {busyId === v._id ? "..." : "Approve"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onReject(v._id)}
+                      disabled={busyId === v._id}
+                      className={`px-2 py-1 rounded text-white ${
+                        v.approvalStatus === "rejected"
+                          ? "bg-red-600"
+                          : "bg-gray-400 hover:bg-red-600"
+                      } disabled:opacity-60`}
+                    >
+                      {busyId === v._id ? "..." : "Reject"}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -204,22 +188,6 @@ export default function VendorTable({ vendors, onApprove, onReject, busyId }) {
           </tbody>
         </table>
       </div>
-
-      {/* Confirm modal */}
-      <Modal
-        open={confirm.open}
-        title={confirm.action === "approve" ? "Approve Vendor" : "Reject Vendor"}
-        description={
-          confirm.action === "approve"
-            ? "Are you sure you want to approve this vendor?"
-            : "Are you sure you want to reject this vendor?"
-        }
-        confirmText={confirm.action === "approve" ? "Approve" : "Reject"}
-        cancelText="Cancel"
-        onConfirm={proceedConfirm}
-        onCancel={closeConfirm}
-        loading={busyId === confirm.id}
-      />
 
       {/* Document viewer */}
       <DocumentViewer

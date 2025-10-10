@@ -1,6 +1,6 @@
 
 
-import User from '../models/User.js';
+import User from '../models/User.model.js';
 
 // --- GET All Users ---
 const getAllUsers = async (req, res) => {
@@ -38,4 +38,4 @@ const getAllUsers = async (req, res) => {
 };
 
 
-export { getAllUsers, updateUserStatus };
+export { getAllUsers };

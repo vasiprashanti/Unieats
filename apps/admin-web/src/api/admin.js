@@ -1,9 +1,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function getVendors() {
-  console.log("HERE-", API_BASE_URL);
-  return request(`${API_BASE_URL}/api/v1/admin/vendors`, { method: 'GET' });
+  return request(`/api/v1/admin/vendors`, { method: 'GET' });
 }
+
 
 async function request(path, { method = 'GET', headers = {}, body } = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -30,7 +30,7 @@ async function request(path, { method = 'GET', headers = {}, body } = {}) {
 
 // Vendors
 export function patchVendorApproval(id, status) {
-  return request(`${API_BASE_URL}/api/v1/admin/vendors/${id}/approval`, {
+  return request(`/api/v1/admin/vendors/${id}/approval`, {
     method: 'PATCH',
     body: { status },
   });

@@ -113,72 +113,43 @@ export default function BannerManager({ api }) {
       </div>
 
       {/* Upload section */}
-      <div className="rounded-lg border border-base p-4 space-y-3">
-        {/* File chooser as dropzone with clear Browse + Upload buttons */}
-        <input
-          id="bannerFile"
-          type="file"
-          accept="image/*"
-          onChange={onFileChange}
-          disabled={loading}
-          className="hidden"
-        />
+     <div className="flex items-center gap-3">
+  {/* Label acts as the button */}
+  <label className="px-3 py-1 rounded bg-blue-600 text-white cursor-pointer hover:bg-blue-700">
+    Browse…
+    <input
+      type="file"
+      accept="image/*"
+      onChange={onFileChange}
+      className="hidden"
+    />
+  </label>
 
-        {/* Dropzone */}
-        <div
-          className={`rounded-lg border border-dashed p-4 ${isDragging ? 'bg-accent' : ''}`}
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-            const dropped = e.dataTransfer.files?.[0];
-            if (dropped) {
-              setFile(dropped);
-              const url = URL.createObjectURL(dropped);
-              setPreview(url);
-            }
-          }}
-        >
-          <div className="flex flex-wrap items-center gap-3">
-            <label
-              htmlFor="bannerFile"
-              className="btn btn-outline cursor-pointer"
-              title="Choose an image file"
-            >
-              Browse…
-            </label>
-            <span className="text-sm text-muted">
-              {file ? file.name : "No file selected. Drag & drop or click Browse."}
-            </span>
-            <button
-              className="btn btn-primary"
-              onClick={onUpload}
-              disabled={!file || loading}
-              type="button"
-            >
-              {isUploading ? "Uploading..." : "Upload Banner"}
-            </button>
-            {!!file && (
-              <button
-                type="button"
-                className="btn"
-                onClick={() => { setFile(null); setPreview(""); }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <p className="mt-2 text-xs text-muted">Drop an image here, or click Browse to select.</p>
-        </div>
-        {preview && (
-          <div className="mt-2">
-            <p className="text-sm text-muted mb-1">Preview:</p>
-            <img src={preview} alt="preview" className="max-h-40 rounded border" />
-          </div>
-        )}
-        {error && <p className="text-sm text-red-600">{error}</p>}
-      </div>
+  <span className="text-sm text-muted">
+    {file ? file.name : "No file selected"}
+  </span>
+
+  <button
+    className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
+    onClick={onUpload}
+  >
+     Upload
+  </button>
+
+  {!!file && (
+    <button
+      type="button"
+      className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400"
+      onClick={() => {
+        setFile(null);
+        setPreview("");
+      }}
+    >
+      Clear
+    </button>
+  )}
+</div>
+
 
       {/* List + DnD */}
       <div className="space-y-2">
