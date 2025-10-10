@@ -42,25 +42,7 @@ export default function BannerManager({ api }) {
 
   // Get image URL from various possible paths
   function getImageUrl(banner) {
-    const possiblePaths = [
-      banner.image?.url,
-      banner.image?.path,
-      banner.imageUrl,
-      banner.url,
-      banner.path,
-      banner.src,
-      banner.image,
-    ];
-    
-    for (const path of possiblePaths) {
-      if (path && typeof path === 'string') {
-        console.log(`Found image URL for ${banner._id}:`, path);
-        return path;
-      }
-    }
-    
-    console.warn(`No valid image URL found for banner:`, banner);
-    return null;
+    return banner.image?.url || null;
   }
 
   // Handle file select + preview
@@ -81,6 +63,7 @@ export default function BannerManager({ api }) {
     setError("");
     try {
       const newBanner = await api.uploadBanner(file);
+      const imageUrl =  newBanner.image?.url || preview;
       console.log("Uploaded banner:", newBanner);
       setBanners((prev) => [...prev, newBanner]);
       setFile(null);
@@ -218,7 +201,7 @@ export default function BannerManager({ api }) {
             src={imageUrl}
             alt={b.title || "banner"}
             className="w-full h-48 object-cover rounded"
-            onError={() => handleImageError(b._id, imageUrl)}
+            onError={() => handleImageError(b._id, imageUrl(b))}
           />
         ) : (
           <div className="w-full h-48 flex flex-col items-center justify-center bg-gray-200 text-gray-500">
