@@ -241,8 +241,9 @@ export default function Home() {
       <MobileHeader />
 
       {/* Hero Section */}
-      <section className="relative h-screen w-full flex flex-col justify-center items-start px-[5vw] overflow-hidden">
-        <h1 className="text-[8vw] leading-none font-semibold relative z-[2] md:text-[6rem]">
+      <section className="relative min-h-screen w-full flex flex-col justify-center items-start px-[6vw] py-[10vh] overflow-hidden ">
+        {/* Heading */}
+        <h1 className="text-[11vw] sm:text-[9vw] md:text-[6rem] leading-tight font-semibold relative z-[2]">
           Ordering
           <br />
           <span
@@ -262,21 +263,21 @@ export default function Home() {
         {user ? (
           <Link
             to="/restaurants"
-            className="mt-8 px-8 py-4 bg-[#ff5c21] text-white text-base font-semibold border-none cursor-pointer rounded transition-all duration-200 z-[3] hover:translate-y-[-3px] hover:bg-[#e63e00]"
+            className="mt-6 sm:mt-8 px-6 sm:px-8 py-3 sm:py-4 bg-[#ff5c21] text-white text-sm sm:text-base font-semibold border-none cursor-pointer rounded-lg transition-all duration-200 z-[3] hover:translate-y-[-3px] hover:bg-[#e63e00]"
           >
             ORDER FOOD
           </Link>
         ) : (
           <Link
             to="/login"
-            className="mt-8 px-8 py-4 bg-[#ff5c21] text-white text-base font-semibold border-none cursor-pointer rounded transition-all duration-200 z-[3] hover:translate-y-[-3px] hover:bg-[#e63e00]"
+            className="mt-6 sm:mt-8 px-6 sm:px-8 py-3 sm:py-4 bg-[#ff5c21] text-white text-sm sm:text-base font-semibold border-none cursor-pointer rounded-lg transition-all duration-200 z-[3] hover:translate-y-[-3px] hover:bg-[#e63e00]"
           >
             ORDER FOOD
           </Link>
         )}
 
         {/* Small Description */}
-        <div className="absolute bottom-[15%] right-[10%] max-w-[260px] text-[0.95rem] text-left leading-[1.4] hidden md:block">
+        <div className="absolute bottom-[12%] right-[8%] max-w-[250px] text-[0.9rem] text-left leading-[1.4] opacity-90">
           <span className="text-[#FF4500]">(1)</span> Small team. Big appetite.
           <br />
           Making food ordering simple,
@@ -284,10 +285,10 @@ export default function Home() {
           one craving at a time.
         </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 right-8 text-[0.8rem] tracking-[2px] text-[#333] flex-col items-center hidden md:flex">
+        {/* Scroll Indicator (always visible) */}
+        <div className="absolute bottom-5 right-5 text-[0.75rem] sm:text-[0.8rem] tracking-[2px] text-[#333] flex flex-col items-center animate-bounce-slow">
           <div
-            className="mb-4"
+            className="mb-3"
             style={{
               writingMode: "vertical-rl",
               transform: "rotate(180deg)",
@@ -295,8 +296,11 @@ export default function Home() {
           >
             SCROLL TO DISCOVER
           </div>
-          <div className="text-[1.2rem] text-[#FF4500]">↓</div>
+          <div className="text-[1.1rem] sm:text-[1.2rem] text-[#FF4500]">↓</div>
         </div>
+
+        {/* Background Accent */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#fff8f6] via-transparent to-transparent -z-[1]" />
       </section>
 
       {/* Categories Section */}
