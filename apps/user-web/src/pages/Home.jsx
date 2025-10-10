@@ -429,38 +429,19 @@ export default function Home() {
       </section>
 
       {/* Hunger + Lucky Draw Combined Section */}
-      <section className="flex flex-col justify-center items-center min-h-screen px-4 md:px-8  py-20 text-center">
-        <div
-          className="transition-transform duration-100 ease-out w-full max-w-4xl mb-16"
-          style={{
-            transform: `perspective(1000px) rotateY(${x}deg) rotateX(${y}deg)`,
-            transformStyle: "preserve-3d",
-          }}
-        >
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-orange-500 mb-6 leading-tight">
-            HUNGRY!
-            <br />
-            But What Kind?
-          </h1>
-          <div className="flex justify-center items-center min-h-[120px] md:min-h-[140px]">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl text-gray-900 font-semibold px-4">
-              <span className="inline-block text-center transition-all duration-500 ease-in-out">
-                {cravings[currentCraving]}
-              </span>
-            </h2>
-          </div>
-        </div>
-
+      <section className="flex flex-col justify-center items-center min-h-screen px-4 md:px-8 py-20 text-center">
         {/* Lucky Draw Content Inside Same Section */}
-        <div className="w-full max-w-6xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row rounded-3xl shadow-2xl overflow-hidden bg-white">
             {/* Left Side - Image */}
-            <div className="w-full lg:w-[65%] h-[550px] lg:h-auto overflow-hidden">
-              <img
-                src="luckydraw.png"
-                alt="Lucky Draw Promotion"
-                className="w-full h-full object-cover lg:object-contain rounded-l-3xl"
-              />
+            <div className="w-full lg:w-[65%] flex items-center justify-center bg-gray-50">
+              <div className="relative w-full h-[300px] sm:h-[400px] lg:h-full">
+                <img
+                  src="luckydraw.png"
+                  alt="Lucky Draw Promotion"
+                  className="absolute inset-0 w-full h-full object-contain lg:object-cover"
+                />
+              </div>
             </div>
 
             {/* Right Side - Entry Form */}
@@ -481,53 +462,38 @@ export default function Home() {
 
                 {/* Form Fields */}
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Enter your name"
-                      className="w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all text-gray-800 placeholder-gray-400"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Enter your name"
+                    className="w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all text-gray-800 placeholder-gray-400"
+                  />
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="Enter your email"
-                      className="w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all text-gray-800 placeholder-gray-400"
-                    />
-                  </div>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter your email"
+                    className="w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all text-gray-800 placeholder-gray-400"
+                  />
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Mobile Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="mobile"
-                      value={formData.mobile}
-                      onChange={handleInputChange}
-                      placeholder="Enter your mobile"
-                      className="w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all text-gray-800 placeholder-gray-400"
-                    />
-                  </div>
+                  <input
+                    type="tel"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleInputChange}
+                    placeholder="Enter your mobile"
+                    className="w-full px-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all text-gray-800 placeholder-gray-400"
+                  />
                 </div>
 
                 {/* Submit Button */}
                 <button
                   onClick={handleSubmit}
-                  className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-lg rounded-xl hover:from-orange-600 hover:to-orange-700 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 mt-4"
+                  className="w-full px-6 py-4 bg-orange-500 text-white font-bold text-lg rounded-xl hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 mt-4"
                 >
                   Enter Lucky Draw
                 </button>
