@@ -36,6 +36,45 @@ export default function Analytics() {
   }, []);
 
 
+   async function fetchOrdersCSV() {
+        try {
+          const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+          const token = await getFirebaseToken(); 
+
+          const response = await fetch(`${API_BASE_URL}/api/v1/admin/orders/export`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'text/csv', // optional
+            },
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to fetch CSV');
+          }
+
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'orders_by_status.csv';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error('Error exporting CSV:', error.message);
+        }
+      }
+
+      // Helper function to get Firebase ID token
+      async function getFirebaseToken() {
+        const auth = getAuth(); 
+        const user = auth.currentUser;
+        if (!user) throw new Error('User not authenticated');
+        return await user.getIdToken();
+      }
 
 const fetchAnalytics = async () => {
   try {
@@ -48,6 +87,8 @@ const fetchAnalytics = async () => {
     if (!user) {
       throw new Error('User not authenticated');
     }
+
+
 
     const token = await user.getIdToken(); // get Firebase ID token
 
@@ -206,20 +247,14 @@ const fetchAnalytics = async () => {
                   <CardTitle>Orders by Status</CardTitle>
                   <CardDescription>Distribution of order statuses</CardDescription>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => exportToCSV({
-                    data: ordersByStatus.map(s => ({ status: s.name, count: s.value })),
-                    filename: 'orders_by_status.csv',
-                    headers: [
-                      { key: 'status', label: 'Status' },
-                      { key: 'count', label: 'Count' },
-                    ],
-                  })}
-                  className="px-3 py-2 rounded border border-base hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                >
-                  Export CSV
-                </button>
+                 <button
+                    type="button"
+                    onClick={fetchOrdersCSV}
+                    className="px-3 py-2 rounded border border-base hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    Export CSV
+                  </button>
+
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
