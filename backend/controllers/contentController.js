@@ -2,17 +2,17 @@ import Content from "../models/Content.model.js";
 import { cloudinary } from "../config/cloudinary.js";
 import { clearCache } from "../middleware/cacheMiddleware.js";
 
+// --- Cloudinary Upload with Optimization ---
 const uploadToCloudinaryOptimized = (file) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         resource_type: "image",
         folder: "unieats_content",
-        // --- Image Optimization ---
         transformation: [
-          { width: 1200, crop: "limit" }, // Resize to max width of 1200px
-          { quality: "auto:good" }, // Adjust quality automatically
-          { fetch_format: "auto" }, // Deliver in modern format like WebP
+          { width: 1200, crop: "limit" },
+          { quality: "auto:good" },
+          { fetch_format: "auto" },
         ],
       },
       (error, result) => {
@@ -37,13 +37,16 @@ const createContent = async (req, res) => {
       image: imageData,
     });
 
-    await newContent.save();
-    clearCache("/api/v1/content"); // Clear cache for the list view
-    res.status(201).json({ success: true, data: newContent });
+    const savedContent = await newContent.save();
+    console.log("savedd--", savedContent);
+
+    // Clear public cache
+    clearCache(`/api/v1/public/banners`);
+
+    res.status(201).json({ success: true, data: savedContent });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Server Error", error: error.message });
+    console.error("Error creating content:", error);
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
@@ -51,19 +54,15 @@ const createContent = async (req, res) => {
 const getAllContent = async (req, res) => {
   try {
     const query = {};
-    // Allow filtering by type, e.g., /api/v1/content?type=banner
     if (req.query.type) {
       query.type = req.query.type;
     }
-    // For public users, only fetch active content
     if (req.user?.role !== "admin") {
       query.isActive = true;
     }
 
     const content = await Content.find(query).sort({ createdAt: -1 });
-    res
-      .status(200)
-      .json({ success: true, count: content.length, data: content });
+    res.status(200).json({ success: true, count: content.length, data: content });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
   }
@@ -74,9 +73,7 @@ const getContentById = async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
     if (!content) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Content not found" });
+      return res.status(404).json({ success: false, message: "Content not found" });
     }
     res.status(200).json({ success: true, data: content });
   } catch (error) {
@@ -89,14 +86,11 @@ const updateContent = async (req, res) => {
   try {
     let content = await Content.findById(req.params.id);
     if (!content) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Content not found" });
+      return res.status(404).json({ success: false, message: "Content not found" });
     }
 
     let imageData = content.image;
     if (req.file) {
-      // If there's a new image, delete the old one from Cloudinary
       if (content.image && content.image.public_id) {
         await cloudinary.uploader.destroy(content.image.public_id);
       }
@@ -121,9 +115,7 @@ const updateContent = async (req, res) => {
 
     res.status(200).json({ success: true, data: updatedContent });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Server Error", error: error.message });
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
@@ -132,12 +124,9 @@ const deleteContent = async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
     if (!content) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Content not found" });
+      return res.status(404).json({ success: false, message: "Content not found" });
     }
 
-    // Delete image from Cloudinary if it exists
     if (content.image && content.image.public_id) {
       await cloudinary.uploader.destroy(content.image.public_id);
     }
@@ -147,9 +136,7 @@ const deleteContent = async (req, res) => {
     clearCache(`/api/v1/content`);
     clearCache(`/api/v1/content/${req.params.id}`);
 
-    res
-      .status(200)
-      .json({ success: true, message: "Content deleted successfully." });
+    res.status(200).json({ success: true, message: "Content deleted successfully." });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
   }

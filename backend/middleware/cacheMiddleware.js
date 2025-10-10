@@ -1,54 +1,46 @@
-import NodeCache from "node-cache";
+// In middleware/cacheMiddleware.js
 
-// Initialize the cache. The stdTTL is the default time-to-live in seconds for every key.
+import NodeCache from 'node-cache';
+
+// --- THE TOOLBOX ---
+// We create our one and only cache instance here and give it a specific name.
 const myCache = new NodeCache({ stdTTL: 120 }); // Default cache for 2 minutes
 
+// --- THE MIDDLEWARE (The Gatekeeper) ---
+// This function is already correct and does not need changes.
 const cacheMiddleware = (duration) => (req, res, next) => {
-  // --- THIS IS THE KEY GENERATION ---
-  // We create a unique key for each request based on its URL.
-  const key = req.originalUrl || req.url;
+    const key = req.originalUrl || req.url;
+    if (!key) {
+        return next();
+    }
+    
+    const cachedResponse = myCache.get(key);
 
-  // --- THIS IS THE FIX ---
-  // 1. Safety Check: If for some reason we couldn't generate a key,
-  //    we skip the cache entirely to prevent a crash.
-  if (!key) {
-    return next();
-  }
-
-  // 2. Check if we have a cached response for this key.
-  const cachedResponse = myCache.get(key);
-
-  // If a cached response exists, send it immediately.
-  if (cachedResponse) {
-    console.log(`CACHE HIT: Serving from cache for key: ${key}`);
-    return res.send(cachedResponse);
-  } else {
-    // If no cached response, we prepare to create one.
-    console.log(`CACHE MISS: No cache found for key: ${key}`);
-
-    // We hijack the 'send' function.
-    const originalSend = res.send;
-    res.send = (body) => {
-      // When the controller is done and calls 'res.send()',
-      // we will cache the response body before sending it.
-      myCache.set(key, body, duration);
-      originalSend.call(res, body);
-    };
-    next();
-  }
+    if (cachedResponse) {
+        console.log("CACHE HIT: Serving from cache for key: ${key}");
+        return res.send(cachedResponse);
+    } else {
+        console.log("CACHE MISS: No cache found for key: ${key}");
+        const originalSend = res.send;
+        res.send = (body) => {
+            myCache.set(key, body, duration);
+            originalSend.call(res, body);
+        };
+        next();
+    }
 };
 
-// Function to clear cache, useful for admin actions
+
+// --- THE HELPER FUNCTION (The Janitor) ---
+// This is the function we are fixing.
 const clearCache = (key) => {
-  if (cache.has(key)) {
-    cache.del(key);
-    console.log(`Cache cleared for key: ${key}`);
-  }
-  // Also clear related keys, e.g., clear the list when one item changes
-  if (key.includes("/api/v1/content/")) {
-    cache.del("/api/v1/content");
-    console.log(`Cache cleared for key: /api/v1/content`);
-  }
+    // --- THE FIX ---
+    // We tell the function to use the specific 'myCache' toolbox that we defined at the top.
+    if (myCache.has(key)) {
+        myCache.del(key);
+        console.log("CACHE CLEARED: Key '${key}' was deleted.");
+    }
 };
 
+// --- Make all our tools available to other files ---
 export { cacheMiddleware, clearCache };
