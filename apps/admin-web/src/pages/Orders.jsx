@@ -1,16 +1,57 @@
 import React, { useEffect, useState } from "react";
 import OrdersTable from "../components/orders/OrdersTable";
 import { useToast } from "../components/ui/Toast";
+import { getAuth } from "firebase/auth";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Orders() {
   const { push } = useToast();
-  const [orders, setOrders] = useState([
-    { id: "ORD-001", customer: "John Doe", vendor: "LGL", items: [{}, {}], totalAmount: 45.99, status: "delivered", createdAt: "2024-01-20 10:12" },
-    { id: "ORD-002", customer: "Sarah Wilson", vendor: "Tea", items: [{}], totalAmount: 12.5, status: "preparing", createdAt: "2024-01-20 10:20" },
-    { id: "ORD-003", customer: "Mike Chen", vendor: "Nescafe", items: [{}, {}, {}], totalAmount: 8.8, status: "placed", createdAt: "2024-01-20 10:25" },
-    { id: "ORD-004", customer: "Lisa Wang", vendor: "Oven", items: [{}, {}], totalAmount: 28.9, status: "ready", createdAt: "2024-01-20 10:35" },
-    { id: "ORD-005", customer: "Emma Brown", vendor: "LGL", items: [{}], totalAmount: 16.4, status: "delivered", createdAt: "2024-01-20 10:45" },
-  ]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) throw new Error("User not authenticated");
+        const token = await user.getIdToken();
+        const response = await fetch(`${API_BASE_URL}/api/V1/admin/orders/monitor`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) throw new Error("Failed to fetch orders");
+        const data = await response.json();
+        console.log("data", data);
+        
+        // Transform the data to flatten nested objects
+        const transformedOrders = (data.data || []).map(order => ({
+          id: order._id,
+          customer: order.user?.name || 'Unknown',
+          customerId: order.user?._id,
+          vendor: order.vendor?.businessName || 'Unknown',
+          vendorId: order.vendor?._id,
+          items: order.items || [],
+          totalAmount: order.totalPrice || 0,
+          status: order.status || 'pending',
+          createdAt: new Date(order.createdAt).toLocaleString(),
+          deliveryAddress: order.deliveryAddress,
+          paymentDetails: order.paymentDetails,
+        }));
+        
+        setOrders(transformedOrders);
+      } catch (error) {
+        console.error(error);
+        push({ title: "Error", message: error.message || "Failed to fetch orders" });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOrders();
+  }, [push]);
 
   // Simulated real-time status progression
   useEffect(() => {
@@ -18,7 +59,7 @@ export default function Orders() {
       setOrders(prev => {
         if (!prev.length) return prev;
         const i = Math.floor(Math.random() * prev.length);
-        const statuses = ["placed", "accepted", "preparing", "ready", "delivered"];
+        const statuses = ["pending", "accepted", "preparing", "ready", "delivered"];
         const curr = prev[i];
         if (!curr || curr.status === "delivered" || curr.status === "cancelled") return prev;
         const idx = statuses.indexOf(curr.status);
@@ -32,14 +73,55 @@ export default function Orders() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleStatusUpdate = (orderId, newStatus) => {
-    setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o)));
-    push({ title: "Order Updated", message: `Order ${orderId} status updated to ${newStatus}` });
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error("User not authenticated");
+      const token = await user.getIdToken();
+      
+      const response = await fetch(`${API_BASE_URL}/api/V1/admin/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      
+      if (!response.ok) throw new Error("Failed to update order");
+      
+      setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o)));
+      push({ title: "Order Updated", message: `Order status updated to ${newStatus}` });
+    } catch (error) {
+      console.error(error);
+      push({ title: "Error", message: error.message || "Failed to update order" });
+    }
   };
 
-  const handleOrderCancel = (orderId) => {
-    setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, status: "cancelled" } : o)));
-    push({ title: "Order Cancelled", message: `Order ${orderId} has been cancelled` });
+  const handleOrderCancel = async (orderId) => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error("User not authenticated");
+      const token = await user.getIdToken();
+      
+      const response = await fetch(`${API_BASE_URL}/api/V1/admin/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) throw new Error("Failed to cancel order");
+      
+      setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, status: "cancelled" } : o)));
+      push({ title: "Order Cancelled", message: `Order has been cancelled` });
+    } catch (error) {
+      console.error(error);
+      push({ title: "Error", message: error.message || "Failed to cancel order" });
+    }
   };
 
   return (
@@ -54,9 +136,9 @@ export default function Orders() {
           <span className="text-xs text-muted">Live</span>
         </div>
       </div>
-
       <OrdersTable
         orders={orders}
+        loading={loading}
         onOrderUpdate={handleStatusUpdate}
         onOrderCancel={handleOrderCancel}
       />
