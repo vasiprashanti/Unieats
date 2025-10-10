@@ -61,7 +61,7 @@ const getAllContent = async (req, res) => {
       query.isActive = true;
     }
 
-    const content = await Content.find(query).sort({ createdAt: -1 });
+    const content = await Content.find();;
     res.status(200).json({ success: true, count: content.length, data: content });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });

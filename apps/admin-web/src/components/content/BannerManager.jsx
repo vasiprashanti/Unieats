@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
  * BannerManager
  * - Upload new banners with preview
  * - List banners with drag-and-drop reordering
+ * - Image-only display style
  *
  * Props:
  * - api: { listBanners, uploadBanner, reorderBanners, deleteBanner }
@@ -15,7 +16,7 @@ export default function BannerManager({ api }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
   const [dragIndex, setDragIndex] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [imageErrors, setImageErrors] = useState({});
 
   // Fetch banners
   useEffect(() => {
@@ -24,9 +25,13 @@ export default function BannerManager({ api }) {
       setLoading(true);
       setError("");
       try {
-        const data = await api.listBanners();
-        if (mounted) setBanners(Array.isArray(data) ? data : data?.banners || []);
+        const response = await api.listBanners();
+        const data = Array.isArray(response.data) ? response.data : [];
+        console.log("Banners loaded:", data);
+        console.log("First banner structure:", data[0]);
+        if (mounted) setBanners(data);
       } catch (e) {
+        console.error("Failed to fetch banners:", e);
         if (mounted) setError(e?.message || "Failed to load banners");
       } finally {
         if (mounted) setLoading(false);
@@ -34,6 +39,29 @@ export default function BannerManager({ api }) {
     })();
     return () => { mounted = false; };
   }, [api]);
+
+  // Get image URL from various possible paths
+  function getImageUrl(banner) {
+    const possiblePaths = [
+      banner.image?.url,
+      banner.image?.path,
+      banner.imageUrl,
+      banner.url,
+      banner.path,
+      banner.src,
+      banner.image,
+    ];
+    
+    for (const path of possiblePaths) {
+      if (path && typeof path === 'string') {
+        console.log(`Found image URL for ${banner._id}:`, path);
+        return path;
+      }
+    }
+    
+    console.warn(`No valid image URL found for banner:`, banner);
+    return null;
+  }
 
   // Handle file select + preview
   function onFileChange(e) {
@@ -53,6 +81,7 @@ export default function BannerManager({ api }) {
     setError("");
     try {
       const newBanner = await api.uploadBanner(file);
+      console.log("Uploaded banner:", newBanner);
       setBanners((prev) => [...prev, newBanner]);
       setFile(null);
       setPreview("");
@@ -69,7 +98,7 @@ export default function BannerManager({ api }) {
     setError("");
     try {
       await api.deleteBanner(id);
-      setBanners((prev) => prev.filter((b) => b.id !== id && b._id !== id));
+      setBanners((prev) => prev.filter((b) => b._id !== id));
     } catch (e) {
       setError(e?.message || "Delete failed");
     } finally {
@@ -77,7 +106,7 @@ export default function BannerManager({ api }) {
     }
   }
 
-  // DnD helpers
+  // Drag-and-drop handlers
   function handleDragStart(index) {
     setDragIndex(index);
   }
@@ -96,11 +125,16 @@ export default function BannerManager({ api }) {
 
     // Persist order
     try {
-      const orderedIds = reordered.map((b) => b.id || b._id);
+      const orderedIds = reordered.map((b) => b._id);
       await api.reorderBanners(orderedIds);
     } catch (e) {
       setError(e?.message || "Reorder failed");
     }
+  }
+
+  function handleImageError(bannerId, url) {
+    console.error(`Failed to load image for banner ${bannerId}:`, url);
+    setImageErrors(prev => ({ ...prev, [bannerId]: true }));
   }
 
   const isUploading = useMemo(() => loading && !!file, [loading, file]);
@@ -109,85 +143,134 @@ export default function BannerManager({ api }) {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold">Promotional Banners</h2>
-        <p className="text-sm text-muted">Upload and reorder homepage banners.</p>
+        <p className="text-sm text-neutral-500">Upload and reorder homepage banners.</p>
       </div>
 
       {/* Upload section */}
-     <div className="flex items-center gap-3">
-  {/* Label acts as the button */}
-  <label className="px-3 py-1 rounded bg-blue-600 text-white cursor-pointer hover:bg-blue-700">
-    Browse…
-    <input
-      type="file"
-      accept="image/*"
-      onChange={onFileChange}
-      className="hidden"
-    />
-  </label>
+      <div className="flex items-center gap-3">
+        <label className="px-3 py-1 rounded bg-blue-600 text-white cursor-pointer hover:bg-blue-700">
+          Browse…
+          <input
+            type="file"
+            accept="image/*"
+            onChange={onFileChange}
+            className="hidden"
+          />
+        </label>
 
-  <span className="text-sm text-muted">
-    {file ? file.name : "No file selected"}
-  </span>
+        <span className="text-sm text-neutral-500">
+          {file ? file.name : "No file selected"}
+        </span>
 
-  <button
-    className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
-    onClick={onUpload}
-  >
-     Upload
-  </button>
+        <button
+          className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
+          onClick={onUpload}
+          disabled={isUploading}
+        >
+          Upload
+        </button>
 
-  {!!file && (
-    <button
-      type="button"
-      className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400"
-      onClick={() => {
-        setFile(null);
-        setPreview("");
-      }}
-    >
-      Clear
-    </button>
-  )}
-</div>
-
-
-      {/* List + DnD */}
-      <div className="space-y-2">
-        {loading && !banners.length ? (
-          <p className="text-sm text-muted">Loading banners...</p>
-        ) : banners.length === 0 ? (
-          <p className="text-sm text-muted">No banners yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {banners.map((b, index) => (
-              <li
-                key={b.id || b._id}
-                className="flex items-center justify-between rounded-lg border border-base p-3 bg-white/50 dark:bg-neutral-900"
-                draggable
-                onDragStart={() => handleDragStart(index)}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(index)}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="cursor-move select-none text-neutral-400">⋮⋮</span>
-                  <img src={b.url} alt={b.alt || "banner"} className="h-12 w-24 object-cover rounded" />
-                  <div>
-                    <p className="text-sm font-medium">{b.title || b.alt || (b.id || b._id)}</p>
-                    <p className="text-xs text-muted">{b.url}</p>
-                  </div>
-                </div>
-                <button
-                  className="text-sm text-red-600 hover:underline"
-                  onClick={() => onDelete(b.id || b._id)}
-                  disabled={loading}
-                >
-                  Delete
-                </button>
-              </li>
-            ))}
-          </ul>
+        {!!file && (
+          <button
+            type="button"
+            className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400"
+            onClick={() => {
+              setFile(null);
+              setPreview("");
+            }}
+          >
+            Clear
+          </button>
         )}
       </div>
+
+      {/* Preview selected file */}
+      {preview && (
+        <div className="border border-neutral-200 rounded-lg p-4 bg-neutral-50">
+          <p className="text-sm font-medium mb-2">Preview:</p>
+          <img src={preview} alt="Preview" className="w-full max-w-md h-48 object-cover rounded" />
+        </div>
+      )}
+
+      {/* Image Grid with Delete on Hover */}
+      <div className="space-y-2">
+        {loading && !banners.length ? (
+          <p className="text-sm text-neutral-500">Loading banners...</p>
+        ) : banners.length === 0 ? (
+          <p className="text-sm text-neutral-500">No banners yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {banners.map((b, index) => {
+    const imageUrl = getImageUrl(b);
+    const hasError = imageErrors[b._id];
+
+    return (
+      <div
+        key={b._id}
+        className="relative group rounded-lg overflow-hidden border border-neutral-200 cursor-move bg-neutral-100"
+        draggable
+        onDragStart={() => handleDragStart(index)}
+        onDragOver={handleDragOver}
+        onDrop={() => handleDrop(index)}
+      >
+        {imageUrl && !hasError ? (
+          <img
+            src={imageUrl}
+            alt={b.title || "banner"}
+            className="w-full h-48 object-cover rounded"
+            onError={() => handleImageError(b._id, imageUrl)}
+          />
+        ) : (
+          <div className="w-full h-48 flex flex-col items-center justify-center bg-gray-200 text-gray-500">
+            <svg
+              className="w-12 h-12 mb-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <p className="text-sm">Image unavailable</p>
+          </div>
+        )}
+
+        {/* Overlay on hover with delete button */}
+        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
+          <button
+            className="opacity-0 group-hover:opacity-100 px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-opacity"
+            onClick={() => onDelete(b._id)}
+            disabled={loading}
+          >
+            Delete
+          </button>
+        </div>
+
+        {/* Drag handle indicator */}
+        <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 text-white bg-black bg-opacity-50 px-2 py-1 rounded text-xs">
+          ⋮⋮ Drag to reorder
+        </div>
+      </div>
+    );
+  })}
+</div>
+
+        )}
+      </div>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      
+      {/* Debug info */}
+      {banners.length > 0 && (
+        <details className="text-xs text-neutral-500 border border-neutral-200 rounded p-2">
+          <summary className="cursor-pointer font-medium">Debug Info (click to expand)</summary>
+          <pre className="mt-2 overflow-auto">{JSON.stringify(banners, null, 2)}</pre>
+        </details>
+      )}
     </div>
   );
 }
