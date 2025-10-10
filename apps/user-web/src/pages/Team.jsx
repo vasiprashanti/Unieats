@@ -2,7 +2,7 @@ import React from "react";
 import Navbar from "../components/Navigation/Navbar";
 import Footer from "../components/Footer";
 import CircularGallery from "../components/ui/CircularGallery";
-import { Linkedin, Github } from "lucide-react";
+import { Linkedin } from "lucide-react";
 
 // Team member data
 const teamMembers = [
@@ -13,7 +13,6 @@ const teamMembers = [
     image: "https://via.placeholder.com/400x400?text=Alex+Johnson",
     bio: "Visionary leader with 15+ years of experience in tech innovation",
     linkedin: "https://linkedin.com",
-    github: ""
   },
   {
     id: 2,
@@ -22,7 +21,6 @@ const teamMembers = [
     image: "https://via.placeholder.com/400x400?text=Mia+Thompson",
     bio: "Tech enthusiast specializing in scalable architecture and AI",
     linkedin: "https://linkedin.com",
-    github: ""
   },
   {
     id: 3,
@@ -31,7 +29,6 @@ const teamMembers = [
     image: "https://via.placeholder.com/400x400?text=Ethan+Lee",
     bio: "Creative designer passionate about user-centered experiences",
     linkedin: "https://linkedin.com",
-    github: ""
   },
   {
     id: 4,
@@ -40,7 +37,6 @@ const teamMembers = [
     image: "https://via.placeholder.com/400x400?text=Sofia+Patel",
     bio: "Full-stack developer with expertise in React and Node.js",
     linkedin: "https://linkedin.com",
-    github: ""
   },
   {
     id: 5,
@@ -49,7 +45,6 @@ const teamMembers = [
     image: "https://via.placeholder.com/400x400?text=Liam+Carter",
     bio: "Strategic marketer driving growth through innovative campaigns",
     linkedin: "https://linkedin.com",
-    github: ""
   },
   {
     id: 6,
@@ -58,30 +53,13 @@ const teamMembers = [
     image: "https://via.placeholder.com/400x400?text=Emma+Rodriguez",
     bio: "Product strategist focused on delivering exceptional value",
     linkedin: "https://linkedin.com",
-    github: ""
-  }
+  },
 ];
 
 export default function Team() {
   return (
     <div className="min-h-screen bg-notebook transition-colors duration-300">
       <Navbar />
-
-      {/* Hero Section */}
-      <section className="relative py-28   px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-black  bg-clip-text text-transparent">
-            Meet Our Team
-          </h1>
-          <p className="text-lg md:text-xl opacity-80 max-w-3xl mx-auto">
-            Get to know the talented individuals who make everything possible. 
-            Scroll through our interactive gallery to explore each team member's profile, 
-            role, and expertise.
-          </p>
-        </div>
-      </section>
-
-    
 
       {/* Circular Gallery */}
       <div style={{ height: "600px", position: "relative" }} className="mb-16">
@@ -94,6 +72,22 @@ export default function Team() {
         />
       </div>
 
+      {/* Hero Section */}
+      <section className="relative py-28   px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+            <span className="text-black">Meet Our </span>
+            <span className="text-[#ff5c21]">Team</span>
+          </h1>
+
+          <p className="text-lg md:text-xl opacity-80 max-w-3xl mx-auto">
+            Get to know the talented individuals who make everything possible.
+            Scroll through our interactive gallery to explore each team member's
+            profile, role, and expertise.
+          </p>
+        </div>
+      </section>
+
       {/* Team Grid Section */}
       <section className="px-6 py-16">
         <div className="max-w-7xl mx-auto">
@@ -101,7 +95,7 @@ export default function Team() {
             {teamMembers.map((member) => (
               <div
                 key={member.id}
-                className="bg-white border border-gray-300 rounded-xl overflow-hidden transition-all duration-300"
+                className="bg-white border border-black rounded-xl overflow-hidden transition-all duration-300"
               >
                 {/* Image Container */}
                 <div className="relative overflow-hidden h-64 bg-gradient-to-br from-orange-100 to-yellow-100">
@@ -115,13 +109,13 @@ export default function Team() {
                 {/* Content */}
                 <div className="p-6">
                   <h3 className="text-2xl font-bold mb-1">{member.name}</h3>
-                  <p className="text-orange-600 font-semibold mb-3">
+                  <p className="text-black font-semibold mb-3">
                     {member.role}
                   </p>
-                  <p className="text-sm opacity-70 mb-4">{member.bio}</p>
+                  <p className="text-sm  mb-4 text-black">{member.bio}</p>
 
                   {/* Social Links */}
-                  <div className="flex gap-3 pt-4 border-t border-gray-200">
+                  <div className="flex gap-3 pt-4 border-t border-black">
                     <a
                       href={member.linkedin}
                       target="_blank"
@@ -129,14 +123,6 @@ export default function Team() {
                       className="p-2 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors"
                     >
                       <Linkedin size={20} />
-                    </a>
-                    <a
-                      href={member.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors"
-                    >
-                      <Github size={20} />
                     </a>
                   </div>
                 </div>
