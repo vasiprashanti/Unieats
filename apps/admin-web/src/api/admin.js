@@ -12,6 +12,26 @@ export function patchVendorApproval(id, status) {
   });
 }
 
+//request
+async function request(path, { method = 'GET', headers = {}, body } = {}) {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: 'include',
+  });
+  const text = await res.text();
+  let data;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (!res.ok) {
+    const err = new Error(data?.message || `Request failed: ${res.status}`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
+
 // Content: Banners
 export async function listBanners() {
   try {
