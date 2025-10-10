@@ -37,6 +37,8 @@ import Profile from '../pages/Profile';
 import Support from '../pages/Support';
 import TermsAndConditions from '../pages/TermsAndConditions';
 import PrivacyPolicy from '../pages/PrivacyPolicy';
+import AboutUs from '../pages/AboutUs';
+import Team from '../pages/Team';
 
 export default function AppRoutes() {
   const location = useLocation();
@@ -63,8 +65,10 @@ export default function AppRoutes() {
         <Route path="/orders/:id" element={<ProtectedUser><OrderTracking /></ProtectedUser>} />
         <Route path="/profile" element={<ProtectedUser><Profile /></ProtectedUser>} />
         <Route path="/support" element={<ProtectedUser><Support /></ProtectedUser>} />
-         <Route path="/terms" element={<ProtectedUser><TermsAndConditions /></ProtectedUser>} />
-        <Route path="/privacy" element={<ProtectedUser><PrivacyPolicy /></ProtectedUser>} />
+         <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/team" element={<Team />} />
         <Route path="*" element={<Navigate to="/home" replace />} />
         
       </Routes>
