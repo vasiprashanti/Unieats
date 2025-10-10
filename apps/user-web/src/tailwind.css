@@ -130,6 +130,6 @@ body {
     background-image: 
       repeating-linear-gradient(white, white 28px, #d2d3d4 29px),
       linear-gradient(to right, #ef4444 60px, transparent 60px);
-    background-size: 100% 30px, 100% 100%;
+    background-size: 100% 40  px, 100% 100%;
   }
 }
