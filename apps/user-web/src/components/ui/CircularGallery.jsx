@@ -334,10 +334,11 @@ class App {
   }
   createMedias(items, bend = 1, textColor, borderRadius, font) {
     const defaultItems = [
-      { image: `https://picsum.photos/seed/1/800/600?grayscale`, text: 'Bridge' },
-      { image: `https://picsum.photos/seed/2/800/600?grayscale`, text: 'Desk Setup' },
-      { image: `https://picsum.photos/seed/3/800/600?grayscale`, text: 'Waterfall' },
-      { image: `https://picsum.photos/seed/4/800/600?grayscale`, text: 'Strawberries' },
+      { image: `om.jpg`, text: 'Om' },
+      { image: `rishikesh.jpg`, text: 'Rishikesh' },
+      { image: `raunak.jpg`, text: 'Raunak' },
+      { image: `pavan.jpg`, text: 'Pavan' },
+      { image: `https://picsum.photos/seed/5/800/600?grayscale`, text: 'Deep Diving' },
       { image: `https://picsum.photos/seed/5/800/600?grayscale`, text: 'Deep Diving' }
     ];
     const galleryItems = items && items.length ? items : defaultItems;
@@ -456,10 +457,10 @@ class App {
 
 function MarqueeGrid({ items, textColor, borderRadius }) {
   const defaultItems = [
-    { image: `https://picsum.photos/seed/1/800/600?grayscale`, text: 'Bridge' },
-    { image: `https://picsum.photos/seed/2/800/600?grayscale`, text: 'Desk Setup' },
-    { image: `https://picsum.photos/seed/3/800/600?grayscale`, text: 'Waterfall' },
-    { image: `https://picsum.photos/seed/4/800/600?grayscale`, text: 'Strawberries' },
+    { image: `om.jpg`, text: 'Om' },
+    { image: `pavan.jpg`, text: 'Pavan' },
+    { image: `rishikesh.jpg`, text: 'Rishikesh' },
+    { image: `raunak.jpg`, text: 'Raunak' },
     { image: `https://picsum.photos/seed/5/800/600?grayscale`, text: 'Deep Diving' }
   ];
   

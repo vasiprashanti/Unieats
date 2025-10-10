@@ -3,6 +3,8 @@ import Navbar from "../components/Navigation/Navbar";
 import Footer from "../components/Footer";
 import CircularGallery from "../components/ui/CircularGallery";
 import { Linkedin } from "lucide-react";
+import { useTheme } from "../context/ThemeContext"; // adjust path
+
 
 // Team member data
 const teamMembers = [
