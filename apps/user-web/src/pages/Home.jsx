@@ -319,18 +319,30 @@ export default function Home() {
           {/* Wave Text */}
           <div
             className="hero-text relative mt-8 h-32 overflow-visible"
+            style={{ position: "sticky", top: 0 }}
             id="waveText"
           >
             {Array.from(
               "Every memory, every favorite bite, every flavor you love — curated into one platform."
-            ).map((char, index) => (
-              <span
-                key={index}
-                className="absolute text-[1.2rem] md:text-[1.8rem] font-extrabold whitespace-pre opacity-0 pointer-events-none text-[#020202]"
-              >
-                {char}
-              </span>
-            ))}
+            ).map((char, index, arr) => {
+              const progress = index / arr.length;
+              const waveY = Math.sin(progress * 2 * Math.PI) * 20; // wave height
+              const xOffset = index * 16; // horizontal spacing between chars
+              return (
+                <span
+                  key={index}
+                  className="absolute text-[1.2rem] md:text-[1.8rem] font-extrabold whitespace-pre opacity-0 pointer-events-none text-[#020202]"
+                  style={{
+                    left: `${xOffset}px`,
+                    top: `${waveY + 10}px`,
+                    opacity: 1, // make visible immediately
+                    transition: "top 0.3s",
+                  }}
+                >
+                  {char}
+                </span>
+              );
+            })}
           </div>
 
           {/* Desktop Poker Hand */}
