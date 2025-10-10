@@ -2,7 +2,7 @@ import express from 'express';
 import { check } from 'express-validator';
 import { verifyFirebaseToken, checkRole } from '../middleware/authMiddleware.js';
 import { registerUser, getMe, verifyToken } from '../controllers/authController.js';
-import { getBasicAnalytics, getComprehensiveAnalytics } from '../controllers/adminAnalyticsController.js';
+
 import { monitorRealTimeOrders, exportOrdersToCSV } from '../controllers/adminOrderController.js'; 
 
 
@@ -36,8 +36,7 @@ router.get('/me', verifyFirebaseToken, getMe);
 router.get("/verify", verifyFirebaseToken, verifyToken);
 
 // --- Analytics Routes ---
-router.get("/analytics/basic", ...adminOnly, getBasicAnalytics);
-router.get("/analytics/comprehensive", ...adminOnly, getComprehensiveAnalytics);
+
 
 // Order Management & Export Routes
 router.get("/orders/monitor", ...adminOnly, monitorRealTimeOrders);

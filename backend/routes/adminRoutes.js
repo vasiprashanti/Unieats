@@ -2,10 +2,10 @@ import express from 'express';
 import { check } from 'express-validator';
 import { getAdminDashboard, getVendors, updateVendorApproval } from '../controllers/adminController.js';
 import { getSettings, updateSettings } from '../controllers/settingsController.js';
-import { getBasicAnalytics } from '../controllers/adminAnalyticsController.js';
 import { verifyFirebaseToken, checkRole } from '../middleware/authMiddleware.js';
 import { monitorRealTimeOrders, exportOrdersToCSV } from '../controllers/adminOrderController.js';
 import { getAllUsers} from '../controllers/adminUserController.js';
+import { getBasicAnalytics, getComprehensiveAnalytics } from '../controllers/adminAnalyticsController.js';
 
 const router = express.Router();
 const adminOnly = [verifyFirebaseToken, checkRole("admin")];
@@ -33,7 +33,6 @@ router.post(
   ],
   updateSettings
 );
-router.get("/analytics", ...adminOnly, getBasicAnalytics);
 
 
 //  Admin Order Management Routes 
@@ -47,6 +46,9 @@ router.get(
     checkRole('admin'),
     monitorRealTimeOrders
 );
+
+router.get("/analytics/basic", ...adminOnly, getBasicAnalytics);
+router.get("/analytics/comprehensive", ...adminOnly, getComprehensiveAnalytics);
 
 // @route   GET /api/v1/admin/orders/export
 // @desc    Export all order data to a CSV file
