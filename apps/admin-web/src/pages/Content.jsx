@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
 import BannerManager from "../components/content/BannerManager";
-import FaqEditor from "../components/content/FaqEditor";
 import {
   listBanners,
   uploadBanner,
@@ -27,7 +26,6 @@ export default function Content() {
       </div>
 
       <BannerManager api={bannerApi} />
-      <FaqEditor api={faqApi} />
     </div>
   );
 }

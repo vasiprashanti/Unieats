@@ -8,7 +8,7 @@ const router = express.Router();
 
 // --- PUBLIC ROUTES (Cached) ---
 // Get all active content (banners, FAQs, etc.)
-router.get("/", cacheMiddleware, getAllContent);
+router.get("/", getAllContent);
 // Get a single piece of content by ID
 router.get("/:id", cacheMiddleware, getContentById);
 

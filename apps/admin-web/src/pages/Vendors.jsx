@@ -9,7 +9,6 @@ const seedVendors = [];
 export default function Vendors() {
   const [vendors, setVendors] = useState(seedVendors);
   const [busyId, setBusyId] = useState(null);
-  // ✅ use _id instead of id
   const byId = useMemo(() => Object.fromEntries(vendors.map(v => [v._id, v])), [vendors]);
   const { push } = useToast();
 
@@ -35,32 +34,36 @@ export default function Vendors() {
     })();
   }, []);
 
-  // Optimistic update helpers
-  const updateStatusLocal = (id, status) =>
+  // Optimistic update
+  function updateStatusLocal(id, status) {
     setVendors(prev =>
-      prev.map(v => (v._id === id ? { ...v, approvalStatus: status } : v)) // ✅ map by _id + update approvalStatus
+      prev.map(v => (v._id === id ? { ...v, approvalStatus: status } : v))
     );
+  }
 
-  const handleApprove = async (id) => {
+  // Approve handler
+  async function handleApprove(id) {
     setBusyId(id);
     const prev = byId[id];
     updateStatusLocal(id, "approved");
+
     try {
       await patchVendorApproval(id, "approved");
       push({ type: "success", title: "Vendor approved" });
     } catch (e) {
-      // revert on failure
       updateStatusLocal(id, prev?.approvalStatus || "pending");
       push({ type: "error", title: "Approval failed", message: e?.message });
     } finally {
       setBusyId(null);
     }
-  };
+  }
 
-  const handleReject = async (id) => {
+  // Reject handler
+  async function handleReject(id) {
     setBusyId(id);
     const prev = byId[id];
     updateStatusLocal(id, "rejected");
+
     try {
       await patchVendorApproval(id, "rejected");
       push({ type: "success", title: "Vendor rejected" });
@@ -70,7 +73,7 @@ export default function Vendors() {
     } finally {
       setBusyId(null);
     }
-  };
+  }
 
   return (
     <div className="space-y-4">
@@ -80,6 +83,7 @@ export default function Vendors() {
           Review newly registered vendors and approve or reject their applications.
         </p>
       </div>
+
       <VendorTable
         vendors={vendors}
         onApprove={handleApprove}

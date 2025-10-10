@@ -42,52 +42,59 @@ const getVendors = async (req, res) => {
 const updateVendorApproval = async (req, res) => {
   try {
     const { status } = req.body; // 'approved' or 'rejected'
+
     if (!["approved", "rejected"].includes(status)) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid status." });
     }
 
-    const vendor = await Vendor.findById(req.params.id);
+    // Fetch the vendor
+    const vendor = await Vendor.findById(req.params.id).select("owner");
     if (!vendor) {
       return res
         .status(404)
         .json({ success: false, message: "Vendor not found." });
     }
 
-    // Find the owner to update their role and get their email
-    const vendorOwner = await User.findById(vendor.owner);
+    // Fetch vendor owner email and name
+    const vendorOwner = await User.findById(vendor.owner).select("email name");
     if (!vendorOwner) {
       return res
         .status(404)
         .json({ success: false, message: "Vendor owner account not found." });
     }
 
-    vendor.approvalStatus = status;
+    // Update vendor approval status
+    await Vendor.findByIdAndUpdate(vendor._id, { approvalStatus: status });
 
+    // If approved, update vendor owner role
     if (status === "approved") {
-      // Promote user role to 'vendor'
-      vendorOwner.role = "vendor";
-      await vendorOwner.save();
-      await vendor.save();
-      // Send approval email
-      await sendVendorApprovalEmail(vendorOwner.email, vendorOwner.name);
-    } else {
-      // If rejected, just save the vendor status
-      await vendor.save();
-      // Send rejection email
-      await sendVendorRejectionEmail(vendorOwner.email, vendorOwner.name);
+      await User.findByIdAndUpdate(vendor.owner, { role: "vendor" });
+    }
+
+    // Try sending email, but don't block response if it fails
+    try {
+      if (status === "approved") {
+        await sendVendorApprovalEmail(vendorOwner.email, vendorOwner.name);
+      } else {
+        await sendVendorRejectionEmail(vendorOwner.email, vendorOwner.name);
+      }
+    } catch (emailError) {
+      // Optionally log the email error for debugging, but don't fail the request
+      console.error("Email sending failed:", emailError.message);
     }
 
     res.status(200).json({
       success: true,
       message: `Vendor has been ${status}.`,
-      data: vendor,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+
+
 
 export { getAdminDashboard, getVendors, updateVendorApproval };

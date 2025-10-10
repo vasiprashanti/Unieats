@@ -5,6 +5,7 @@ import { getSettings, updateSettings } from '../controllers/settingsController.j
 import { getBasicAnalytics } from '../controllers/adminAnalyticsController.js';
 import { verifyFirebaseToken, checkRole } from '../middleware/authMiddleware.js';
 import { monitorRealTimeOrders, exportOrdersToCSV } from '../controllers/adminOrderController.js';
+import { getAllUsers} from '../controllers/adminUserController.js';
 
 const router = express.Router();
 const adminOnly = [verifyFirebaseToken, checkRole("admin")];
@@ -56,5 +57,18 @@ router.get(
     checkRole('admin'),
     exportOrdersToCSV
 );
+
+// --- User Management Routes ---
+
+// @route   GET /api/v1/admin/users
+// @desc    Get a paginated list of all users
+// @access  Private (Admin Only)
+router.get(
+    '/users',
+    verifyFirebaseToken,
+    checkRole('admin'),
+    getAllUsers
+);
+
 
 export default router;

@@ -1,10 +1,18 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function getVendors() {
-  console.log("HERE-", API_BASE_URL);
-  return request(`${API_BASE_URL}/api/v1/admin/vendors`, { method: 'GET' });
+  return request(`/api/v1/admin/vendors`, { method: 'GET' });
 }
 
+// Vendors
+export function patchVendorApproval(id, status) {
+  return request(`/api/v1/admin/vendors/${id}/approval`, {
+    method: 'PATCH',
+    body: { status },
+  });
+}
+
+//request
 async function request(path, { method = 'GET', headers = {}, body } = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method,
@@ -14,11 +22,7 @@ async function request(path, { method = 'GET', headers = {}, body } = {}) {
   });
   const text = await res.text();
   let data;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
-  }
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!res.ok) {
     const err = new Error(data?.message || `Request failed: ${res.status}`);
     err.status = res.status;
@@ -28,44 +32,21 @@ async function request(path, { method = 'GET', headers = {}, body } = {}) {
   return data;
 }
 
-// Vendors
-export function patchVendorApproval(id, status) {
-  return request(`${API_BASE_URL}/api/v1/admin/vendors/${id}/approval`, {
-    method: 'PATCH',
-    body: { status },
-  });
-}
-
 // Content: Banners
 export async function listBanners() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/content?type=banner`, {
+    const res = await fetch(`${API_BASE_URL}/api/v1/content`, {
       method: 'GET',
-      credentials: 'include',
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      let data;
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        data = text;
-      }
-      const err = new Error(data?.message || `Fetch failed: ${res.status}`);
-      err.status = res.status;
-      err.data = data;
-      throw err;
-    }
-
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
     const data = await res.json();
-    console.log("Fetched banners data:", data);
     return data;
   } catch (error) {
     console.error("Error fetching banners:", error);
     throw error;
   }
 }
+
 
 export async function uploadBanner(file) {
   const form = new FormData();
