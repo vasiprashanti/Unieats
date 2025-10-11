@@ -370,11 +370,12 @@ class App {
   }
   createMedias(items, bend = 1, textColor, borderRadius, font) {
     const defaultItems = [
-      { image: `om.jpg`, text: "Om" },
-      { image: `rishikesh.jpg`, text: "Rishikesh" },
+      { image: `tanvika.jpg`, text: "Vasi Tanvika" },
+      
       { image: `raunak.jpg`, text: "Raunak" },
       { image: `pavan.jpg`, text: "Pavan" },
-      { image: `tanvika.jpg`, text: "Vasi Tanvika" },
+      { image: `rishikesh.jpg`, text: "Rishikesh" },
+      { image: `om.jpg`, text: "Om" },
       { image: `srikar.jpg`, text: "Srikar" },
     ];
     const galleryItems = items && items.length ? items : defaultItems;
