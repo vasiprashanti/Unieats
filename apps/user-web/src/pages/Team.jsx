@@ -4,6 +4,7 @@ import Footer from "../components/Footer";
 import CircularGallery from "../components/ui/CircularGallery";
 import { Linkedin } from "lucide-react";
 import { useTheme } from "../context/ThemeContext"; 
+import { useEffect } from "react";
 
 
 // Team member data
@@ -56,6 +57,10 @@ const teamMembers = [
 
 export default function Team() {
   const { theme, isDark } = useTheme();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
