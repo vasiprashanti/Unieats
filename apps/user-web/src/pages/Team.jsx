@@ -19,21 +19,21 @@ const teamMembers = [
   {
     id: 2,
     name: " Raunak Sadana",
-    role: "Frontend Developer",
+    role: "Developer @ TechLearn",
     image: "raunak.jpg",
     linkedin: "https://linkedin.com",
   },
   {
     id: 3,
     name: "Om",
-    role: "Frontend Intern",
+    role: "Intern @ TechLearn",
     image: "om.jpg",
     linkedin: "https://linkedin.com",
   },
   {
     id: 4,
     name: "Srikar",
-    role: "Full Stack Developer",
+    role: "Developer @ TechLearn",
     image: "srikar.jpg",
     
     linkedin: "https://linkedin.com",
@@ -41,14 +41,14 @@ const teamMembers = [
   {
     id: 5,
     name: "Rishikesh",
-    role: "Backend Developer",
+    role: "Developer @ TechLearn",
     image: "rishikesh.jpg",
     linkedin: "https://linkedin.com",
   },
   {
     id: 6,
     name: "Pavan",
-    role: "Backend Developer",
+    role: "Developer @ TechLearn",
     image: "pavan.jpg",
     
     linkedin: "https://linkedin.com",
