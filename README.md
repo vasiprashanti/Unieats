@@ -1,4 +1,4 @@
-# 🍽️ UNieats  
+# 🍽️ UniEats  
 **Property of TechLearn Solutions**  
 
 UNieats is a proprietary **web-based food ordering and delivery platform** designed exclusively for **in-campus and in-hostel use at Manipal University Jaipur**.  
