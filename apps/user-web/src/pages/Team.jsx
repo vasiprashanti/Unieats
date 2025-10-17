@@ -11,13 +11,6 @@ const founders = [
     role: "Founder & Site Architect",
     image: "tanvika.jpg",
   },
-  {
-    id: 2,
-    name: "Vasi Prashanti",
-    role: "Investor & Strategic Partner (Techlearn Solutions)",
-    image: "prashanti.jpg",
-  },
-];
 
 // Development Team data
 const devTeam = [
@@ -97,7 +90,7 @@ export default function Team() {
               isDark ? "text-white" : "text-black"
             }`}
           >
-            Founders & Investor
+            Founder
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -148,14 +141,14 @@ export default function Team() {
 
       {/* Development Team Section */}
       <section className="px-6 py-16">
-        <div className="max-w-7xl mx-auto">
-          <h2
-            className={`text-3xl font-bold mb-10 text-center ${
-              isDark ? "text-white" : "text-black"
-            }`}
-          >
-            Development Team
-          </h2>
+       <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+            <span className={isDark ? "text-white" : "text-black"}>
+              Meet Our{" "}
+            </span>
+            <span className="text-[#ff5c21]">Team</span>
+          </h1>
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {devTeam.map((member) => (
