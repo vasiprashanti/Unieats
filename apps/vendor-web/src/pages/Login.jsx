@@ -128,7 +128,10 @@ function VendorLoginForm() {
     setSubmitting(true);
     try {
       const res = await login({ email, password });
-      if (res?.ok) navigate('/vendor/dashboard');
+      console.log("result enti--",res);
+      if (res?.ok) {
+        navigate('/vendor/dashboard');
+      }
     } finally {
       setSubmitting(false);
     }

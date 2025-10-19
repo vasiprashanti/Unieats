@@ -32,10 +32,12 @@ const orderSchema = new mongoose.Schema(
       enum: [
         "payment_pending",
         "pending",
+        "accepted",
         "preparing",
         "ready",
         "out_for_delivery",
         "delivered",
+        "rejected",
         "cancelled",
       ],
       default: "payment_pending",
@@ -65,6 +67,7 @@ const orderSchema = new mongoose.Schema(
     },
     acceptedAt: { type: Date },
     readyAt: { type: Date },
+  rejectedAt: { type: Date },
 
     // Added statusHistory to fix pre-save push error
     statusHistory: [

@@ -3,121 +3,90 @@ import Order from "../models/Order.model.js";
 import { cloudinary } from "../config/cloudinary.js";
 import MenuItem, { MenuCategory } from "../models/MenuItem.model.js";
 
+import User from "../models/User.model.js";
+
+
+
+// Helper to convert buffer to Base64 Data URI
+const bufferToDataURI = (file) => {
+  const base64 = file.buffer.toString("base64");
+  const mimeType = file.mimetype;
+  return `data:${mimeType};base64,${base64}`;
+};
+
+
 const registerVendor = async (req, res) => {
-  // The user must be logged in to register as a vendor
   try {
-    // Handle file uploads to Cloudinary
-    if (
-      !req.files ||
-      !req.files.businessLicense ||
-      !req.files.foodSafetyCertificate
-    ) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Both business license and food safety certificate are required.",
-        });
+    console.log("📌 [registerVendor] Vendor registration API hit.");
+    console.log("Data received:", req.body);
+
+    const cuisineType = JSON.parse(req.body.cuisineType);
+    const operatingHours = JSON.parse(req.body.operatingHours);
+
+    if (!req.files || !req.files.businessLicense || !req.files.foodSafetyCertificate) {
+      return res.status(400).json({ message: "Both Business License and Food Safety Certificate are required." });
     }
 
-    const uploadToCloudinary = (file) => {
-      return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { resource_type: "auto", folder: "unieats_documents" },
-          (error, result) => {
-            if (error) reject(error);
-            else
-              resolve({ url: result.secure_url, public_id: result.public_id });
-          }
-        );
-        uploadStream.end(file.buffer);
-      });
-    };
+    const businessLicenseFile = req.files.businessLicense[0];
+    const foodSafetyCertificateFile = req.files.foodSafetyCertificate[0];
 
-    const [licenseResult, certificateResult] = await Promise.all([
-      uploadToCloudinary(req.files.businessLicense[0]),
-      uploadToCloudinary(req.files.foodSafetyCertificate[0]),
-    ]);
+    console.log("➡️ Uploading files to Cloudinary...");
 
-    const newVendor = new Vendor({
-      ...req.body,
-      documents: {
-        businessLicense: licenseResult,
-        foodSafetyCertificate: certificateResult,
-      },
-    });
+    // Upload Business License
+    const licenseResult = await cloudinary.uploader.upload(
+      bufferToDataURI(businessLicenseFile),
+      { folder: "unieats_documents" }
+    );
 
-    await newVendor.save();
+    // Upload Food Safety Certificate
+    const certificateResult = await cloudinary.uploader.upload(
+      bufferToDataURI(foodSafetyCertificateFile),
+      { folder: "unieats_documents" }
+    );
 
-    res.status(201).json({
-      success: true,
-      message:
-        "Vendor registration successful! Your application is pending approval.",
-      data: newVendor,
-    });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Server error during vendor registration." });
-  }
+    console.log("✅ Files uploaded successfully.");
 
-  try {
-    // Handle file uploads to Cloudinary
-    if (
-      !req.files ||
-      !req.files.businessLicense ||
-      !req.files.foodSafetyCertificate
-    ) {
-      return res.status(400).json({
-        message:
-          "Both business license and food safety certificate are required.",
-      });
+    // Find the user by email
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User with this email not found." });
     }
 
-    const uploadToCloudinary = (file) => {
-      return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { resource_type: "auto", folder: "unieats_documents" },
-          (error, result) => {
-            if (error) reject(error);
-            else
-              resolve({ url: result.secure_url, public_id: result.public_id });
-          }
-        );
-        uploadStream.end(file.buffer);
-      });
+    const vendorData = {
+      businessName: req.body.businessName,
+      contactPhone: req.body.phone,
+      businessAddress: {
+        street: req.body.street,
+        city: req.body.city,
+        state: req.body.state,
+        zipCode: req.body.zipCode
+      },
+      cuisineType,
+      operatingHours,
+      businessLicense: {
+        url: licenseResult.secure_url,
+        public_id: licenseResult.public_id
+      },
+      foodSafetyCertificate: {
+        url: certificateResult.secure_url,
+        public_id: certificateResult.public_id
+      },
+      owner: user._id // attach the found user's id here
     };
 
-    const [licenseResult, certificateResult] = await Promise.all([
-      uploadToCloudinary(req.files.businessLicense[0]),
-      uploadToCloudinary(req.files.foodSafetyCertificate[0]),
-    ]);
+    const vendor = new Vendor(vendorData);
+    await vendor.save();
 
-    const newVendor = new Vendor({
-      ...req.body,
-      owner: ownerId,
-      documents: {
-        businessLicense: licenseResult,
-        foodSafetyCertificate: certificateResult,
-      },
-    });
+    console.log("✅ Vendor registered successfully:", vendor._id);
+    res.status(201).json({ success: true, vendor });
 
-    await newVendor.save();
-
-    res.status(201).json({
-      success: true,
-      message:
-        "Vendor registration successful! Your application is pending approval.",
-      data: newVendor,
-    });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Server error during vendor registration." });
+    console.error("💥 ERROR in registerVendor:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
 
 const getVendorProfile = async (req, res) => {
   // The user must be logged in to register as a vendor
@@ -250,8 +219,11 @@ const updateOrderStatus = async (req, res) => {
     // Order Status Transition Validation (State Machine)
     const currentStatus = order.status;
     const allowedTransitions = {
-      pending: ["preparing", "cancelled"],
-      preparing: ["ready"],
+      // Allow vendor to accept an order from pending, then move to preparing
+      // Also allow rejecting at early stages
+      pending: ["accepted", "preparing", "cancelled", "rejected"],
+      accepted: ["preparing", "cancelled", "rejected"],
+      preparing: ["ready", "cancelled", "rejected"],
       ready: ["out_for_delivery", "delivered"],
       out_for_delivery: ["delivered"],
       delivered: [], // Cannot change after delivery
@@ -269,7 +241,10 @@ const updateOrderStatus = async (req, res) => {
         });
     }
 
-    order.status = newStatus;
+  order.status = newStatus;
+  if (newStatus === 'accepted') order.acceptedAt = new Date();
+  if (newStatus === 'ready') order.readyAt = new Date();
+  if (newStatus === 'rejected') order.rejectedAt = new Date();
     // The pre-save hook on the Order model will automatically update the statusHistory
 
     const updatedOrder = await order.save();
@@ -292,6 +267,29 @@ const updateOrderStatus = async (req, res) => {
     res.status(500).json({ message: "Server error while updating status." });
   }
 };
+
+//GET VENDOR STATUS
+const getVendorStatus = async (req, res) => {
+  try {
+    const userId = req.user._id; // from verifyFirebaseToken middleware
+
+    // Find the vendor profile for this user
+    const vendor = await Vendor.findOne({ owner: userId }).select("approvalStatus"); // fetch only approvalStatus
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor profile not found." });
+    }
+
+    // Send response with approvalStatus
+    return res.status(200).json({
+      success: true,
+      status: vendor.approvalStatus, // send approvalStatus
+    });
+  } catch (error) {
+    console.error("Error fetching vendor approval status:", error);
+    return res.status(500).json({ message: "Server error fetching vendor approval status." });
+  }
+};
+
 
 // GET all vendors (restaurants)
 const getAllVendors = async (req, res) => {
@@ -391,5 +389,6 @@ export {
   getVendorProfile,
   updateOrderStatus,
   getVendorOrders,
+  getVendorStatus
 };
 export { registerVendor, getAllVendors, getVendorDetails };

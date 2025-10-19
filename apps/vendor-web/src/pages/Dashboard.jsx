@@ -1,185 +1,220 @@
 import React, { useEffect, useState } from "react";
-import StatCard from "../components/dashboard/StatCard";
-import Alert from "../components/Alert";
-import { getVendorDashboard } from "../api/vendor";
-import { useAuth } from "../context/AuthContext";
-import ApprovalStatusBanner from "../components/dashboard/ApprovalStatusBanner";
+import { getAuth } from "firebase/auth";
 
-export default function Dashboard() {
-  const { user } = useAuth();
-  const [stats, setStats] = useState({ todayRevenue: 0, pendingOrders: 0, avgPrepTime: 0, status: "pending" });
-  const [loading, setLoading] = useState(true);
-  const [notif, setNotif] = useState(""); // placeholder notifications handled in header
+export default function VendorStatus() {
+  const [status, setStatus] = useState("pending");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    (async () => {
-      setLoading(true);
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    const fetchStatus = async () => {
       try {
-        const data = await getVendorDashboard({ token: user?.token });
-        if (active)
-          setStats({
-            todayRevenue: data.todayRevenue ?? 0,
-            pendingOrders: data.pendingOrders ?? 0,
-            avgPrepTime: data.avgPrepTime ?? 0,
-            status: data.status ?? "pending",
-          });
-      } catch (e) {
-        if (active) setError("Failed to load dashboard. Showing placeholders.");
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) throw new Error("User not logged in");
+
+        const token = await user.getIdToken();
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/vendors/vendorStatus`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log("Fetch response:", response);
+
+        if (!response.ok) {
+          const text = await response.text();
+          console.error("Failed to fetch vendor status:", text);
+          throw new Error("Failed to fetch vendor status");
+        }
+
+        const data = await response.json();
+        console.log("Vendor Status Data:", data);
+
+        if (active) setStatus(data.status ?? "pending");
+      } catch (err) {
+        console.log("Error Occurred-", err);
+        if (active) setError("Failed to fetch vendor status.");
       } finally {
         if (active) setLoading(false);
       }
-    })();
+    };
+
+    fetchStatus();
+
     return () => {
       active = false;
     };
-  }, [user?.token]);
+  }, []);
+
+  const getStatusStyles = () => {
+    switch (status) {
+      case "approved":
+        return {
+          bg: "bg-green-50",
+          border: "border-green-200",
+          text: "text-green-800",
+          icon: "bg-green-100 text-green-600"
+        };
+      case "rejected":
+        return {
+          bg: "bg-red-50",
+          border: "border-red-200",
+          text: "text-red-800",
+          icon: "bg-red-100 text-red-600"
+        };
+      case "pending":
+      default:
+        return {
+          bg: "bg-yellow-50",
+          border: "border-yellow-200",
+          text: "text-yellow-800",
+          icon: "bg-yellow-100 text-yellow-600"
+        };
+    }
+  };
+
+  const getStatusMessage = () => {
+    switch (status) {
+      case "approved":
+        return "Your application has been approved!";
+      case "rejected":
+        return "Your application has been rejected.";
+      case "pending":
+      default:
+        return "Your application is under review by the admin.";
+    }
+  };
+
+  const styles = getStatusStyles();
 
   return (
     <div className="p-4 md:p-6 text-[hsl(var(--foreground))]">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-          <p className="text-sm text-white/60">Welcome back! Here's what's happening today.</p>
-        </div>
-
-      </div>
-
-      <ApprovalStatusBanner status={stats.status} />
-      <Alert type="error" message={error} />
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          title="Today's Revenue"
-          value={`₹ ${Number(stats.todayRevenue).toLocaleString()}`}
-          subtitle={loading ? "Loading..." : "+12% from yesterday"}
-          icon={
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
           }
-        />
-        <StatCard
-          title="Pending Orders"
-          value={String(stats.pendingOrders)}
-          subtitle={loading ? "Loading..." : "Require immediate attention"}
-          icon={
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15V8a2 2 0 0 0-2-2h-3l-2-2H8L6 6H5a2 2 0 0 0-2 2v7" />
-              <path d="M3 21h18" />
-              <path d="M16 13a4 4 0 0 1-8 0" />
-            </svg>
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
-        />
-        <StatCard
-          title="Avg Prep Time"
-          value={`${stats.avgPrepTime}m`}
-          subtitle={loading ? "Loading..." : "~2m from yesterday"}
-          icon={
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="9"/>
-              <path d="M12 6v6l4 2"/>
-            </svg>
+        }
+        
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
           }
-        />
-      </div>
-
-      {/* Enhanced content sections */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-3xl border border-base bg-[hsl(var(--card))] p-6 shadow-lg hover:shadow-xl transition-all duration-300 group">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-xl bg-[hsl(var(--primary))]/10">
-              <svg className="h-5 w-5 text-[hsl(var(--primary))]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15V8a2 2 0 0 0-2-2h-3l-2-2H8L6 6H5a2 2 0 0 0-2 2v7" />
-                <path d="M3 21h18" />
-                <path d="M16 13a4 4 0 0 1-8 0" />
-              </svg>
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+        
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        
+        .hover-lift {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .image-glow {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .image-glow::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: linear-gradient(
+            to bottom right,
+            rgba(255, 255, 255, 0.3),
+            rgba(255, 255, 255, 0.1),
+            transparent
+          );
+          animation: shimmer 3s infinite;
+        }
+      `}</style>
+      
+      <div className={`rounded-3xl border ${styles.border} ${styles.bg} p-6 shadow-lg text-center animate-fade-in-up hover-lift`}>
+        {loading ? (
+          <p className="text-sm text-muted">Loading status...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            <div className={`${styles.icon} rounded-full p-3 w-16 h-16 flex items-center justify-center animate-float`}>
+              {status === "approved" && (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {status === "rejected" && (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              {status === "pending" && (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
             </div>
             <div>
-              <h2 className="text-xl font-semibold">Recent Orders</h2>
-              <p className="text-sm text-muted">Latest orders that need your attention</p>
+              <p className={`text-lg font-semibold ${styles.text}`}>
+                {getStatusMessage()}
+              </p>
+              <p className="text-sm text-gray-600 mt-1 capitalize">
+                Status: {status}
+              </p>
             </div>
           </div>
-          <div className="rounded-2xl border border-base bg-[hsl(var(--background))] p-6 text-sm text-muted group-hover:bg-[hsl(var(--accent))]/50 transition-colors duration-300">
-            <div className="flex items-center justify-center h-32">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-[hsl(var(--primary))]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  </svg>
-                </div>
-                <p>Coming soon...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-3xl border border-base bg-[hsl(var(--card))] p-6 shadow-lg hover:shadow-xl transition-all duration-300 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-[hsl(var(--primary))]/10">
-                <svg className="h-5 w-5 text-[hsl(var(--primary))]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10 21a2 2 0 0 0 4 0" />
-                  <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold">Notifications</h2>
-            </div>
-            <button className="text-xs text-muted hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] px-2 py-1 rounded-lg transition-all duration-200">Mark all read</button>
-          </div>
-          <div className="rounded-2xl border border-base bg-[hsl(var(--background))] p-6 text-sm text-muted group-hover:bg-[hsl(var(--accent))]/50 transition-colors duration-300">
-            <div className="flex items-center justify-center h-32">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-[hsl(var(--primary))]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M10 21a2 2 0 0 0 4 0" />
-                    <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                  </svg>
-                </div>
-                <p>No new notifications.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-
-      <div className="mt-8 rounded-3xl border border-base bg-[hsl(var(--card))] p-6 shadow-lg hover:shadow-xl transition-all duration-300 group">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-xl bg-[hsl(var(--primary))]/10">
-            <svg className="h-5 w-5 text-[hsl(var(--primary))]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 3v18h18" />
-              <path d="m19 9-5 5-4-4-3 3" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold">Performance Overview</h2>
-            <p className="text-sm text-muted">Your restaurant's key metrics over time</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="text-center p-4 rounded-2xl bg-[hsl(var(--background))] hover:bg-[hsl(var(--accent))]/30 transition-all duration-300 group/metric hover:scale-105 hover:shadow-md border border-base/50">
-            <p className="text-3xl font-extrabold text-[hsl(var(--primary))] group-hover/metric:scale-110 transition-transform duration-200">156</p>
-            <p className="text-xs text-muted font-medium mt-2">Total Orders</p>
-          </div>
-          <div className="text-center p-4 rounded-2xl bg-[hsl(var(--background))] hover:bg-[hsl(var(--accent))]/30 transition-all duration-300 group/metric hover:scale-105 hover:shadow-md border border-base/50">
-            <p className="text-3xl font-extrabold text-[hsl(var(--primary))] group-hover/metric:scale-110 transition-transform duration-200">₹45,230</p>
-            <p className="text-xs text-muted font-medium mt-2">Total Revenue</p>
-          </div>
-          <div className="text-center p-4 rounded-2xl bg-[hsl(var(--background))] hover:bg-[hsl(var(--accent))]/30 transition-all duration-300 group/metric hover:scale-105 hover:shadow-md border border-base/50">
-            <p className="text-3xl font-extrabold text-[hsl(var(--primary))] group-hover/metric:scale-110 transition-transform duration-200">4.5★</p>
-            <p className="text-xs text-muted font-medium mt-2">Customer Rating</p>
-          </div>
-          <div className="text-center p-4 rounded-2xl bg-[hsl(var(--background))] hover:bg-[hsl(var(--accent))]/30 transition-all duration-300 group/metric hover:scale-105 hover:shadow-md border border-base/50">
-            <p className="text-3xl font-extrabold text-[hsl(var(--primary))] group-hover/metric:scale-110 transition-transform duration-200">89</p>
-            <p className="text-xs text-muted font-medium mt-2">Total Reviews</p>
-          </div>
-          <div className="text-center p-4 rounded-2xl bg-[hsl(var(--background))] hover:bg-[hsl(var(--accent))]/30 transition-all duration-300 group/metric hover:scale-105 hover:shadow-md border border-base/50">
-            <p className="text-3xl font-extrabold text-[hsl(var(--primary))] group-hover/metric:scale-110 transition-transform duration-200">3</p>
-            <p className="text-xs text-muted font-medium mt-2">Cuisine Types</p>
+      
+      {!loading && !error && (
+        <div className="mt-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <div className="rounded-3xl overflow-hidden shadow-xl hover-lift image-glow border border-gray-200 bg-white">
+            <img 
+              src="https://i.postimg.cc/k5yMpRt8/Whats-App-Image-2025-10-10-at-22-34-27-61235788.jpg"
+              alt="Vendor illustration"
+              className="w-full h-auto object-cover"
+              style={{ 
+                transition: 'transform 0.5s ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            />
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

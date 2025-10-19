@@ -5,7 +5,7 @@ import BusinessHours from "../components/profile/BusinessHours";
 import DocumentManager from "../components/profile/DocumentManager";
 
 export default function Profile() {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -13,9 +13,7 @@ export default function Profile() {
     ownerName: '',
     email: '',
     phone: '',
-    description: '',
-    fssaiNumber: '',
-    gstNumber: '',
+  // description removed per request
     streetAddress: '',
     city: '',
     state: '',
@@ -43,24 +41,88 @@ export default function Profile() {
     }
   });
 
-  // Load profile data on component mount
-  useEffect(() => {
-    loadProfileData();
-  }, [token]);
-
+  // Load profile data on component mount or when token changes
   const loadProfileData = async () => {
-    if (!token) return;
-    
     try {
       setLoading(true);
-      const data = await getVendorProfile({ token });
-      setProfileData(prevData => ({ ...prevData, ...data }));
+      const data = await getVendorProfile();
+      // Log the fetched data so developers can see the response
+      console.log('Vendor profile:', data);
+
+      const vendor = data && data.vendor ? data.vendor : data;
+
+      // Map vendor fields to our profileData shape
+      const mapped = {};
+      if (vendor.businessName) mapped.businessName = vendor.businessName;
+      if (vendor.owner) mapped.ownerName = vendor.owner; // owner id — keep as-is for now
+      if (vendor.contactPhone) mapped.phone = vendor.contactPhone;
+      if (vendor.cuisineType) mapped.cuisineType = vendor.cuisineType;
+      // Address mapping
+      if (vendor.businessAddress) {
+        mapped.streetAddress = vendor.businessAddress.street || '';
+        mapped.city = vendor.businessAddress.city || '';
+        mapped.state = vendor.businessAddress.state || '';
+        mapped.pincode = vendor.businessAddress.zipCode || '';
+      }
+
+      // Operating hours: backend stores as array [{ day: 'Monday', open: '09:00', close: '22:00', isClosed: false }, ...]
+      if (Array.isArray(vendor.operatingHours)) {
+        const hoursObj = {};
+        // Initialize all days as closed by default
+        const allDays = {
+          monday: { open: false, openTime: '09:00', closeTime: '22:00' },
+          tuesday: { open: false, openTime: '09:00', closeTime: '22:00' },
+          wednesday: { open: false, openTime: '09:00', closeTime: '22:00' },
+          thursday: { open: false, openTime: '09:00', closeTime: '22:00' },
+          friday: { open: false, openTime: '09:00', closeTime: '22:00' },
+          saturday: { open: false, openTime: '09:00', closeTime: '22:00' },
+          sunday: { open: false, openTime: '10:00', closeTime: '22:00' }
+        };
+
+        vendor.operatingHours.forEach(h => {
+          if (!h || !h.day) return;
+          const dayLower = String(h.day).toLowerCase();
+          const key = dayLower.startsWith('mon') ? 'monday' :
+                      dayLower.startsWith('tue') ? 'tuesday' :
+                      dayLower.startsWith('wed') ? 'wednesday' :
+                      dayLower.startsWith('thu') ? 'thursday' :
+                      dayLower.startsWith('fri') ? 'friday' :
+                      dayLower.startsWith('sat') ? 'saturday' :
+                      dayLower.startsWith('sun') ? 'sunday' : null;
+          if (!key) return;
+
+          const isClosed = !!h.isClosed;
+          hoursObj[key] = {
+            open: !isClosed,
+            openTime: h.open || '09:00',
+            closeTime: h.close || '22:00'
+          };
+        });
+
+        // Merge specific hours into allDays (days not present remain closed)
+        mapped.operatingHours = { ...allDays, ...hoursObj };
+      }
+
+      // Email: fallback to auth user email if available
+      if (user && user.email && !vendor.email) mapped.email = user.email;
+
+      // Merge mapped fields into state
+      if (Object.keys(mapped).length > 0) {
+        setProfileData(prevData => ({ ...prevData, ...mapped }));
+      }
     } catch (error) {
       console.error('Failed to load profile:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Wait until auth user is available, otherwise api wrapper's getToken() will fail
+    if (!user) return;
+    loadProfileData();
+    // re-run when user changes
+  }, [user]);
 
   const handleInputChange = (section, field, value) => {
     if (section) {
@@ -81,11 +143,32 @@ export default function Profile() {
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    if (!token) return;
-
     try {
       setSaving(true);
-      await updateVendorProfile({ token, data: profileData });
+      // convert operatingHours object to backend array before saving
+      const convertToArray = (hoursObj) => {
+        const dayNames = {
+          monday: 'Monday',
+          tuesday: 'Tuesday',
+          wednesday: 'Wednesday',
+          thursday: 'Thursday',
+          friday: 'Friday',
+          saturday: 'Saturday',
+          sunday: 'Sunday'
+        };
+        return Object.keys(dayNames).map(key => {
+          const h = hoursObj[key] || { open: false, openTime: '09:00', closeTime: '22:00' };
+          return {
+            day: dayNames[key],
+            open: h.openTime || '09:00',
+            close: h.closeTime || '22:00',
+            isClosed: !h.open
+          };
+        }).filter(Boolean);
+      };
+
+      const payload = { ...profileData, operatingHours: convertToArray(profileData.operatingHours) };
+      await updateVendorProfile(payload);
       alert('Profile updated successfully!');
     } catch (error) {
       alert('Failed to update profile. Please try again.');
@@ -96,11 +179,32 @@ export default function Profile() {
   };
 
   const handleHoursUpdate = async (hoursData) => {
+    // Convert our hours object (monday, tuesday...) into backend array format
+    const convertToArray = (hoursObj) => {
+      const dayNames = {
+        monday: 'Monday',
+        tuesday: 'Tuesday',
+        wednesday: 'Wednesday',
+        thursday: 'Thursday',
+        friday: 'Friday',
+        saturday: 'Saturday',
+        sunday: 'Sunday'
+      };
+      return Object.keys(dayNames).map(key => {
+        const h = hoursObj[key] || { open: false, openTime: '09:00', closeTime: '22:00' };
+        return {
+          day: dayNames[key],
+          open: h.openTime || '09:00',
+          close: h.closeTime || '22:00',
+          isClosed: !h.open
+        };
+      }).filter(Boolean);
+    };
+
     try {
-      await updateVendorProfile({ 
-        token, 
-        data: { operatingHours: hoursData } 
-      });
+      const operatingHoursArray = convertToArray(hoursData);
+      // Call the same API as update profile, sending the array
+      await updateVendorProfile({ operatingHours: operatingHoursArray });
       setProfileData(prev => ({ ...prev, operatingHours: hoursData }));
       alert('Business hours updated successfully!');
     } catch (error) {
@@ -189,62 +293,11 @@ export default function Profile() {
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Description</label>
-              <textarea
-                value={profileData.description}
-                onChange={(e) => handleInputChange(null, 'description', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-base rounded-lg bg-background focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-[hsl(var(--primary))]"
-                placeholder="Authentic Indian cuisine with a modern twist. Serving delicious traditional recipes passed down through generations."
-              />
-            </div>
+            {/* description removed */}
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">FSSAI Number</label>
-                <input
-                  type="text"
-                  value={profileData.fssaiNumber}
-                  onChange={(e) => handleInputChange(null, 'fssaiNumber', e.target.value)}
-                  className="w-full px-3 py-2 border border-base rounded-lg bg-background focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-[hsl(var(--primary))]"
-                  placeholder="FSSAI123456789"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">GST Number</label>
-                <input
-                  type="text"
-                  value={profileData.gstNumber}
-                  onChange={(e) => handleInputChange(null, 'gstNumber', e.target.value)}
-                  className="w-full px-3 py-2 border border-base rounded-lg bg-background focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-[hsl(var(--primary))]"
-                  placeholder="GST123456789"
-                />
-              </div>
-            </div>
+            {/* FSSAI and GST fields removed */}
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-2 rounded-lg font-medium hover:bg-[hsl(var(--primary))]/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                  Update Profile
-                </>
-              )}
-            </button>
+            {/* Update Profile button removed */}
           </form>
         </div>
 
@@ -317,13 +370,14 @@ export default function Profile() {
         />
       </div>
 
-      {/* Documents */}
+      {/* Documents
       <div className="mt-6">
-        <DocumentManager token={token} />
+        <DocumentManager />
       </div>
+      */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        {/* Notification Preferences */}
+        {/* Notification Preferences (commented out)
         <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg border border-base p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-accent rounded-lg">
@@ -368,6 +422,7 @@ export default function Profile() {
             ))}
           </div>
         </div>
+        */}
 
         {/* Payout Information */}
         <div className="bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] rounded-lg border border-base p-6">

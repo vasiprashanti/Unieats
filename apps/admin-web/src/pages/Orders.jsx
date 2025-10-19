@@ -30,7 +30,7 @@ export default function Orders() {
         // Transform the data to flatten nested objects
         const transformedOrders = (data.data || []).map(order => ({
           id: order._id,
-          customer: order.user?.name || 'Unknown',
+          customer: `${order.user?.name?.first || ''} ${order.user?.name?.last || ''}`.trim() || 'Unknown',
           customerId: order.user?._id,
           vendor: order.vendor?.businessName || 'Unknown',
           vendorId: order.vendor?._id,
@@ -41,6 +41,7 @@ export default function Orders() {
           deliveryAddress: order.deliveryAddress,
           paymentDetails: order.paymentDetails,
         }));
+
         
         setOrders(transformedOrders);
       } catch (error) {

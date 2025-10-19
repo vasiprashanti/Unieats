@@ -25,7 +25,7 @@ export default function Analytics() {
     try {
       setLoading(true);
       setError('');
-      
+
       let startDate, endDate;
       if (dateRange === 'custom') {
         startDate = customStartDate;
@@ -37,11 +37,26 @@ export default function Analytics() {
       }
 
       const data = await getAnalytics({ token, startDate, endDate });
-      setAnalyticsData(data);
+
+      // Wrap API response into summary for UI consistency
+      setAnalyticsData({
+        summary: {
+          totalRevenue: data.totalRevenue ?? 0,
+          totalOrders: data.totalOrders ?? 0,
+          avgOrderValue: data.totalOrders > 0 ? (data.totalRevenue / data.totalOrders).toFixed(2) : 0,
+          avgPrepTime: data.averagePrepTime ?? 0,
+          revenueChange: 0,
+          ordersChange: 0,
+          avgOrderValueChange: 0,
+          avgPrepTimeChange: 0
+        },
+        revenueData: data.revenueData || [],
+        topItems: data.topItems || []
+      });
+
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
       setError('Failed to load analytics data');
-      // Use fallback data for UI continuity
       setAnalyticsData(getFallbackAnalytics());
     } finally {
       setLoading(false);
@@ -51,7 +66,7 @@ export default function Analytics() {
   const handleExportCSV = async () => {
     try {
       setExporting(true);
-      
+
       let startDate, endDate;
       if (dateRange === 'custom') {
         startDate = customStartDate;
@@ -63,7 +78,7 @@ export default function Analytics() {
       }
 
       const blob = await exportAnalytics({ token, startDate, endDate });
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -132,7 +147,7 @@ export default function Analytics() {
           <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">Analytics & Reports</h1>
           <p className="text-[hsl(var(--muted-foreground))]">Track your business performance and insights</p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Date Range Selector */}
           <div className="flex items-center gap-2">
@@ -170,7 +185,7 @@ export default function Analytics() {
           )}
 
           {/* Export Button */}
-          <button
+          {/* <button
             onClick={handleExportCSV}
             disabled={exporting}
             className="flex items-center gap-2 px-4 py-2 bg-[#ff6600] text-white rounded-lg hover:bg-[#e65c00] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -179,7 +194,7 @@ export default function Analytics() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             {exporting ? 'Exporting...' : 'Export CSV'}
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -194,43 +209,35 @@ export default function Analytics() {
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 shadow-sm">
-              <div>
-                <p className="text-[hsl(var(--muted-foreground))] text-sm">Total Revenue</p>
-                <p className="text-2xl font-bold text-[hsl(var(--foreground))]">₹{analyticsData.summary.totalRevenue.toLocaleString()}</p>
-                <p className="text-sm text-green-600 mt-1">
-                  +{analyticsData.summary.revenueChange}% from last period
-                </p>
-              </div>
+              <p className="text-[hsl(var(--muted-foreground))] text-sm">Total Revenue</p>
+              <p className="text-2xl font-bold text-[hsl(var(--foreground))]">₹{analyticsData?.summary?.totalRevenue?.toLocaleString() ?? 0}</p>
+              <p className="text-sm text-green-600 mt-1">
+                +{analyticsData?.summary?.revenueChange ?? 0}% from last period
+              </p>
             </div>
 
             <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 shadow-sm">
-              <div>
-                <p className="text-[hsl(var(--muted-foreground))] text-sm">Total Orders</p>
-                <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{analyticsData.summary.totalOrders}</p>
-                <p className="text-sm text-green-600 mt-1">
-                  +{analyticsData.summary.ordersChange}% from last period
-                </p>
-              </div>
+              <p className="text-[hsl(var(--muted-foreground))] text-sm">Total Orders</p>
+              <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{analyticsData?.summary?.totalOrders ?? 0}</p>
+              <p className="text-sm text-green-600 mt-1">
+                +{analyticsData?.summary?.ordersChange ?? 0}% from last period
+              </p>
             </div>
 
             <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 shadow-sm">
-              <div>
-                <p className="text-[hsl(var(--muted-foreground))] text-sm">Avg Order Value</p>
-                <p className="text-2xl font-bold text-[hsl(var(--foreground))]">₹{analyticsData.summary.avgOrderValue}</p>
-                <p className="text-sm text-green-600 mt-1">
-                  +{analyticsData.summary.avgOrderValueChange}% from last period
-                </p>
-              </div>
+              <p className="text-[hsl(var(--muted-foreground))] text-sm">Avg Order Value</p>
+              <p className="text-2xl font-bold text-[hsl(var(--foreground))]">₹{analyticsData?.summary?.avgOrderValue ?? 0}</p>
+              <p className="text-sm text-green-600 mt-1">
+                +{analyticsData?.summary?.avgOrderValueChange ?? 0}% from last period
+              </p>
             </div>
 
             <div className="bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))] p-6 shadow-sm">
-              <div>
-                <p className="text-[hsl(var(--muted-foreground))] text-sm">Avg Prep Time</p>
-                <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{analyticsData.summary.avgPrepTime} mins</p>
-                <p className="text-sm text-green-600 mt-1">
-                  {analyticsData.summary.avgPrepTimeChange} mins from last period
-                </p>
-              </div>
+              <p className="text-[hsl(var(--muted-foreground))] text-sm">Avg Prep Time</p>
+              <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{analyticsData?.summary?.avgPrepTime ?? 0} mins</p>
+              <p className="text-sm text-green-600 mt-1">
+                {analyticsData?.summary?.avgPrepTimeChange ?? 0} mins from last period
+              </p>
             </div>
           </div>
 
@@ -242,7 +249,7 @@ export default function Analytics() {
               </svg>
               <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Revenue Trend</h3>
             </div>
-            <RevenueChart data={analyticsData.revenueData} />
+            <RevenueChart data={analyticsData?.revenueData || []} />
           </div>
 
           {/* Top Selling Items */}
@@ -253,7 +260,7 @@ export default function Analytics() {
               </svg>
               <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Top Selling Items</h3>
             </div>
-            <TopItemsList items={analyticsData.topItems} />
+            <TopItemsList items={analyticsData?.topItems || []} />
           </div>
         </>
       )}

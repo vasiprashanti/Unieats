@@ -134,7 +134,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/vendors", vendorRoutes);
-app.use("/api/v1/vendors/menu", menuRoutes);
+// app.use("/api/v1/vendors/menu", menuRoutes);
 app.use("/api/v1/content", contentRoutes);
 app.use("/api/v1/prelaunch", preLaunchUserRoutes);
 app.use("/api/v1/users", userRoutes);

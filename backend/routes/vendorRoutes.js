@@ -5,6 +5,7 @@ import {
   getVendorProfile,
   getAllVendors,
   getVendorDetails,
+  getVendorStatus
 } from "../controllers/vendorController.js";
 import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
 import { cacheMiddleware } from "../middleware/cacheMiddleware.js";
@@ -18,6 +19,8 @@ import {
   getVendorMenu,
   updateMenuItem,
   deleteMenuItem,
+  createCategory,
+  toggleAvailability
 } from "../controllers/menuController.js";
 import { getVendorAnalytics } from "../controllers/vendorAnalyticsController.js";
 import {
@@ -30,6 +33,9 @@ const router = express.Router();
 // GET all vendors (restaurants)
 router.get("/restaurants", verifyFirebaseToken, getAllVendors); // Will support search via query param
 // GET vendor (restaurant) details + menu
+
+// CREATE a new category
+router.post("/categories", verifyFirebaseToken, createCategory);
 
 // GET vendor (restaurant) details + menu (cached)
 router.get(
@@ -44,7 +50,6 @@ router.get(
 // @access  Private (requires user to be logged in)
 router.post(
   "/register",
-  verifyFirebaseToken,
   uploadDocuments.fields([
     // Handle multiple file fields
     { name: "businessLicense", maxCount: 1 },
@@ -80,6 +85,9 @@ router.post(
 // Get all orders for the logged-in vendor (with filtering)
 router.get("/orders", verifyFirebaseToken, getVendorOrders);
 
+// Get vendor status
+router.get("/vendorStatus", verifyFirebaseToken,getVendorStatus );
+
 // Update the status of a specific order
 router.patch("/orders/:orderId/status", verifyFirebaseToken, updateOrderStatus);
 
@@ -96,7 +104,22 @@ router.patch(
   uploadImage.single("image"),
   updateMenuItem
 );
+
+// Delete menu item
+router.delete(
+  "/menu/:itemId",
+  verifyFirebaseToken,
+  deleteMenuItem
+);
 router.delete("/menu/:itemId", verifyFirebaseToken, deleteMenuItem);
+
+
+
+router.patch(
+  "/menu/:itemId/availability",
+  verifyFirebaseToken,
+  toggleAvailability
+);
 
 router.get("/analytics", verifyFirebaseToken, getVendorAnalytics);
 
