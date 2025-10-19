@@ -11,6 +11,7 @@ const founders = [
     role: "Founder & Site Architect",
     image: "tanvika.jpg",
   },
+]; // ✅ closed the founders array properly
 
 // Development Team data
 const devTeam = [
@@ -141,14 +142,13 @@ export default function Team() {
 
       {/* Development Team Section */}
       <section className="px-6 py-16">
-       <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             <span className={isDark ? "text-white" : "text-black"}>
               Meet Our{" "}
             </span>
             <span className="text-[#ff5c21]">Team</span>
           </h1>
-
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {devTeam.map((member) => (
