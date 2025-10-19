@@ -4,121 +4,99 @@ import { cloudinary } from "../config/cloudinary.js";
 import MenuItem, { MenuCategory } from "../models/MenuItem.model.js";
 
 const registerVendor = async (req, res) => {
-  // The user must be logged in to register as a vendor
-  try {
-    // Handle file uploads to Cloudinary
-    if (
-      !req.files ||
-      !req.files.businessLicense ||
-      !req.files.foodSafetyCertificate
-    ) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Both business license and food safety certificate are required.",
+    // 1. Get ALL the data from the frontend form
+    const {
+        email,
+        password,
+        fullName, // From the 'Owner Name' field
+        phone,    // From the 'Phone' field
+        restaurantName, // From the 'Business Name' field
+        address, // The single address string
+        cuisineType
+    } = req.body;
+
+    // 2. Basic Validation: Check if the most important fields were sent
+    if (!email || !password || !restaurantName || !fullName) {
+        return res.status(400).json({ message: 'Email, password, owner name, and business name are required.' });
+    }
+    if (!req.files || !req.files.businessLicense || !req.files.foodSafetyCertificate) {
+        return res.status(400).json({ message: 'Both business license and food safety certificate are required.' });
+    }
+
+    try {
+        // JOB 1: CREATE THE FIREBASE USER
+        console.log("Attempting to create user in Firebase...");
+        const userRecord = await admin.auth().createUser({
+            email: email,
+            password: password,
+            displayName: fullName,
         });
+        console.log("Firebase user created successfully:", userRecord.uid);
+
+        // JOB 2: CREATE THE USER IN YOUR MONGODB
+        const newUser = new User({
+            firebaseUid: userRecord.uid,
+            email: email,
+            name: { first: fullName.split(' ')[0] || '', last: fullName.split(' ')[1] || '' },
+            phone: phone,
+            // Add default values for other required User fields
+            yearOfStudy: '1st Year', 
+            accommodation: 'Non-Hosteller',
+        });
+        const savedUser = await newUser.save();
+        console.log("MongoDB user created successfully:", savedUser._id);
+
+        // JOB 3: CREATE THE VENDOR PROFILE IN MONGODB
+
+        // File Upload Logic (This part is the same)
+        const uploadToCloudinary = (file) => {
+            return new Promise((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream({ resource_type: 'auto', folder: 'unieats_documents' }, (error, result) => {
+                    if (error) reject(error);
+                    else resolve({ url: result.secure_url, public_id: result.public_id });
+                });
+                uploadStream.end(file.buffer);
+            });
+        };
+        const [licenseResult, certificateResult] = await Promise.all([
+            uploadToCloudinary(req.files.businessLicense[0]),
+            uploadToCloudinary(req.files.foodSafetyCertificate[0]),
+        ]);
+
+        // Assemble the new Vendor, matching the frontend's data names
+        const newVendor = new Vendor({
+            owner: savedUser._id, // Link to the user we just created
+            businessName: restaurantName, // Use the name from the form
+            contactPhone: phone, // Use the phone from the form
+            cuisineType: [cuisineType],
+            // Create a simple address object from the single string
+            businessAddress: {
+                street: address,
+                city: 'Unknown',
+                state: 'Unknown',
+                zipCode: '000000',
+            },
+            documents: {
+                businessLicense: licenseResult,
+                foodSafetyCertificate: certificateResult,
+            },
+        });
+
+        await newVendor.save();
+        console.log("Vendor profile created successfully.");
+
+        res.status(201).json({ success: true, message: 'Registration successful! Your application is pending approval.' });
+
+    } catch (error) {
+        console.error("Error during vendor registration:", error);
+        // This will catch errors from Firebase (like 'email-already-exists')
+        // and Mongoose (like validation errors)
+        if (error.code === 'auth/email-already-exists') {
+            return res.status(400).json({ message: 'This email is already registered. Please login instead.' });
+        }
+        res.status(500).json({ message: 'Server error during registration.' });
     }
-
-    const uploadToCloudinary = (file) => {
-      return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { resource_type: "auto", folder: "unieats_documents" },
-          (error, result) => {
-            if (error) reject(error);
-            else
-              resolve({ url: result.secure_url, public_id: result.public_id });
-          }
-        );
-        uploadStream.end(file.buffer);
-      });
-    };
-
-    const [licenseResult, certificateResult] = await Promise.all([
-      uploadToCloudinary(req.files.businessLicense[0]),
-      uploadToCloudinary(req.files.foodSafetyCertificate[0]),
-    ]);
-
-    const newVendor = new Vendor({
-      ...req.body,
-      documents: {
-        businessLicense: licenseResult,
-        foodSafetyCertificate: certificateResult,
-      },
-    });
-
-    await newVendor.save();
-
-    res.status(201).json({
-      success: true,
-      message:
-        "Vendor registration successful! Your application is pending approval.",
-      data: newVendor,
-    });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Server error during vendor registration." });
-  }
-
-  try {
-    // Handle file uploads to Cloudinary
-    if (
-      !req.files ||
-      !req.files.businessLicense ||
-      !req.files.foodSafetyCertificate
-    ) {
-      return res.status(400).json({
-        message:
-          "Both business license and food safety certificate are required.",
-      });
-    }
-
-    const uploadToCloudinary = (file) => {
-      return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { resource_type: "auto", folder: "unieats_documents" },
-          (error, result) => {
-            if (error) reject(error);
-            else
-              resolve({ url: result.secure_url, public_id: result.public_id });
-          }
-        );
-        uploadStream.end(file.buffer);
-      });
-    };
-
-    const [licenseResult, certificateResult] = await Promise.all([
-      uploadToCloudinary(req.files.businessLicense[0]),
-      uploadToCloudinary(req.files.foodSafetyCertificate[0]),
-    ]);
-
-    const newVendor = new Vendor({
-      ...req.body,
-      owner: ownerId,
-      documents: {
-        businessLicense: licenseResult,
-        foodSafetyCertificate: certificateResult,
-      },
-    });
-
-    await newVendor.save();
-
-    res.status(201).json({
-      success: true,
-      message:
-        "Vendor registration successful! Your application is pending approval.",
-      data: newVendor,
-    });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Server error during vendor registration." });
-  }
 };
-
 const getVendorProfile = async (req, res) => {
   // The user must be logged in to register as a vendor
   const ownerId = req.user._id;

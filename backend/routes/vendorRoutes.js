@@ -43,14 +43,12 @@ router.get(
 // @desc    Register a new vendor profile
 // @access  Private (requires user to be logged in)
 router.post(
-  "/register",
-  verifyFirebaseToken,
-  uploadDocuments.fields([
-    // Handle multiple file fields
-    { name: "businessLicense", maxCount: 1 },
-    { name: "foodSafetyCertificate", maxCount: 1 },
-  ]),
-  registerVendor
+    '/register',
+    uploadDocuments.fields([ // The file handler is still needed
+        { name: 'businessLicense', maxCount: 1 },
+        { name: 'foodSafetyCertificate', maxCount: 1 }
+    ]),
+    registerVendor 
 );
 
 // @route   GET /api/v1/vendors/profile
@@ -83,19 +81,15 @@ router.get("/orders", verifyFirebaseToken, getVendorOrders);
 // Update the status of a specific order
 router.patch("/orders/:orderId/status", verifyFirebaseToken, updateOrderStatus);
 
-router.post(
-  "/menu",
-  verifyFirebaseToken,
-  uploadImage.single("image"),
-  createMenuItem
-);
 router.get("/menu", verifyFirebaseToken, getVendorMenu);
+
 router.patch(
   "/menu/:itemId",
   verifyFirebaseToken,
   uploadImage.single("image"),
   updateMenuItem
 );
+
 router.delete("/menu/:itemId", verifyFirebaseToken, deleteMenuItem);
 
 router.get("/analytics", verifyFirebaseToken, getVendorAnalytics);
