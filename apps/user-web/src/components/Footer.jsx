@@ -27,12 +27,10 @@ function Footer() {
           {/* Right Section - Navigation Links */}
           <nav className="flex flex-col w-full md:w-[50%]">
             {[
-              { id: "01", label: "ORDER", path: "/orders" },
+              { id: "01", label: "ORDER", path: "/restaurants" },
               { id: "02", label: "ABOUT", path: "/about" },
               { id: "03", label: "TEAM", path: "/team" },
-              { id: "04", label: "CAREERS", path: "/careers" },
-              { id: "05", label: "PARTNERS", path: "/partners" },
-              { id: "06", label: "CONTACT", path: "/contact" },
+              { id: "04", label: "CAREERS", path: "/careers" }
             ].map((item) => (
               <Link
                 key={item.id}
