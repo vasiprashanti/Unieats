@@ -11,7 +11,7 @@ const founders = [
     role: "Founder & Site Architect",
     image: "tanvika.jpg",
   },
-]; // ✅ closed the founders array properly
+]; 
 
 // Development Team data
 const devTeam = [
