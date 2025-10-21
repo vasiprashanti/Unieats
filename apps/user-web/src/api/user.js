@@ -24,59 +24,7 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 };
 
-// Mock user data for development
-const mockUserData = {
-  id: 'demo-user',
-  firebaseUid: 'demo-uid',
-  name: 'John Doe',
-  email: 'john.doe@university.edu',
-  phone: '+91 9876543210',
-  role: 'user',
-  addresses: [
-    {
-      id: '1',
-      label: 'Hostel Room',
-      street: 'Block A, Room 201, University Hostel',
-      city: 'Campus',
-      state: '123456',
-      zipCode: '123456',
-      phone: '+91 9876543210',
-      isDefault: true,
-    },
-    {
-      id: '2',
-      label: 'Library',
-      street: 'Central Library, Ground Floor, Campus',
-      city: 'Campus',
-      state: '123456',
-      zipCode: '123456',
-      phone: '+91 9876543210',
-      isDefault: false,
-    },
-  ],
-  paymentMethods: [
-    {
-      id: '1',
-      type: 'card',
-      cardType: 'visa',
-      lastFour: '1234',
-      expiryMonth: 12,
-      expiryYear: 2025,
-      isDefault: true,
-    },
-    {
-      id: '2',
-      type: 'card',
-      cardType: 'mastercard',
-      lastFour: '5678',
-      expiryMonth: 8,
-      expiryYear: 2026,
-      isDefault: false,
-    },
-  ],
-  createdAt: '2024-01-01T00:00:00.000Z',
-  updatedAt: '2024-01-01T00:00:00.000Z',
-};
+
 
 // Get user profile
 export const getUserProfile = async () => {

@@ -286,28 +286,42 @@ export function CartProvider({ children }) {
       console.log('Remove item response:', text);
       let data = text ? JSON.parse(text) : {};
 
-      if (response.ok && data.data) {
-        const items = data.data.items.map(i => ({
-          _id: i._id,
-          menuItem: i.menuItem,
-          quantity: i.quantity,
-          price: i.price,
-          ...i
-        }));
-        
-        // Recalculate totals on frontend
-        const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-        
-        dispatch({
-          type: CART_ACTIONS.LOAD_CART,
-          payload: {
-            items,
-            totalItems,
-            totalPrice,
-            restaurantId: data.data.vendor,
-          }
-        });
+      if (response.ok) {
+        // If cart is deleted, backend sends data.data as [] or null
+        if (data.data === null || (Array.isArray(data.data) && data.data.length === 0)) {
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: initialState
+          });
+          return;
+        }
+        if (data.data && Array.isArray(data.data.items)) {
+          const items = data.data.items.map(i => ({
+            _id: i._id,
+            menuItem: i.menuItem,
+            quantity: i.quantity,
+            price: i.price,
+            ...i
+          }));
+          // Recalculate totals on frontend
+          const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
+          const totalPrice = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: {
+              items,
+              totalItems,
+              totalPrice,
+              restaurantId: data.data.vendor,
+            }
+          });
+        } else {
+          // Unexpected format, clear cart
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: initialState
+          });
+        }
       } else {
         alert(data.message || 'Failed to remove item');
       }
