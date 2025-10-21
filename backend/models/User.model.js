@@ -35,7 +35,7 @@ const userSchema = new Schema(
     },
     yearOfStudy: {
       type: String,
-      enum: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
+      enum: ['',"1st Year", "2nd Year", "3rd Year", "4th Year"],
     },
     accommodation: {
       type: String,
