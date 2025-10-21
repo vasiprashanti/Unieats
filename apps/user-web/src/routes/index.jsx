@@ -68,9 +68,9 @@ export default function AppRoutes() {
         <Route path="/support" element={<ProtectedUser><Support /></ProtectedUser>} />
          <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/about" element={<ProtectedUser><AboutUs /></ProtectedUser>} />
-        <Route path="/team" element={<ProtectedUser><Team /></ProtectedUser>} />
-        <Route path="/careers" element={<ProtectedUser><Careers/></ProtectedUser>}/>
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/team" element={<Team />} />
+        <Route path="/careers" element={<Careers/>}/>
         <Route path="*" element={<Navigate to="/home" replace />} />
         
       </Routes>
