@@ -28,10 +28,21 @@ export default function Profile() {
       setLoading(true);
       setError(null);
       const response = await getUserProfile();
-      if (response.success) {
-        setUser(response.data);
-        setAddresses(response.data.addresses || []);
-        setPaymentMethods(response.data.paymentMethods || []);
+      // Support two possible shapes:
+      // 1) Mocked: { success: true, data: { ...user } }
+      // 2) Backend: userObject (direct)
+      let userData = null;
+      if (response && response.success && response.data) {
+        userData = response.data;
+      } else if (response && response.firebaseUid) {
+        // Looks like a user object from backend
+        userData = response;
+      }
+
+      if (userData) {
+        setUser(userData);
+        setAddresses(userData.addresses || []);
+        setPaymentMethods(userData.paymentMethods || []);
       }
     } catch (err) {
       console.error('Failed to load user data:', err);
@@ -91,7 +102,13 @@ export default function Profile() {
   const handleUpdateProfile = async (profileData) => {
     try {
       const response = await updateUserProfile(profileData);
-      if (response.success) {
+      // If backend returns { success, data } keep compatibility
+      if (response && response.success && response.data && response.data.user) {
+        setUser(response.data.user);
+      } else if (response && response.user) {
+        setUser(response.user);
+      } else {
+        // Fallback: merge updated fields into user state
         setUser(prev => ({ ...prev, ...profileData }));
       }
     } catch (error) {
