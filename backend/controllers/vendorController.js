@@ -5,6 +5,52 @@ import MenuItem, { MenuCategory } from "../models/MenuItem.model.js";
 
 import User from "../models/User.model.js";
 
+// Update vendor UPI ID
+const updateVendorUpiId = async (req, res) => {
+  try {
+    console.log("reqq-", req.body);
+    const { upiId, userId } = req.body;
+
+    // Find the user by firebase UID
+    const user = await User.findOne({ firebaseUid: userId });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Find the vendor associated with this user
+    const vendor = await Vendor.findOne({ owner: user._id });
+    console.log("Vendor found:", vendor ? vendor._id : 'Not found');
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found for this user" });
+    }
+
+    // Validate UPI ID format
+    const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/;
+    if (!upiRegex.test(upiId)) {
+      return res.status(400).json({ message: "Invalid UPI ID format" });
+    }
+
+    // Update UPI ID and save
+    vendor.upiId = upiId;
+    await vendor.save();
+
+    // Respond with updated data
+    res.status(200).json({
+      success: true,
+      data: {
+        upiId: vendor.upiId
+      }
+    });
+
+  } catch (error) {
+    console.error("Error updating UPI ID:", error);
+    res.status(500).json({
+      message: "Failed to update UPI ID",
+      error: error.message
+    });
+  }
+};
 
 
 // Helper to convert buffer to Base64 Data URI
@@ -389,6 +435,7 @@ export {
   getVendorProfile,
   updateOrderStatus,
   getVendorOrders,
-  getVendorStatus
+  getVendorStatus,
+  updateVendorUpiId
 };
 export { registerVendor, getAllVendors, getVendorDetails };

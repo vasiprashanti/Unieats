@@ -257,6 +257,20 @@ export default function Orders() {
         >
           Mark as Ready
         </button>
+        <button
+          className="rounded-lg border border-base px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
+          disabled={selectedIds.length === 0}
+          onClick={() => bulkUpdate('out_for_delivery')}
+        >
+          Mark as Out for Delivery
+        </button>
+        <button
+          className="rounded-lg border border-base px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
+          disabled={selectedIds.length === 0}
+          onClick={() => bulkUpdate('delivered')}
+        >
+          Mark as Delivered
+        </button>
       </div>
 
       {/* Table */}

@@ -5,7 +5,8 @@ import {
   getVendorProfile,
   getAllVendors,
   getVendorDetails,
-  getVendorStatus
+  getVendorStatus,
+  updateVendorUpiId
 } from "../controllers/vendorController.js";
 import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
 import { cacheMiddleware } from "../middleware/cacheMiddleware.js";
@@ -44,6 +45,11 @@ router.get(
   cacheMiddleware(300), // Cache for 5 minutes
   getVendorDetails
 );
+
+// @route   PATCH /api/v1/vendors/upi
+// @desc    Update vendor's UPI ID
+// @access  Private (requires vendor authentication)
+router.patch("/upi", verifyFirebaseToken, updateVendorUpiId);
 
 // @route   POST /api/v1/vendors/register
 // @desc    Register a new vendor profile

@@ -25,6 +25,23 @@ async function apiFetch(url, options = {}) {
 
 /** ------------------- Vendor Registration & Profile ------------------- **/
 
+// Update vendor's UPI ID
+export async function updateVendorUpiId(upiId) {
+  const auth = getAuth();
+  const firebaseUser = auth.currentUser;
+  
+  return apiFetch(`${BASE_URL}/api/v1/vendors/upi`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 
+      upiId,
+      userId: firebaseUser.uid  // Adding Firebase UID
+    })
+  });
+}
+
 export async function registerVendor(data) {
   const form = new FormData();
   Object.entries(data || {}).forEach(([key, value]) => {

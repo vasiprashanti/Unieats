@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getVendorProfile, updateVendorProfile } from "../api/vendor";
+import { getVendorProfile, updateVendorProfile, updateVendorUpiId } from "../api/vendor";
 import BusinessHours from "../components/profile/BusinessHours";
 import DocumentManager from "../components/profile/DocumentManager";
 
@@ -472,14 +472,36 @@ export default function Profile() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">UPI ID (Alternative)</label>
-              <input
-                type="text"
-                value={profileData.payoutInfo.upiId}
-                onChange={(e) => handleInputChange('payoutInfo', 'upiId', e.target.value)}
-                className="w-full px-3 py-2 border border-base rounded-lg bg-background focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-[hsl(var(--primary))]"
-                placeholder="user@paytm"
-              />
+              <label className="block text-sm font-medium mb-2">UPI ID</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={profileData.payoutInfo.upiId}
+                  onChange={(e) => handleInputChange('payoutInfo', 'upiId', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-base rounded-lg bg-background focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-[hsl(var(--primary))]"
+                  placeholder="username@upi"
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setSaving(true);
+                      await updateVendorUpiId(profileData.payoutInfo.upiId);
+                      // Show success message here if needed
+                      alert('UPI ID updated successfully');
+                    } catch (error) {
+                      console.error('Failed to update UPI ID:', error);
+                      alert('Failed to update UPI ID: ' + (error.message || 'Unknown error'));
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  disabled={saving}
+                  className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg font-medium hover:bg-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {saving ? 'Updating...' : 'Update UPI ID'}
+                </button>
+              </div>
             </div>
             <button
               type="button"

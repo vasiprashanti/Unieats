@@ -16,6 +16,7 @@ import Navbar from "../components/Navigation/Navbar";
 import MobileHeader from "../components/Navigation/MobileHeader";
 
 export default function Orders() {
+  const getOrderId = (order) => order?._id || order?.id || order?.orderNumber || '';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,7 +56,7 @@ export default function Orders() {
         }
 
         const data = await response.json();
-        console.log("emm orrderss--",data);
+        console.log("Orders Data from Backend--",data);
         
         // Apply filters - ensure we always have an array
         let allOrders = [];
@@ -87,8 +88,51 @@ export default function Orders() {
           );
         }
 
-        setOrders(filteredOrders);
-        setTotalPages(Math.ceil(filteredOrders.length / 10));
+        // Normalize orders for UI
+        const normalize = (o) => {
+          if (!o) return null;
+          const id = o._id || o.id || o.orderNumber || '';
+          const restaurant = o.vendor ? (o.vendor.businessName || o.vendor.name) : (o.restaurant?.name || o.restaurant || 'Restaurant');
+          const total = o.totalPrice ?? o.total ?? o.amount ?? 0;
+          const createdAt = o.createdAt || o.placedAt || o.date || null;
+          const paymentMethod = o.paymentDetails?.method || o.paymentMethod || (o.payment && o.payment.method) || 'Online Payment';
+          const paymentStatus = o.paymentDetails?.status || o.paymentStatus || (o.payment && o.payment.status) || (paymentMethod === 'COD' ? 'pending' : 'completed');
+          const items = Array.isArray(o.items) ? o.items : (o.orderItems || []);
+          // derive a displayable address string from deliveryAddress or other address fields
+          let customerAddress = '';
+          const addr = o.deliveryAddress || o.customerAddress || o.address || null;
+          if (addr) {
+            if (typeof addr === 'string') customerAddress = addr;
+            else {
+              // prefer street/line1 if present, otherwise city/state/zip
+              const parts = [];
+              if (addr.street) parts.push(addr.street);
+              if (addr.line1) parts.push(addr.line1);
+              if (addr.city) parts.push(addr.city);
+              if (addr.state) parts.push(addr.state);
+              if (addr.zipCode) parts.push(addr.zipCode);
+              if (addr.pincode) parts.push(addr.pincode);
+              customerAddress = parts.filter(Boolean).join(', ');
+            }
+          }
+
+          return {
+            ...o,
+            id,
+            orderNumber: id,
+            restaurantName: restaurant,
+            total,
+            createdAt,
+            paymentMethod,
+            paymentStatus,
+            items,
+            customerAddress,
+          };
+        };
+
+        const normalized = filteredOrders.map(normalize).filter(Boolean);
+        setOrders(normalized);
+        setTotalPages(Math.ceil(normalized.length / 10));
       } catch (err) {
         console.error('Failed to fetch orders:', err);
         setError(err.message);
@@ -141,7 +185,9 @@ export default function Orders() {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
     return date.toLocaleDateString("en-IN", {
       day: "numeric",
       month: "short",
@@ -150,7 +196,10 @@ export default function Orders() {
   };
 
   const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString("en-IN", {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -309,8 +358,9 @@ export default function Orders() {
               const statusInfo = getStatusInfo(order.status);
               return (
                 <div
-                  key={order.id}
-                  className="rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-200"
+                  key={getOrderId(order)}
+                  onClick={() => navigate(`/orders/${getOrderId(order)}`, { state: { order } })}
+                  className="rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer"
                   style={{ backgroundColor: "hsl(var(--card))" }}
                 >
                   {/* Order Header */}
@@ -324,23 +374,18 @@ export default function Orders() {
                           className="font-semibold"
                           style={{ color: "hsl(var(--card-foreground))" }}
                         >
-                          {order.restaurant?.name || "Restaurant"}
+                          {order.restaurantName || order.restaurant?.name || "Restaurant"}
                         </h3>
                         <div 
                           className="flex items-center gap-2 text-sm"
                           style={{ color: "hsl(var(--muted-foreground))" }}
                         >
                           <MapPin className="w-3 h-3" />
-                          {order.restaurant?.address || "Address not available"}
+                          {order.customerAddress?.line1 ? `${order.customerAddress.line1}, ${order.customerAddress.city || ''}` : (order.customerAddress || 'Address not available')}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div 
-                          className="text-sm"
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                        >
-                          #{order.orderNumber}
-                        </div>
+                        {/* Order ID removed from list view */}
                         <div 
                           className="text-sm"
                           style={{ color: "hsl(var(--muted-foreground))" }}
@@ -392,12 +437,12 @@ export default function Orders() {
                       style={{ borderColor: "hsl(var(--border))" }}
                     >
                       <div 
-                        className="flex items-center gap-4 text-sm"
+                        className="flex items-center  text-sm"
                         style={{ color: "hsl(var(--muted-foreground))" }}
                       >
                         <span>{formatTime(order.date)}</span>
-                        <span>•</span>
-                        <span>{order.paymentMethod || "Online Payment"}</span>
+                        <span className="font-bold">Payment Mode:</span>
+                        <span>{order.paymentMethod || order.paymentMethod || "Online Payment"}</span>
                       </div>
                       <div 
                         className="text-lg font-bold"
@@ -409,23 +454,10 @@ export default function Orders() {
 
                     {/* Action Buttons */}
                     <div className="flex gap-3 mt-4">
-                      {order.status === "delivered" && (
-                        <button
-                          onClick={() =>
-                            navigate(`/restaurants/${order.restaurantId}`)
-                          }
-                          className="flex-1 py-2 px-4 rounded-lg font-medium transition-colors duration-200"
-                          style={{ 
-                            backgroundColor: "hsl(var(--primary))",
-                            color: "hsl(var(--primary-foreground))"
-                          }}
-                        >
-                          Reorder
-                        </button>
-                      )}
+                      {/* No Reorder button for delivered orders per request */}
                       {order.status === "out_for_delivery" && (
                         <button
-                          onClick={() => navigate(`/orders/${order.id}`)}
+                          onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order.id}`, { state: { order } }); }}
                           className="flex-1 py-2 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2 hover:opacity-80"
                           style={{ 
                             border: "1px solid hsl(var(--primary))",
@@ -439,9 +471,7 @@ export default function Orders() {
                       )}
                       {order.status === "cancelled" && (
                         <button
-                          onClick={() =>
-                            navigate(`/restaurants/${order.restaurantId}`)
-                          }
+                          onClick={(e) => { e.stopPropagation(); navigate(`/restaurants/${order.restaurantId}`); }}
                           className="flex-1 py-2 px-4 rounded-lg font-medium transition-colors duration-200"
                           style={{ 
                             backgroundColor: "hsl(var(--primary))",
@@ -453,7 +483,7 @@ export default function Orders() {
                       )}
                       {order.status === "preparing" && (
                         <button
-                          onClick={() => navigate(`/orders/${order.id}`)}
+                          onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order.id}`, { state: { order } }); }}
                           className="flex-1 py-2 px-4 rounded-lg font-medium transition-colors duration-200 hover:opacity-80"
                           style={{ 
                             border: "1px solid hsl(var(--primary))",

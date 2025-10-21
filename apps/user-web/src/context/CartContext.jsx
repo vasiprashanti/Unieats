@@ -41,10 +41,24 @@ function cartReducer(state, action) {
 export function CartProvider({ children }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        // User logged out - clear cart
+        dispatch({ type: CART_ACTIONS.CLEAR_CART });
+        localStorage.removeItem('unieats-cart');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Load cart from localStorage on mount
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('unieats-cart');
-      if (savedCart) {
+      if (savedCart && auth.currentUser) { // Only load if user is logged in
         dispatch({ type: CART_ACTIONS.LOAD_CART, payload: JSON.parse(savedCart) });
       }
     } catch (error) {
