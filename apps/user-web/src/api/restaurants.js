@@ -75,7 +75,7 @@ export const getRestaurantById = async (id, token) => {
   console.log(`[getRestaurantById] Fetching restaurant with id: ${id}`);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/vendors/restaurants/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/public/restaurants/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -124,21 +124,9 @@ export const getRestaurantMenu = async (restaurantId) => {
   console.log(`[getRestaurantMenu] Fetching menu for restaurant id: ${restaurantId}`);
 
   try {
-    const auth = getAuth();
-    const user = auth.currentUser;
 
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    // 🔑 Get fresh Firebase ID token
-    const token = await user.getIdToken();
-    const response = await fetch(`${API_BASE_URL}/api/v1/vendors/restaurants/${restaurantId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/public/restaurants/${restaurantId}`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
     });
     const data = await response.json();
     console.log('[getRestaurantMenu] Response:', data);
@@ -154,7 +142,7 @@ export const getRestaurantMenu = async (restaurantId) => {
     // ✅ RETURN THE RAW DATA - Let the React component transform it
     return {
       success: true,
-      data: data.data // This contains { menu: [...], vendor: {...} }
+      data: data.data
     };
   } catch (err) {
     console.error('[getRestaurantMenu] Exception:', err);

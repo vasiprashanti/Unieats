@@ -92,13 +92,7 @@ export default function RestaurantMenu() {
   const navigate = useNavigate();
   const auth = getAuth();
   
-  useEffect(() => {
-    // Check if user is logged in
-    if (!auth.currentUser) {
-      navigate('/login');
-      return;
-    }
-  }, [navigate]);
+  
   const { addItem, getItemQuantity, updateQuantity, totalItems } = useCart();
 
   const [menuData, setMenuData] = useState(null);
