@@ -115,9 +115,15 @@ const onSubmit = async (e) => {
       console.error("Verification failed:", data.message);
       // handle error (show message to user)
     } else {
-      console.log("asall ochama");
-      navigate('/restaurants');
-      console.log("Verification successful:", data.user);
+      console.log("Login successful:", data.user);
+      // Check if there's a return URL stored
+      const returnTo = localStorage.getItem('returnTo');
+      if (returnTo) {
+        localStorage.removeItem('returnTo'); // Clear it
+        navigate(returnTo); // Go back to the stored page
+      } else {
+        navigate('/restaurants'); // Default redirect
+      }
       // You can save the user info in state or context
     }
   } catch (error) {

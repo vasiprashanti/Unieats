@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { auth } from '../config/firebase';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const CartContext = createContext(null);
 
@@ -40,6 +41,15 @@ function cartReducer(state, action) {
 
 export function CartProvider({ children }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Helper to handle unauthorized users
+  const handleUnauthorized = () => {
+    // Store current path to return after login
+    localStorage.setItem('returnTo', location.pathname + location.search);
+    navigate('/login');
+  };
 
   // Listen for auth state changes
   useEffect(() => {
@@ -126,7 +136,7 @@ export function CartProvider({ children }) {
     try {
       const token = await getFirebaseToken();
       if (!token) {
-        alert("User not logged in");
+        handleUnauthorized();
         return;
       }
 
@@ -193,7 +203,7 @@ export function CartProvider({ children }) {
     try {
       const token = await getFirebaseToken();
       if (!token) {
-        alert("User not logged in");
+        handleUnauthorized();
         return;
       }
 
@@ -269,7 +279,7 @@ export function CartProvider({ children }) {
     try {
       const token = await getFirebaseToken();
       if (!token) {
-        alert("User not logged in");
+        handleUnauthorized();
         return;
       }
 
