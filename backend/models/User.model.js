@@ -35,9 +35,6 @@ const userSchema = new Schema(
     },
     yearOfStudy: {
       type: String,
-      required: function() {
-        return this.accommodation === "Hosteller";
-      },
       enum: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
     },
     accommodation: {
