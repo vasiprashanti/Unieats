@@ -67,7 +67,7 @@ export default function AppRoutes() {
         <Route path="/profile" element={<ProtectedUser><Profile /></ProtectedUser>} />
         <Route path="/support" element={<ProtectedUser><Support /></ProtectedUser>} />
          <Route path="/terms" element={<TermsAndConditions />} />
-        <Route path="/privacy" element={<ProtectedUser><PrivacyPolicy /></ProtectedUser>} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/about" element={<ProtectedUser><AboutUs /></ProtectedUser>} />
         <Route path="/team" element={<ProtectedUser><Team /></ProtectedUser>} />
         <Route path="/careers" element={<ProtectedUser><Careers/></ProtectedUser>}/>

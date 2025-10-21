@@ -210,30 +210,47 @@ export function CartProvider({ children }) {
       console.log('Update quantity response:', text);
       let data = text ? JSON.parse(text) : {};
 
-      if (response.ok && data.data) {
-        const items = data.data.items.map(i => ({
-          _id: i._id,
-          menuItem: i.menuItem,
-          quantity: i.quantity,
-          price: i.price,
-          ...i
-        }));
-        
-        // Recalculate totals on frontend
-        const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-        
-        console.log("After update - Frontend totals:", { totalItems, totalPrice });
-        
-        dispatch({
-          type: CART_ACTIONS.LOAD_CART,
-          payload: {
-            items,
-            totalItems,
-            totalPrice,
-            restaurantId: data.data.vendor,
-          }
-        });
+      if (response.ok) {
+        if (data.data === null) {
+          // Cart was cleared/deleted
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: initialState
+          });
+          return;
+        }
+
+        if (data.data && Array.isArray(data.data.items)) {
+          const items = data.data.items.map(i => ({
+            _id: i._id,
+            menuItem: i.menuItem,
+            quantity: i.quantity,
+            price: i.price,
+            ...i
+          }));
+          
+          // Recalculate totals on frontend
+          const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
+          const totalPrice = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+          
+          console.log("After update - Frontend totals:", { totalItems, totalPrice });
+          
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: {
+              items,
+              totalItems,
+              totalPrice,
+              restaurantId: data.data.vendor,
+            }
+          });
+        } else {
+          console.error("Invalid cart data format:", data);
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: initialState
+          });
+        }
       } else {
         alert(data.message || 'Failed to update item quantity');
       }
