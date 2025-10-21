@@ -177,7 +177,7 @@ const onSubmit = async (e) => {
 function SignupForm({ onSwitch }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-      emailOrPhone: "", firstName: "", lastName: "", yearOfStudy: "", password: "", confirmPassword: "",
+      emailOrPhone: "", phone: "", firstName: "", lastName: "", yearOfStudy: "", password: "", confirmPassword: "",
       accommodation: "", hostelBlock: "", hostelRoom: "", 
       addressLine1: "", landmark: "", city: "", state: "", zipCode: "", addressLabel: "Home"
   });
@@ -261,7 +261,7 @@ function SignupForm({ onSwitch }) {
     const registrationPayload = {
       firebaseUid,
       email,
-      phone: formData.emailOrPhone, // assuming phone is entered here
+      phone: formData.phone,
       name: { first: formData.firstName, last: formData.lastName },
       yearOfStudy: formData.yearOfStudy,
       accommodation: formData.accommodation === 'hosteller' ? 'Hosteller' : 'Non-Hosteller',
@@ -272,14 +272,13 @@ function SignupForm({ onSwitch }) {
         room: formData.hostelRoom,
       };
     } else if (formData.accommodation === 'non-hosteller') {
-      registrationPayload.addresses = [{
-        label: formData.addressLabel || 'Home',
+      registrationPayload.offCampusAddress = {
         addressLine1: formData.addressLine1,
         landmark: formData.landmark,
         city: formData.city,
         state: formData.state,
-        zipCode: formData.zipCode,
-      }];
+        zipCode: formData.zipCode
+      };
     }
     const apiRes = await fetch(
       `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/register`,
@@ -320,7 +319,8 @@ function SignupForm({ onSwitch }) {
       <Alert type="error" message={friendly(error) || (error && typeof error === 'string' ? error : null)} />
       {currentStep === 1 && (
         <div>
-          <Field label="Email / Phone" value={formData.emailOrPhone} onChange={handleChange("emailOrPhone")} required />
+          <Field label="Email" value={formData.emailOrPhone} onChange={handleChange("emailOrPhone")} required />
+          <Field label="Phone Number" value={formData.phone} onChange={handleChange("phone")} required />
           <Field label="First Name" value={formData.firstName} onChange={handleChange("firstName")} required />
           <Field label="Last Name" value={formData.lastName} onChange={handleChange("lastName")} required />
           <Field label="Password" type="password" value={formData.password} onChange={handleChange("password")} required enableToggle />
