@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { auth } from '../config/firebase'; // your Firebase config
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 
 // Role defaults to 'vendor' in this app
 const AuthContext = createContext(null);
@@ -50,8 +50,49 @@ export function AuthProvider({ children, initialRole = 'vendor' }) {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         displayName: firebaseUser.displayName,
-        role: "vendor", // Since this is vendor-web, default to vendor role
+        role: "vendor", 
       };
+
+      // Verify with backend whether this firebase user has a vendor profile
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/vendors/profile`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
+
+        if (!resp.ok) {
+          if (resp.status === 404) {
+            // User is authenticated with Firebase but not registered as a vendor in backend
+            setError('vendor/not-registered');
+            // Sign out from Firebase to avoid leaving an authenticated session
+            try { await signOut(auth); } catch (e) { console.error('Error signing out after vendor check failed:', e); }
+            setUser(null);
+            return { ok: false, code: 'vendor/not-registered' };
+          } else {
+            // Other backend errors
+            console.error('Backend vendor check failed:', resp.status);
+            setError('auth/backend-error');
+            try { await signOut(auth); } catch (e) { console.error('Error signing out after backend error:', e); }
+            setUser(null);
+            return { ok: false, code: 'auth/backend-error' };
+          }
+        }
+
+        // If OK, we can optionally read vendor data
+        const body = await resp.json();
+        // attach vendor info if needed: userWithRole.vendor = body.vendor
+      } catch (networkErr) {
+        console.error('Network error while checking vendor profile:', networkErr);
+        // On network failure, sign out and return error so UI can show message
+        setError('auth/backend-unreachable');
+        try { await signOut(auth); } catch (e) { console.error('Error signing out after network failure:', e); }
+        setUser(null);
+        return { ok: false, code: 'auth/backend-unreachable' };
+      }
   
       setUser(userWithRole);
       return { ok: true, user: userWithRole };
