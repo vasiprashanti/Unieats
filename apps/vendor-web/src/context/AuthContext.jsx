@@ -14,20 +14,65 @@ export function AuthProvider({ children, initialRole = 'vendor' }) {
 
   useEffect(() => {
     let active = true;
-    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       if (!active) return;
-      
-      if (firebaseUser) {
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          role: 'vendor',
-        });
-      } else {
+
+      // If no Firebase user, clear local state
+      if (!firebaseUser) {
         setUser(null);
+        setInitializing(false);
+        return;
       }
-      setInitializing(false);
+
+      // When a Firebase user exists, verify with backend whether they are a vendor
+      (async () => {
+        try {
+          const idToken = await firebaseUser.getIdToken();
+          const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/vendors/profile`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${idToken}`,
+            },
+          });
+
+          if (!resp.ok) {
+            // Not a vendor or backend issue — sign out locally and don't set vendor role
+            if (resp.status === 404) {
+              // Not registered as vendor
+              try { await signOut(auth); } catch (e) { console.error('Error signing out non-vendor on auth change:', e); }
+              setUser(null);
+              setError('vendor/not-registered');
+            } else {
+              console.error('Error checking vendor profile on auth change:', resp.status);
+              try { await signOut(auth); } catch (e) { console.error('Error signing out after backend error on auth change:', e); }
+              setUser(null);
+              setError('auth/backend-error');
+            }
+            setInitializing(false);
+            return;
+          }
+
+          // OK — parse vendor and set user with vendor role
+          const body = await resp.json();
+          if (!active) return;
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            role: 'vendor',
+            vendor: body.vendor,
+          });
+        } catch (err) {
+          console.error('Network/exception while verifying vendor on auth change:', err);
+          // On network error we sign out to avoid inconsistent UI
+          try { await signOut(auth); } catch (e) { console.error('Error signing out after network error on auth change:', e); }
+          setUser(null);
+          setError('auth/backend-unreachable');
+        } finally {
+          setInitializing(false);
+        }
+      })();
     });
 
     return () => {
