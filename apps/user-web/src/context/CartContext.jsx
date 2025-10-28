@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { auth } from '../config/firebase';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const CartContext = createContext(null);
 
@@ -40,11 +41,34 @@ function cartReducer(state, action) {
 
 export function CartProvider({ children }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // Helper to handle unauthorized users
+  const handleUnauthorized = () => {
+    // Store current path to return after login
+    localStorage.setItem('returnTo', location.pathname + location.search);
+    navigate('/login');
+  };
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        // User logged out - clear cart
+        dispatch({ type: CART_ACTIONS.CLEAR_CART });
+        localStorage.removeItem('unieats-cart');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Load cart from localStorage on mount
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('unieats-cart');
-      if (savedCart) {
+      if (savedCart && auth.currentUser) { // Only load if user is logged in
         dispatch({ type: CART_ACTIONS.LOAD_CART, payload: JSON.parse(savedCart) });
       }
     } catch (error) {
@@ -112,7 +136,7 @@ export function CartProvider({ children }) {
     try {
       const token = await getFirebaseToken();
       if (!token) {
-        alert("User not logged in");
+        handleUnauthorized();
         return;
       }
 
@@ -179,7 +203,7 @@ export function CartProvider({ children }) {
     try {
       const token = await getFirebaseToken();
       if (!token) {
-        alert("User not logged in");
+        handleUnauthorized();
         return;
       }
 
@@ -196,30 +220,47 @@ export function CartProvider({ children }) {
       console.log('Update quantity response:', text);
       let data = text ? JSON.parse(text) : {};
 
-      if (response.ok && data.data) {
-        const items = data.data.items.map(i => ({
-          _id: i._id,
-          menuItem: i.menuItem,
-          quantity: i.quantity,
-          price: i.price,
-          ...i
-        }));
-        
-        // Recalculate totals on frontend
-        const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-        
-        console.log("After update - Frontend totals:", { totalItems, totalPrice });
-        
-        dispatch({
-          type: CART_ACTIONS.LOAD_CART,
-          payload: {
-            items,
-            totalItems,
-            totalPrice,
-            restaurantId: data.data.vendor,
-          }
-        });
+      if (response.ok) {
+        if (data.data === null) {
+          // Cart was cleared/deleted
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: initialState
+          });
+          return;
+        }
+
+        if (data.data && Array.isArray(data.data.items)) {
+          const items = data.data.items.map(i => ({
+            _id: i._id,
+            menuItem: i.menuItem,
+            quantity: i.quantity,
+            price: i.price,
+            ...i
+          }));
+          
+          // Recalculate totals on frontend
+          const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
+          const totalPrice = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+          
+          console.log("After update - Frontend totals:", { totalItems, totalPrice });
+          
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: {
+              items,
+              totalItems,
+              totalPrice,
+              restaurantId: data.data.vendor,
+            }
+          });
+        } else {
+          console.error("Invalid cart data format:", data);
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: initialState
+          });
+        }
       } else {
         alert(data.message || 'Failed to update item quantity');
       }
@@ -238,7 +279,7 @@ export function CartProvider({ children }) {
     try {
       const token = await getFirebaseToken();
       if (!token) {
-        alert("User not logged in");
+        handleUnauthorized();
         return;
       }
 
@@ -255,28 +296,42 @@ export function CartProvider({ children }) {
       console.log('Remove item response:', text);
       let data = text ? JSON.parse(text) : {};
 
-      if (response.ok && data.data) {
-        const items = data.data.items.map(i => ({
-          _id: i._id,
-          menuItem: i.menuItem,
-          quantity: i.quantity,
-          price: i.price,
-          ...i
-        }));
-        
-        // Recalculate totals on frontend
-        const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-        
-        dispatch({
-          type: CART_ACTIONS.LOAD_CART,
-          payload: {
-            items,
-            totalItems,
-            totalPrice,
-            restaurantId: data.data.vendor,
-          }
-        });
+      if (response.ok) {
+        // If cart is deleted, backend sends data.data as [] or null
+        if (data.data === null || (Array.isArray(data.data) && data.data.length === 0)) {
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: initialState
+          });
+          return;
+        }
+        if (data.data && Array.isArray(data.data.items)) {
+          const items = data.data.items.map(i => ({
+            _id: i._id,
+            menuItem: i.menuItem,
+            quantity: i.quantity,
+            price: i.price,
+            ...i
+          }));
+          // Recalculate totals on frontend
+          const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
+          const totalPrice = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: {
+              items,
+              totalItems,
+              totalPrice,
+              restaurantId: data.data.vendor,
+            }
+          });
+        } else {
+          // Unexpected format, clear cart
+          dispatch({
+            type: CART_ACTIONS.LOAD_CART,
+            payload: initialState
+          });
+        }
       } else {
         alert(data.message || 'Failed to remove item');
       }

@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
+import {useNavigate} from "react-router-dom"
 
 // Vendor Sign-up page with multi-step form
 export default function Signup() {
+  
+  const navigate = useNavigate();
+
+
   const texts = useMemo(
     () => [
       "Grow your restaurant with Unieats!",
@@ -71,7 +76,7 @@ export default function Signup() {
             >
               Support
             </button>
-            <button className="hover:text-[#ff6600] transition-colors">Login</button>
+            <button className="hover:text-[#ff6600] transition-colors"  onClick={() => navigate("/vendor/login")} >Login</button>
           </nav>
         </div>
       </div>
@@ -305,6 +310,7 @@ function VendorSignupForm() {
   const [formData, setFormData] = useState({
     // Step 1: Basic Information
     businessName: "",
+    email: "",
     phone: "",
     
     // Step 2: Business Address
@@ -338,6 +344,9 @@ function VendorSignupForm() {
     }
   };
 
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+
   const onSubmit = async (e) => {
     e.preventDefault();
 
@@ -346,6 +355,7 @@ function VendorSignupForm() {
 
       // Append text fields only
       data.append("businessName", formData.businessName);
+      data.append("email", formData.email);
       data.append("phone", formData.phone);
       data.append("street", formData.street);
       data.append("city", formData.city);
@@ -362,8 +372,14 @@ function VendorSignupForm() {
         data.append("foodSafetyCertificate", formData.foodSafetyCertificate);
       }
 
+     for (let [key, value] of data.entries()) {
+  console.log(key, value);
+}
+
+
       // Mock API call since we can't use environment variables in artifacts
-      const response = await fetch("/api/v1/vendors/register", {
+
+      const response = await fetch(`${BASE_URL}/api/v1/vendors/register`, {
         method: "POST",
         body: data,
       });
@@ -373,6 +389,7 @@ function VendorSignupForm() {
         // Reset form
         setFormData({
           businessName: "",
+          email: "",
           phone: "",
           street: "",
           city: "",
@@ -451,7 +468,7 @@ function VendorSignupForm() {
 function Step1({ formData, updateFormData, onNext }) {
   const handleNext = (e) => {
     e.preventDefault();
-    if (formData.businessName && formData.phone) {
+    if (formData.businessName && formData.email && formData.phone) {
       onNext();
     }
   };
@@ -464,6 +481,14 @@ function Step1({ formData, updateFormData, onNext }) {
         placeholder="Business/Restaurant Name"
         value={formData.businessName}
         onChange={(value) => updateFormData('businessName', value)}
+        required
+      />
+
+      <Input
+        type="email"
+        placeholder="Business Email"
+        value={formData.email}
+        onChange={(value) => updateFormData('email', value)}
         required
       />
       
@@ -680,6 +705,7 @@ function Step4({ formData, updateFormData, onSubmit, onPrev }) {
         <h5 className="font-semibold text-[#333] mb-2">Review Your Information</h5>
         <div className="text-sm text-[#555] space-y-1">
           <p><strong>Business Name:</strong> {formData.businessName}</p>
+          <p><strong>Email:</strong> {formData.email}</p>
           <p><strong>Phone:</strong> {formData.phone}</p>
           <p><strong>Address:</strong> {formData.street}, {formData.city}, {formData.state} {formData.zipCode}</p>
           <p><strong>Cuisines:</strong> {formData.cuisineType.join(', ') || 'None selected'}</p>

@@ -96,7 +96,7 @@ const getVendorMenu = async (req, res) => {
 const createCategory = async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name?.trim()) {
+    if (typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ message: "Category name is required" });
     }
 
@@ -128,6 +128,9 @@ const createCategory = async (req, res) => {
 // CREATE menu item
 const createMenuItem = async (req, res) => {
   try {
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+
     const {
       name,
       description,
@@ -139,28 +142,46 @@ const createMenuItem = async (req, res) => {
       isVegetarian,
     } = req.body;
 
+    console.log("Extracted fields:", {
+      name,
+      description,
+      price,
+      categoryId,
+      vegOrNonVeg,
+      prepTime,
+      tags,
+      isVegetarian,
+    });
+
     // Validate required fields
     if (!name || !price || !categoryId) {
+      console.log("Validation failed: Missing required fields");
       return res
         .status(400)
         .json({ message: "Name, price, and category are required" });
     }
 
     const vendor = await getVendor(req.user._id);
+    console.log("Vendor found:", vendor);
 
     // Verify category belongs to this vendor
     const category = await MenuCategory.findOne({
       _id: categoryId,
       vendor: vendor._id,
     });
+    console.log("Category found:", category);
+
     if (!category) {
+      console.log("Invalid category for vendor");
       return res.status(400).json({ message: "Invalid category" });
     }
 
     // Handle image upload
     let imageData = null;
     if (req.file) {
+      console.log("Uploading image...");
       imageData = await uploadImageToCloudinary(req.file);
+      console.log("Image uploaded:", imageData);
     }
 
     const menuItem = new MenuItem({
@@ -179,8 +200,11 @@ const createMenuItem = async (req, res) => {
         : [],
     });
 
+    console.log("Menu item object before save:", menuItem);
+
     await menuItem.save();
     await menuItem.populate("category", "name");
+    console.log("Menu item saved and populated:", menuItem);
 
     const responseItem = {
       id: menuItem._id,
@@ -196,6 +220,8 @@ const createMenuItem = async (req, res) => {
       tags: menuItem.tags,
     };
 
+    console.log("Response item:", responseItem);
+
     res.status(201).json(responseItem);
   } catch (error) {
     console.error("Error creating menu item:", error);
@@ -205,10 +231,13 @@ const createMenuItem = async (req, res) => {
   }
 };
 
+
 // UPDATE menu item
 const updateMenuItem = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { itemId } = req.params;
+    const id = itemId;
+
     const {
       name,
       description,
@@ -222,13 +251,11 @@ const updateMenuItem = async (req, res) => {
 
     const vendor = await getVendor(req.user._id);
 
-    // Find the menu item
     const menuItem = await MenuItem.findOne({ _id: id, vendor: vendor._id });
     if (!menuItem) {
       return res.status(404).json({ message: "Menu item not found" });
     }
 
-    // Verify category if provided
     if (categoryId) {
       const category = await MenuCategory.findOne({
         _id: categoryId,
@@ -239,29 +266,26 @@ const updateMenuItem = async (req, res) => {
       }
     }
 
-    // Handle image upload
     let imageData = menuItem.image;
     if (req.file) {
-      // Delete old image if exists
       if (menuItem.image?.public_id) {
-        await cloudinary.uploader
-          .destroy(menuItem.image.public_id)
-          .catch(console.error);
+        await cloudinary.uploader.destroy(menuItem.image.public_id).catch(console.error);
       }
       imageData = await uploadImageToCloudinary(req.file);
     }
 
-    // Update fields
     if (name) menuItem.name = name.trim();
     if (description !== undefined) menuItem.description = description?.trim();
     if (price) menuItem.price = parseFloat(price);
     if (categoryId) menuItem.category = categoryId;
+    if (prepTime) menuItem.prepTime = parseInt(prepTime);
+
     if (vegOrNonVeg || isVegetarian !== undefined) {
       menuItem.vegOrNonVeg = isVegetarian
         ? "veg"
         : vegOrNonVeg || menuItem.vegOrNonVeg;
     }
-    if (prepTime) menuItem.prepTime = parseInt(prepTime);
+
     if (tags !== undefined) {
       menuItem.tags = Array.isArray(tags)
         ? tags
@@ -269,6 +293,7 @@ const updateMenuItem = async (req, res) => {
         ? tags.split(",").map((t) => t.trim())
         : [];
     }
+
     menuItem.image = imageData;
 
     await menuItem.save();
@@ -288,19 +313,21 @@ const updateMenuItem = async (req, res) => {
       tags: menuItem.tags,
     };
 
-    res.status(200).json(responseItem);
+    return res.status(200).json(responseItem);
+
   } catch (error) {
-    console.error("Error updating menu item:", error);
     res
       .status(error.message === "Vendor profile not found" ? 404 : 500)
       .json({ message: error.message || "Server error" });
   }
 };
 
+
 // DELETE menu item
 const deleteMenuItem = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { itemId } = req.params;
+    const id=itemId;
     const vendor = await getVendor(req.user._id);
 
     const menuItem = await MenuItem.findOne({ _id: id, vendor: vendor._id });
@@ -328,34 +355,36 @@ const deleteMenuItem = async (req, res) => {
 // TOGGLE menu item availability
 const toggleAvailability = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { isAvailable } = req.body;
+    const { itemId } = req.params;
     const vendor = await getVendor(req.user._id);
 
-    const menuItem = await MenuItem.findOneAndUpdate(
-      { _id: id, vendor: vendor._id },
-      { isAvailable: Boolean(isAvailable) },
-      { new: true }
-    );
-
+    // Step 1: Find the item
+    const menuItem = await MenuItem.findOne({ _id: itemId, vendor: vendor._id });
     if (!menuItem) {
       return res.status(404).json({ message: "Menu item not found" });
     }
 
-    res.json({
+    // Step 2: Toggle the value
+    menuItem.isAvailable = !menuItem.isAvailable;
+
+    // Step 3: Save updated item
+    await menuItem.save();
+
+    return res.json({
       id: menuItem._id,
       isAvailable: menuItem.isAvailable,
       message: `Item ${
-        isAvailable ? "marked as available" : "marked as sold out"
+        menuItem.isAvailable ? "marked as available" : "marked as sold out"
       }`,
     });
+
   } catch (error) {
-    console.error("Error updating availability:", error);
-    res
+    return res
       .status(error.message === "Vendor profile not found" ? 404 : 500)
       .json({ message: error.message || "Server error" });
   }
 };
+
 
 export {
   getVendorMenu,

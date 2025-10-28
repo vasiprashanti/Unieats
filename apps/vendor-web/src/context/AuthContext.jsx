@@ -1,4 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { auth } from '../config/firebase'; // your Firebase config
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 
 // Role defaults to 'vendor' in this app
 const AuthContext = createContext(null);
@@ -12,29 +14,142 @@ export function AuthProvider({ children, initialRole = 'vendor' }) {
 
   useEffect(() => {
     let active = true;
-    (async () => {
-      try {
-        await new Promise(r => setTimeout(r, 500));
-        // Optionally set user if session exists
-      } finally {
-        if (active) setInitializing(false);
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      if (!active) return;
+
+      // If no Firebase user, clear local state
+      if (!firebaseUser) {
+        setUser(null);
+        setInitializing(false);
+        return;
       }
-    })();
-    return () => { active = false; };
+
+      // When a Firebase user exists, verify with backend whether they are a vendor
+      (async () => {
+        try {
+          const idToken = await firebaseUser.getIdToken();
+          const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/vendors/profile`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${idToken}`,
+            },
+          });
+
+          if (!resp.ok) {
+            // Not a vendor or backend issue — sign out locally and don't set vendor role
+            if (resp.status === 404) {
+              // Not registered as vendor
+              try { await signOut(auth); } catch (e) { console.error('Error signing out non-vendor on auth change:', e); }
+              setUser(null);
+              setError('vendor/not-registered');
+            } else {
+              console.error('Error checking vendor profile on auth change:', resp.status);
+              try { await signOut(auth); } catch (e) { console.error('Error signing out after backend error on auth change:', e); }
+              setUser(null);
+              setError('auth/backend-error');
+            }
+            setInitializing(false);
+            return;
+          }
+
+          // OK — parse vendor and set user with vendor role
+          const body = await resp.json();
+          if (!active) return;
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            role: 'vendor',
+            vendor: body.vendor,
+          });
+        } catch (err) {
+          console.error('Network/exception while verifying vendor on auth change:', err);
+          // On network error we sign out to avoid inconsistent UI
+          try { await signOut(auth); } catch (e) { console.error('Error signing out after network error on auth change:', e); }
+          setUser(null);
+          setError('auth/backend-unreachable');
+        } finally {
+          setInitializing(false);
+        }
+      })();
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async ({ email, password }) => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
+  
     try {
-      await new Promise(r => setTimeout(r, 400));
-      setUser({ uid: 'demo', email, displayName: 'Vendor', role: 'vendor' });
-      setRole('vendor');
-      return { ok: true };
+      // Authenticate with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  
+      // Extract user info
+      const firebaseUser = userCredential.user;
+      const userWithRole = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName,
+        role: "vendor", 
+      };
+
+      // Verify with backend whether this firebase user has a vendor profile
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/vendors/profile`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
+
+        if (!resp.ok) {
+          if (resp.status === 404) {
+            // User is authenticated with Firebase but not registered as a vendor in backend
+            setError('vendor/not-registered');
+            // Sign out from Firebase to avoid leaving an authenticated session
+            try { await signOut(auth); } catch (e) { console.error('Error signing out after vendor check failed:', e); }
+            setUser(null);
+            return { ok: false, code: 'vendor/not-registered' };
+          } else {
+            // Other backend errors
+            console.error('Backend vendor check failed:', resp.status);
+            setError('auth/backend-error');
+            try { await signOut(auth); } catch (e) { console.error('Error signing out after backend error:', e); }
+            setUser(null);
+            return { ok: false, code: 'auth/backend-error' };
+          }
+        }
+
+        // If OK, we can optionally read vendor data
+        const body = await resp.json();
+        // attach vendor info if needed: userWithRole.vendor = body.vendor
+      } catch (networkErr) {
+        console.error('Network error while checking vendor profile:', networkErr);
+        // On network failure, sign out and return error so UI can show message
+        setError('auth/backend-unreachable');
+        try { await signOut(auth); } catch (e) { console.error('Error signing out after network failure:', e); }
+        setUser(null);
+        return { ok: false, code: 'auth/backend-unreachable' };
+      }
+  
+      setUser(userWithRole);
+      return { ok: true, user: userWithRole };
     } catch (e) {
-      setError('auth/wrong-password');
-      return { ok: false, code: 'auth/wrong-password' };
-    } finally { setLoading(false); }
+      console.error("Firebase login error:", e);
+      setError(e.code || "auth/wrong-password");
+      return { ok: false, code: e.code };
+    } finally {
+      setLoading(false);
+    }
   }, []);
+  
 
   const signup = useCallback(async ({ email, password, displayName }) => {
     setLoading(true); setError(null);
@@ -60,7 +175,17 @@ export function AuthProvider({ children, initialRole = 'vendor' }) {
     } finally { setLoading(false); }
   }, []);
 
-  const value = useMemo(() => ({ user, role, loading, initializing, error, login, signup, logout, setRole, setError }), [user, role, loading, initializing, error, login, signup, logout]);
+  const value = useMemo(() => ({
+    user,
+    role: user?.role || initialRole,
+    loading,
+    initializing,
+    error,
+    login,
+    signup,
+    logout,
+    setError
+  }), [user, initialRole, loading, initializing, error, login, signup, logout]);
 
   return (
     <AuthContext.Provider value={value}>

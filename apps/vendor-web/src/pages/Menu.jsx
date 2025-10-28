@@ -118,11 +118,7 @@ export default function Menu() {
     try {
       if (editingItem) {
         // Update existing item
-        await updateMenuItem({ 
-          token: user?.token, 
-          id: editingItem.id, 
-          data: formData 
-        });
+        await updateMenuItem(editingItem.id, formData);
         setNotice('Menu item updated successfully');
       } else {
         // Create new item
@@ -162,6 +158,19 @@ export default function Menu() {
       setNotice(`Item ${isAvailable ? 'marked as available' : 'marked as sold out'}`);
     } catch (e) {
       setError('Failed to update item availability');
+    }
+  };
+
+  // Handle single item delete
+  const handleDeleteItem = async (itemId) => {
+    try {
+      setError(''); // Clear any existing errors
+      await deleteMenuItem(itemId);
+      setNotice('Menu item deleted successfully');
+      fetchMenu(); // Refresh data
+    } catch (e) {
+      console.error('Delete error:', e);
+      setError(e.message || 'Failed to delete item');
     }
   };
 
@@ -358,6 +367,7 @@ export default function Menu() {
                     onSelect={handleSelectItem}
                     onEdit={openEditModal}
                     onToggleAvailability={handleToggleAvailability}
+                    onDelete={handleDeleteItem}
                   />
                 ))}
 

@@ -10,11 +10,11 @@ import { CartProvider } from './context/CartContext';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <ThemeProvider>
     <AuthProvider>
-      <CartProvider>
-        <BrowserRouter>
+      <BrowserRouter>
+        <CartProvider>
           <AppRoutes />
-        </BrowserRouter>
-      </CartProvider>
+        </CartProvider>
+      </BrowserRouter>
     </AuthProvider>
   </ThemeProvider>
 );

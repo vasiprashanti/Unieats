@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import OrdersTable from "../components/orders/OrdersTable";
 import OrderDetailsModal from "../components/orders/OrderDetailsModal";
 import Alert from "../components/Alert";
-import { bulkUpdateOrderStatus, getVendorOrders, updateOrderStatus } from "../api/vendor";
+import { getVendorOrders, updateOrderStatus } from "../api/vendor";
 import { useAuth } from "../context/AuthContext";
 
 const FILTERS = [
@@ -31,14 +31,87 @@ export default function Orders() {
   const [notice, setNotice] = useState("");
 
   const fetchOrders = async () => {
-    setLoading(true); setError("");
-    try {
-      const data = await getVendorOrders({ token: user?.token, status: filter, search, sortKey, sortDir });
-      setOrders(Array.isArray(data) ? data : []);
-    } catch (e) {
-      setError("Failed to load orders");
-    } finally { setLoading(false); }
-  };
+  setLoading(true); 
+  setError("");
+  try {
+    const data = await getVendorOrders({ status: filter, search, sortKey, sortDir });
+    console.log("orders data-", data);
+
+    // Backend returns { success: true, count, orders: [...] }
+    const raw = data?.orders ?? [];
+
+    const timeAgo = (iso) => {
+      if (!iso) return '';
+      const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+      if (diff < 60) return `${Math.floor(diff)} seconds ago`;
+      if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+      return `about ${Math.floor(diff / 86400)} days ago`;
+    };
+
+    const mapItem = (it) => {
+      return {
+        name: it.name || it.title || it.productName || 'Item',
+        qty: it.qty ?? it.quantity ?? it.count ?? 1,
+      };
+    };
+
+    const mapOrders = raw.map((o) => {
+      const customer = o.user || {};
+      // customer name may be nested object
+      let customerName = '';
+      if (customer.name) {
+        if (typeof customer.name === 'string') customerName = customer.name;
+        else if (typeof customer.name === 'object') {
+          customerName = [customer.name.first, customer.name.last].filter(Boolean).join(' ') || customer.name.full || '';
+        }
+      }
+      customerName = customerName || o.customerName || (customer.fullName || '') || 'Customer';
+
+      const customerPhone = customer.phone || customer.phoneNumber || customer.mobile || o.customerPhone || '';
+
+      const addr = o.deliveryAddress || o.customerAddress || o.address || null;
+      let customerAddress = null;
+      if (addr) {
+        if (typeof addr === 'string') customerAddress = addr;
+        else {
+          customerAddress = {
+            line1: addr.line1 || addr.addressLine || '',
+            line2: addr.line2 || '',
+            city: addr.city || addr.town || '',
+            block: addr.block || addr.blockNo || '',
+            zip: addr.zipCode || addr.postalCode || addr.zip || ''
+          };
+        }
+      }
+
+      const items = Array.isArray(o.items) ? o.items.map(mapItem) : [];
+
+      return {
+        id: o._id || o.id,
+        code: o.code || (o._id ? `ORD_${String(o._id).slice(0,6).toUpperCase()}` : 'ORD_000'),
+        status: o.status || 'pending',
+        items,
+        customerAddress,
+        customerName,
+        customerPhone,
+        total: o.totalPrice ?? o.total ?? o.amount ?? 0,
+        placedAt: o.createdAt || o.placedAt || o.created_at,
+        placedAgoText: timeAgo(o.createdAt || o.placedAt || o.created_at),
+        timeLeftText: o.timeLeftText || '',
+        // keep original raw object for details modal
+        raw: o,
+      };
+    });
+
+    setOrders(Array.isArray(mapOrders) ? mapOrders : []);
+  } catch (e) {
+    setError("Failed to load orders");
+  } finally { 
+    setLoading(false); 
+  }
+};
+
 
   useEffect(() => { fetchOrders(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [filter, sortKey, sortDir]);
 
@@ -80,32 +153,49 @@ export default function Orders() {
 
   const openDetails = (order) => { setActiveOrder(order); setModalOpen(true); };
   const closeDetails = () => { setModalOpen(false); setActiveOrder(null); };
-
   const acceptOrder = async (order) => {
     try {
-      await updateOrderStatus({ token: user?.token, id: order.id, status: "accepted" });
+      await updateOrderStatus(order.id, "accepted");
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "accepted" } : o)));
       setNotice(`Order ${order.code} has been accepted.`);
-    } catch (e) { setError("Failed to accept order"); }
+    } catch (e) {
+      setError("Failed to accept order");
+    }
   };
+
   const rejectOrder = async (order) => {
     try {
-      await updateOrderStatus({ token: user?.token, id: order.id, status: "rejected" });
+      await updateOrderStatus(order.id, "rejected");
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "rejected" } : o)));
       setNotice(`Order ${order.code} has been rejected.`);
-    } catch (e) { setError("Failed to reject order"); }
+    } catch (e) {
+      setError("Failed to reject order");
+    }
   };
 
   const bulkUpdate = async (status) => {
     if (selectedIds.length === 0) return;
     try {
-      await bulkUpdateOrderStatus({ token: user?.token, ids: selectedIds, status });
-      setOrders((prev) => prev.map((o) => (selectedIds.includes(o.id) ? { ...o, status } : o)));
-      setSelectedIds([]);
-      setNotice(`${selectedIds.length} orders updated to ${status}.`);
-    } catch (e) { setError("Failed to update orders"); }
-  };
+      // Update each order individually using the existing single-order endpoint
+      const results = await Promise.all(
+        selectedIds.map((id) =>
+          updateOrderStatus(id, status)
+            .then((res) => ({ id, ok: true, res }))
+            .catch((err) => ({ id, ok: false, err }))
+        )
+      );
 
+      const successIds = results.filter((r) => r.ok).map((r) => r.id);
+
+      setOrders((prev) => prev.map((o) => (successIds.includes(o.id) ? { ...o, status } : o)));
+      setSelectedIds([]);
+      setNotice(`${successIds.length} orders updated to ${status}.`);
+      const failed = results.length - successIds.length;
+      if (failed > 0) setError(`${failed} orders failed to update.`);
+    } catch (e) {
+      setError("Failed to update orders");
+    }
+  };
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -166,6 +256,20 @@ export default function Orders() {
           onClick={() => bulkUpdate('ready')}
         >
           Mark as Ready
+        </button>
+        <button
+          className="rounded-lg border border-base px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
+          disabled={selectedIds.length === 0}
+          onClick={() => bulkUpdate('out_for_delivery')}
+        >
+          Mark as Out for Delivery
+        </button>
+        <button
+          className="rounded-lg border border-base px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
+          disabled={selectedIds.length === 0}
+          onClick={() => bulkUpdate('delivered')}
+        >
+          Mark as Delivered
         </button>
       </div>
 

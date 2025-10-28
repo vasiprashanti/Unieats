@@ -108,6 +108,8 @@ const signup = useCallback(async ({ email, password, displayName }) => {
     setError(null);
     try {
       await signOut(auth);
+      // Clear all items from localStorage
+      localStorage.clear();
       // The onAuthStateChanged listener will handle clearing the user state
     } catch (e) {
       console.error('Firebase logout error:', e);

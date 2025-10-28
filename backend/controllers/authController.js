@@ -15,56 +15,60 @@ const registerUser = async (req, res) => {
   } = req.body;
 
   // Basic validation
-  if (
-    !firebaseUid ||
-    !email ||
-    !phone ||
-    !name ||
-    !yearOfStudy ||
-    !accommodation
-  ) {
-    return res
-      .status(400)
-      .json({ message: "Missing required fields for registration." });
+  if (!firebaseUid || !email || !phone || !name || !accommodation) {
+    return res.status(400).json({ message: "Missing required fields for registration." });
+  }
+
+  // Additional validation only for HOSTELLERS
+  if (accommodation === "Hosteller" && !yearOfStudy) {
+    return res.status(400).json({ message: "Year of study is required for hostellers." });
+  }
+
+  // Additional validation only for NON-HOSTELLERS
+  if (accommodation === "Non-Hosteller" && !offCampusAddress) {
+    return res.status(400).json({ message: "Address is required for non-hostellers." });
   }
 
   try {
-    // Check if user already exists
     let user = await User.findOne({ $or: [{ email }, { firebaseUid }] });
+
     if (user) {
       return res.status(400).json({ message: "User already exists." });
     }
 
-    // Build the new user object based on the schema
+
     const newUserPayload = {
       firebaseUid,
       email,
       phone,
       name,
-      yearOfStudy,
       accommodation,
     };
 
-    // Conditionally add address details
+    // If Hosteller
     if (accommodation === "Hosteller") {
+      newUserPayload.yearOfStudy = yearOfStudy;
       newUserPayload.hostelDetails = hostelDetails;
-    } else if (accommodation === "Non-Hosteller" && offCampusAddress) {
-      // Convert old offCampusAddress format to new addresses array format
+      console.log("🏠 Hosteller Payload:", newUserPayload);
+    }
+
+    // If Non-Hosteller
+    if (accommodation === "Non-Hosteller") {
       newUserPayload.addresses = [
         {
-          street: offCampusAddress.addressLine1 || "",
+          label: "Home",
+          addressLine1: offCampusAddress.addressLine1 || "",
+          landmark: offCampusAddress.landmark || "",
           city: offCampusAddress.city || "",
           state: offCampusAddress.state || "",
           zipCode: offCampusAddress.zipCode || "",
-          landmark: offCampusAddress.landmark || "",
-          isDefault: true,
-          label: "Home",
         },
       ];
     }
 
     user = new User(newUserPayload);
     await user.save();
+
 
     res.status(201).json({
       message: "User registered successfully!",
@@ -76,10 +80,10 @@ const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error during user registration:", error);
     res.status(500).json({ message: "Server error during registration." });
   }
 };
+
 
 // GET USER PROFILE CONTROLLER
 const getMe = async (req, res) => {

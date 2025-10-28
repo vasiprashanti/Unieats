@@ -32,10 +32,12 @@ const orderSchema = new mongoose.Schema(
       enum: [
         "payment_pending",
         "pending",
+        "accepted",
         "preparing",
         "ready",
         "out_for_delivery",
         "delivered",
+        "rejected",
         "cancelled",
       ],
       default: "payment_pending",
@@ -51,6 +53,7 @@ const orderSchema = new mongoose.Schema(
     paymentDetails: {
       method: { type: String, enum: ["UPI", "COD"], default: "UPI" },
       transactionId: { type: String },
+      upiId: { type: String },
       status: {
         type: String,
         enum: ["pending", "completed", "failed"],
@@ -65,6 +68,7 @@ const orderSchema = new mongoose.Schema(
     },
     acceptedAt: { type: Date },
     readyAt: { type: Date },
+  rejectedAt: { type: Date },
 
     // Added statusHistory to fix pre-save push error
     statusHistory: [

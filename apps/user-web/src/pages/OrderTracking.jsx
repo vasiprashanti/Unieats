@@ -6,11 +6,24 @@ import {
   Package,
   ChefHat,
   ClipboardCheck,
+  QrCode,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navigation/Navbar";
+import { useParams, useLocation } from 'react-router-dom';
+import { auth } from '../config/firebase';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function OrderTracking() {
+  const { id } = useParams();
+  const location = useLocation();
+
+  // Add top margin to account for navbar height and padding on all sides
+  const containerStyle = {
+    padding: '2rem',
+    marginTop: '4rem', // This ensures content is below navbar
+  };
+
   const [orders, setOrders] = useState([
     {
       id: "ORD-001",
@@ -34,8 +47,46 @@ export default function OrderTracking() {
     },
   ]);
 
-  const [selectedOrder, setSelectedOrder] = useState(orders[0]);
-  const [simulateRealTime, setSimulateRealTime] = useState(false);
+  const normalizeOrder = (o) => {
+    if (!o) return null;
+    const id = o._id || o.id || o.orderNumber || "";
+    const total = o.total || o.totalPrice || o.amount || 0;
+    const restaurant = o.vendor ? (o.vendor.businessName || o.vendor.name) : (o.restaurant || "");
+    const restaurantId = o.vendor ? (o.vendor._id || o.vendor.id) : (o.restaurantId || "");
+    const deliveryAddress = o.deliveryAddress || o.address || o.businessAddress || "";
+    const items = Array.isArray(o.items) ? o.items : (o.orderItems || []);
+    const orderTime = o.createdAt || o.orderTime || o.date || o.orderTimeDate || null;
+    const paymentMethod = (o.paymentDetails && o.paymentDetails.method) || o.paymentMethod || (o.payment && o.payment.method) || "Online Payment";
+    // Only include UPI ID if the order is payment_pending and payment method is UPI
+    const upiId = (paymentMethod === "UPI") ? 
+                  (o.paymentDetails && o.paymentDetails.upiId) || 
+                  (o.vendor && o.vendor.upiId) || 
+                  null : null;
+    const status = o.status || 'placed';
+    const driverLocation = o.driverLocation || null;
+    const estimatedTime = o.estimatedTime || null;
+
+    return {
+      ...o,
+      id,
+      total,
+      restaurant,
+      restaurantId,
+      deliveryAddress,
+      items,
+      orderTime,
+      paymentMethod,
+      upiId,
+      status,
+      driverLocation,
+      estimatedTime,
+      _raw: o
+    };
+  };
+
+  const [selectedOrder, setSelectedOrder] = useState(() => {
+    return location.state?.order ? normalizeOrder(location.state.order) : normalizeOrder(orders[0]);
+  });
   const intervalRef = useRef(null);
 
   const statusSteps = [
@@ -47,62 +98,112 @@ export default function OrderTracking() {
     { key: "delivered", label: "Delivered", icon: CheckCircle },
   ];
 
-  const getStatusIndex = (status) =>
-    statusSteps.findIndex((step) => step.key === status);
-  const currentStatusIndex = getStatusIndex(selectedOrder.status);
+  const mapBackendStatusToStep = (status) => {
+    // Map backend statuses to our step keys
+    if (!status) return 'placed';
+    if (status === 'payment_pending' || status === 'pending') return 'placed';
+    if (status === 'accepted') return 'accepted';
+    if (status === 'preparing') return 'preparing';
+    if (status === 'ready') return 'ready';
+    if (status === 'out_for_delivery') return 'out_for_delivery';
+    if (status === 'delivered') return 'delivered';
+    if (status === 'rejected' || status === 'cancelled') return 'rejected';
+    return 'placed';
+  };
 
-  // Simulate WebSocket updates
+  const getStatusIndex = (stepKey) => statusSteps.findIndex((step) => step.key === stepKey);
+  const currentStatusIndex = selectedOrder && selectedOrder.status ? getStatusIndex(mapBackendStatusToStep(selectedOrder.status)) : -1;
+
+  // Poll backend for updates to this order (every 5s)
   useEffect(() => {
-    if (simulateRealTime) {
-      intervalRef.current = setInterval(() => {
-        setOrders((prevOrders) => {
-          return prevOrders.map((order) => {
-            if (order.id === selectedOrder.id && order.status !== "delivered") {
-              const currentIndex = getStatusIndex(order.status);
-              if (currentIndex < statusSteps.length - 1) {
-                const newStatus = statusSteps[currentIndex + 1].key;
-                const updatedOrder = { ...order, status: newStatus };
+    let mounted = true;
+    const pollIntervalMs = 5000;
 
-                // Update estimated time
-                if (newStatus === "ready") {
-                  updatedOrder.estimatedTime = "5 mins";
-                } else if (newStatus === "out_for_delivery") {
-                  updatedOrder.estimatedTime = "15 mins";
-                } else if (newStatus === "delivered") {
-                  updatedOrder.estimatedTime = "Delivered";
-                  updatedOrder.deliveredTime = new Date();
-                }
-
-                // Simulate driver movement
-                if (newStatus === "out_for_delivery" && order.driverLocation) {
-                  updatedOrder.driverLocation = {
-                    lat:
-                      order.driverLocation.lat + (Math.random() - 0.5) * 0.001,
-                    lng:
-                      order.driverLocation.lng + (Math.random() - 0.5) * 0.001,
-                  };
-                }
-
-                if (order.id === selectedOrder.id) {
-                  setSelectedOrder(updatedOrder);
-                }
-
-                return updatedOrder;
-              }
-            }
-            return order;
-          });
+    const fetchAndUpdate = async () => {
+      if (!id) return;
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        const token = await user.getIdToken();
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL;
+        const res = await fetch(`${API_BASE_URL}/api/v1/orders/prevOrders`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
         });
-      }, 3000);
-    }
+        if (!res.ok) return;
+        const data = await res.json();
+        const rawOrders = Array.isArray(data) ? data : (data.orders || data.data || data.data?.data || []);
+        const allOrders = rawOrders.map(normalizeOrder).filter(Boolean);
+        if (!mounted) return;
+        setOrders(allOrders);
+        const found = allOrders.find(o => String(o._id) === String(id) || String(o.id) === String(id) || String(o.orderNumber) === String(id));
+        if (found) {
+          // update selectedOrder if status or updatedAt changed
+          const prevUpdated = selectedOrder?._raw?.updatedAt || selectedOrder?._raw?.updatedAt || selectedOrder?._raw?.updatedAt;
+          const prevStatus = selectedOrder?.status;
+          const newUpdated = found._raw?.updatedAt || found._raw?.updatedAt || null;
+          if (!selectedOrder || prevStatus !== found.status || (newUpdated && String(newUpdated) !== String(prevUpdated))) {
+            setSelectedOrder(found);
+          }
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    };
+
+    // initial fetch
+    fetchAndUpdate();
+    intervalRef.current = setInterval(fetchAndUpdate, pollIntervalMs);
 
     return () => {
+      mounted = false;
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [simulateRealTime, selectedOrder.id]);
+  }, [id]);
+
+  // If navigated with state, selectedOrder is already set. Otherwise, try to fetch user's orders and find by id
+  useEffect(() => {
+    const fetchAndSelect = async () => {
+      if (!id) return;
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        const token = await user.getIdToken();
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL;
+        const res = await fetch(`${API_BASE_URL}/api/v1/orders/prevOrders`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        console.log("Order data received:", data);
+          const rawOrders = Array.isArray(data) ? data : (data.orders || data.data || data.data?.data || []);
+          const allOrders = rawOrders.map(order => {
+            const normalized = normalizeOrder(order);
+            return normalized;
+          }).filter(Boolean);
+          setOrders(allOrders);
+          const found = allOrders.find(o => String(o._id) === String(id) || String(o.id) === String(id) || String(o.orderNumber) === String(id));
+          if (found) setSelectedOrder(found);
+      } catch (err) {
+        console.error('Failed to load order for tracking:', err);
+      }
+    };
+
+    fetchAndSelect();
+  }, [id, location.state]);
 
   const formatTime = (date) => {
-    return date.toLocaleTimeString("en-IN", {
+    if (!date) return "";
+    let d = date instanceof Date ? date : new Date(date);
+    if (!d || isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -110,7 +211,8 @@ export default function OrderTracking() {
   };
 
   const getEstimatedDelivery = (orderTime, status) => {
-    const baseTime = new Date(orderTime);
+    let baseTime = orderTime ? new Date(orderTime) : new Date();
+    if (isNaN(baseTime.getTime())) baseTime = new Date();
     let addMinutes = 30;
 
     switch (status) {
@@ -137,33 +239,38 @@ export default function OrderTracking() {
     return baseTime;
   };
 
+  const getOrderIdentifier = (o) => o?._id || o?.id || o?.orderNumber || "";
+
+  const formatAddress = (addr) => {
+    if (!addr) return "";
+    if (typeof addr === "string") return addr;
+    // addr may be { city, state, zipCode } or { street, city, state, zipCode }
+    const parts = [];
+    if (addr.street) parts.push(addr.street);
+    if (addr.address) parts.push(addr.address);
+    if (addr.city) parts.push(addr.city);
+    if (addr.state) parts.push(addr.state);
+    if (addr.zipCode) parts.push(addr.zipCode);
+    if (addr.pincode) parts.push(addr.pincode);
+    return parts.filter(Boolean).join(', ');
+  };
+
+  const formatRestaurant = (r) => {
+    if (!r) return "";
+    if (typeof r === "string") return r;
+    return r.name || r.title || formatAddress(r.address) || "";
+  };
+
+  const orderTimeDate = selectedOrder && selectedOrder.orderTime ? new Date(selectedOrder.orderTime) : null;
+
   return (
     <div
       className="min-h-screen transition-colors duration-300"
       style={{ backgroundColor: "hsl(var(--background))" }}
     >
       <Navbar />
-      {/* Controls */}
-      <div className="mb-4 md:mb-6 bg-white rounded-lg p-3 md:p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={simulateRealTime}
-              onChange={(e) => setSimulateRealTime(e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm font-medium">
-              Simulate Real-time Updates
-            </span>
-          </label>
-          <div className="text-sm text-gray-500">
-            {simulateRealTime ? " Live updates enabled" : " Updates paused"}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
+      <div style={containerStyle}>
+        <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
         {/* Orders List */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-sm">
@@ -289,6 +396,44 @@ export default function OrderTracking() {
             </div>
           </div>
 
+          {/* UPI QR Code */}
+          {selectedOrder.paymentMethod === "UPI" && (
+            <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4">
+              <h3 className="text-base md:text-lg font-semibold mb-3 flex items-center gap-2">
+                <QrCode className="w-5 h-5" />
+                UPI Payment
+              </h3>
+              <div className="flex flex-col items-center space-y-4">
+                {selectedOrder.upiId ? (
+                  <>
+                    <QRCodeSVG
+                      value={`upi://pay?pa=${selectedOrder.upiId}&pn=UNIEATS&tn=Order%20${selectedOrder.id}&am=${selectedOrder.total}&cu=INR`}
+                      size={200}
+                      level="H"
+                      includeMargin={true}
+                    />
+                    <p className="text-sm text-gray-600 font-medium">
+                      Scan this QR code to pay
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      UPI ID: {selectedOrder.upiId}
+                    </p>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">Payment Information</p>
+                    <p className="text-xs text-gray-500 mt-2">Method: {selectedOrder.paymentMethod}</p>
+                    {selectedOrder.paymentDetails && (
+                      <pre className="text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded">
+                        {JSON.stringify(selectedOrder.paymentDetails, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Order Details */}
           <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
             <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">
@@ -298,13 +443,13 @@ export default function OrderTracking() {
               <div>
                 <p className="text-xs md:text-sm text-gray-600">Order ID</p>
                 <p className="font-medium text-sm md:text-base">
-                  {selectedOrder.id}
+                  {getOrderIdentifier(selectedOrder) || selectedOrder.id || ''}
                 </p>
               </div>
               <div>
                 <p className="text-xs md:text-sm text-gray-600">Restaurant</p>
                 <p className="font-medium text-sm md:text-base">
-                  {selectedOrder.restaurant}
+                  {formatRestaurant(selectedOrder.restaurant)}
                 </p>
               </div>
               <div>
@@ -312,7 +457,7 @@ export default function OrderTracking() {
                   Delivery Address
                 </p>
                 <p className="font-medium text-sm md:text-base break-words">
-                  {selectedOrder.deliveryAddress}
+                  {formatAddress(selectedOrder.deliveryAddress || selectedOrder.businessAddress || selectedOrder.address)}
                 </p>
               </div>
               <div>
@@ -350,18 +495,14 @@ export default function OrderTracking() {
               <div className="flex justify-between items-center">
                 <span className="text-xs md:text-sm">Order placed</span>
                 <span className="text-xs md:text-sm text-gray-600">
-                  {formatTime(selectedOrder.orderTime)}
+                  {formatTime(orderTimeDate)}
                 </span>
               </div>
               {currentStatusIndex >= 1 && (
                 <div className="flex justify-between items-center">
                   <span className="text-xs md:text-sm">Order accepted</span>
                   <span className="text-xs md:text-sm text-gray-600">
-                    {formatTime(
-                      new Date(
-                        selectedOrder.orderTime.getTime() + 2 * 60 * 1000
-                      )
-                    )}
+                    {formatTime(orderTimeDate ? new Date(orderTimeDate.getTime() + 2 * 60 * 1000) : null)}
                   </span>
                 </div>
               )}
@@ -371,11 +512,7 @@ export default function OrderTracking() {
                     Preparation started
                   </span>
                   <span className="text-xs md:text-sm text-gray-600">
-                    {formatTime(
-                      new Date(
-                        selectedOrder.orderTime.getTime() + 5 * 60 * 1000
-                      )
-                    )}
+                    {formatTime(orderTimeDate ? new Date(orderTimeDate.getTime() + 5 * 60 * 1000) : null)}
                   </span>
                 </div>
               )}
@@ -392,6 +529,7 @@ export default function OrderTracking() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

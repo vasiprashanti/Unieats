@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { getAuth } from 'firebase/auth';
 import { getRestaurantMenu } from '../api/restaurants';
 import { useCart } from '../context/CartContext';
 
@@ -89,6 +90,9 @@ MenuItem.displayName = 'MenuItem';
 export default function RestaurantMenu() {
   const { id: restaurantId } = useParams();
   const navigate = useNavigate();
+  const auth = getAuth();
+  
+  
   const { addItem, getItemQuantity, updateQuantity, totalItems } = useCart();
 
   const [menuData, setMenuData] = useState(null);
@@ -103,6 +107,11 @@ export default function RestaurantMenu() {
       try {
         setLoading(true);
         const response = await getRestaurantMenu(restaurantId);
+        if (response.error === "User not authenticated") {
+          // If user is not authenticated, redirect to login page
+          navigate('/login', { state: { from: location.pathname } });
+          return;
+        }
         const categories = {};
         (response.data.menu || []).forEach(category => {
           categories[category.name] = category.items;

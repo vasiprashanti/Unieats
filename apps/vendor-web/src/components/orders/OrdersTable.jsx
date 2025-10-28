@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 // Status badge styles mapped to tokens
 const statusStyles = {
   new: "bg-amber-100 text-amber-700 border border-amber-200",
+  pending: "bg-amber-100 text-amber-700 border border-amber-200",
   accepted: "bg-blue-100 text-blue-700 border border-blue-200",
   preparing: "bg-yellow-100 text-yellow-800 border border-yellow-200",
   ready: "bg-emerald-100 text-emerald-700 border border-emerald-200",
@@ -179,7 +180,7 @@ export default function OrdersTable({
 
                     {menuOpenId === o.id && (
                       <div className="absolute right-0 top-8 z-10 w-44 rounded-lg border border-base bg-[hsl(var(--card))] p-1 shadow-xl">
-                        {o.status === "new" && (
+                        {(o.status === "new" || o.status === "pending") && (
                           <>
                             <button
                               className="w-full text-left px-3 py-2 rounded-md hover:bg-accent"

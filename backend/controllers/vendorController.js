@@ -97,6 +97,7 @@ const registerVendor = async (req, res) => {
         res.status(500).json({ message: 'Server error during registration.' });
     }
 };
+
 const getVendorProfile = async (req, res) => {
   // The user must be logged in to register as a vendor
   const ownerId = req.user._id;
@@ -305,6 +306,28 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
+//GET VENDOR STATUS
+const getVendorStatus = async (req, res) => {
+  try {
+    const userId = req.user._id; // from verifyFirebaseToken middleware
+
+    // Find the vendor profile for this user
+    const vendor = await Vendor.findOne({ owner: userId }).select("approvalStatus"); // fetch only approvalStatus
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor profile not found." });
+    }
+
+    // Send response with approvalStatus
+    return res.status(200).json({
+      success: true,
+      status: vendor.approvalStatus, // send approvalStatus
+    });
+  } catch (error) {
+    console.error("Error fetching vendor approval status:", error);
+    return res.status(500).json({ message: "Server error fetching vendor approval status." });
+  }
+};
+
 // GET all vendors (restaurants)
 const getAllVendors = async (req, res) => {
   try {
@@ -403,5 +426,6 @@ export {
   getVendorProfile,
   updateOrderStatus,
   getVendorOrders,
+  getVendorStatus,
 };
 export { registerVendor, getAllVendors, getVendorDetails };

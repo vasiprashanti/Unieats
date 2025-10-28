@@ -126,28 +126,42 @@ const updateCartItem = async (req, res) => {
     const itemIndex = cart.items.findIndex(
       (p) => p.menuItem.toString() === menuItemId
     );
+
     if (itemIndex > -1) {
       if (quantity <= 0) {
-        // Remove item if quantity is 0 or less
+        // Remove item
         cart.items.splice(itemIndex, 1);
+
+        // ✅ If no items left, delete cart completely
+        if (cart.items.length === 0) {
+          await Cart.deleteOne({ user: req.user._id });
+          return res.status(200).json({
+            success: true,
+            data: [],
+            message: "Cart is empty and has been deleted.",
+          });
+        }
       } else {
         cart.items[itemIndex].quantity = quantity;
       }
+
       cart = calculateTotals(cart);
       await cart.save();
 
-      // Populate menuItem data before formatting
       await cart.populate("items.menuItem", "name image");
-
       const formattedCart = formatCart(cart);
+
       res.status(200).json({ success: true, data: formattedCart });
+
     } else {
-      res.status(404).json({ message: "Item not in cart." });
+      return res.status(404).json({ message: "Item not in cart." });
     }
+
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 
 // Clear the entire cart
 const clearCart = async (req, res) => {

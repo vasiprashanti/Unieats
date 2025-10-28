@@ -4,27 +4,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const getRestaurants = async (filters = {}) => {
   try {
-    const auth = getAuth();
-    const user = auth.currentUser;
-
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    // 🔑 Get fresh Firebase ID token
-    const token = await user.getIdToken();
-
     // Build query params
     const params = {};
     if (filters.search) params.search = filters.search;
     if (filters.page) params.page = filters.page;
     if (filters.limit) params.limit = filters.limit;
 
-    // Call backend with token
-    const res = await axios.get(`${API_BASE_URL}/api/v1/vendors/restaurants`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    // Call public endpoint without authentication
+    const res = await axios.get(`${API_BASE_URL}/api/v1/public/restaurants`, {
       params,
     });
     let restaurants = res.data.data || [];
@@ -88,7 +75,7 @@ export const getRestaurantById = async (id, token) => {
   console.log(`[getRestaurantById] Fetching restaurant with id: ${id}`);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/vendors/restaurants/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/public/restaurants/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -137,21 +124,9 @@ export const getRestaurantMenu = async (restaurantId) => {
   console.log(`[getRestaurantMenu] Fetching menu for restaurant id: ${restaurantId}`);
 
   try {
-    const auth = getAuth();
-    const user = auth.currentUser;
 
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    // 🔑 Get fresh Firebase ID token
-    const token = await user.getIdToken();
-    const response = await fetch(`${API_BASE_URL}/api/v1/vendors/restaurants/${restaurantId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/public/restaurants/${restaurantId}`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
     });
     const data = await response.json();
     console.log('[getRestaurantMenu] Response:', data);
@@ -167,7 +142,7 @@ export const getRestaurantMenu = async (restaurantId) => {
     // ✅ RETURN THE RAW DATA - Let the React component transform it
     return {
       success: true,
-      data: data.data // This contains { menu: [...], vendor: {...} }
+      data: data.data
     };
   } catch (err) {
     console.error('[getRestaurantMenu] Exception:', err);

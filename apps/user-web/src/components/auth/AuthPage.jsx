@@ -115,9 +115,15 @@ const onSubmit = async (e) => {
       console.error("Verification failed:", data.message);
       // handle error (show message to user)
     } else {
-      console.log("asall ochama");
-      navigate('/restaurants');
-      console.log("Verification successful:", data.user);
+      console.log("Login successful:", data.user);
+      // Check if there's a return URL stored
+      const returnTo = localStorage.getItem('returnTo');
+      if (returnTo) {
+        localStorage.removeItem('returnTo'); // Clear it
+        navigate(returnTo); // Go back to the stored page
+      } else {
+        navigate('/restaurants'); // Default redirect
+      }
       // You can save the user info in state or context
     }
   } catch (error) {
@@ -171,8 +177,9 @@ const onSubmit = async (e) => {
 function SignupForm({ onSwitch }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-      emailOrPhone: "", firstName: "", lastName: "", yearOfStudy: "", password: "", confirmPassword: "",
-      accommodation: "", hostelBlock: "", hostelRoom: "", addressLine1: "", landmark: ""
+      emailOrPhone: "", phone: "", firstName: "", lastName: "", yearOfStudy: "", password: "", confirmPassword: "",
+      accommodation: "", hostelBlock: "", hostelRoom: "", 
+      addressLine1: "", landmark: "", city: "", state: "", zipCode: "", addressLabel: "Home"
   });
   const [submitting, setSubmitting] = useState(false);
   const { signup, loading, error, setError } = useAuth();
@@ -193,8 +200,8 @@ function SignupForm({ onSwitch }) {
   };
   
   const nextStep = () => {
-    const { emailOrPhone, firstName, lastName, yearOfStudy, password } = formData;
-    if (!emailOrPhone || !firstName || !lastName || !yearOfStudy || !password) {
+    const { emailOrPhone, firstName, lastName, password } = formData;
+    if (!emailOrPhone || !firstName || !lastName || !password) {
       setError("Please fill in all required fields");
       return;
     }
@@ -214,6 +221,12 @@ function SignupForm({ onSwitch }) {
 
   if (password !== confirmPassword) {
     setError("auth/password-mismatch");
+    return;
+  }
+
+  // Validate hosteller requirements
+  if (formData.accommodation === "hosteller" && !formData.yearOfStudy) {
+    setError("Year of Study is required for hostellers");
     return;
   }
 
@@ -248,7 +261,7 @@ function SignupForm({ onSwitch }) {
     const registrationPayload = {
       firebaseUid,
       email,
-      phone: formData.emailOrPhone, // assuming phone is entered here
+      phone: formData.phone,
       name: { first: formData.firstName, last: formData.lastName },
       yearOfStudy: formData.yearOfStudy,
       accommodation: formData.accommodation === 'hosteller' ? 'Hosteller' : 'Non-Hosteller',
@@ -262,9 +275,9 @@ function SignupForm({ onSwitch }) {
       registrationPayload.offCampusAddress = {
         addressLine1: formData.addressLine1,
         landmark: formData.landmark,
-        city: formData.city || '',
-        state: formData.state || '',
-        zipCode: formData.zipCode || '',
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode
       };
     }
     const apiRes = await fetch(
@@ -306,10 +319,10 @@ function SignupForm({ onSwitch }) {
       <Alert type="error" message={friendly(error) || (error && typeof error === 'string' ? error : null)} />
       {currentStep === 1 && (
         <div>
-          <Field label="Email / Phone" value={formData.emailOrPhone} onChange={handleChange("emailOrPhone")} required />
+          <Field label="Email" value={formData.emailOrPhone} onChange={handleChange("emailOrPhone")} required />
+          <Field label="Phone Number" value={formData.phone} onChange={handleChange("phone")} required />
           <Field label="First Name" value={formData.firstName} onChange={handleChange("firstName")} required />
           <Field label="Last Name" value={formData.lastName} onChange={handleChange("lastName")} required />
-          <SelectField label="Year of Study" value={formData.yearOfStudy} onChange={handleChange("yearOfStudy")} required options={[{value: "", label: "Select Year"}, {value: "1st Year", label: "1st Year"}, { value: "2nd Year", label: "2nd Year" }, { value: "3rd Year", label: "3rd Year" }, { value: "4th Year", label: "4th Year" }]} />
           <Field label="Password" type="password" value={formData.password} onChange={handleChange("password")} required enableToggle />
           <PrimaryButton type="button" onClick={nextStep}>Next</PrimaryButton>
           <SwitchText>Already have an account? <LinkButton onClick={onSwitch}>Sign in here</LinkButton></SwitchText>
@@ -320,6 +333,19 @@ function SignupForm({ onSwitch }) {
           <SelectField label="Accommodation" value={formData.accommodation} onChange={handleChange("accommodation")} required options={[{value: "", label: "Select"}, {value: "hosteller", label: "Hosteller"}, {value: "non-hosteller", label: "Non-Hosteller"}]} />
           {formData.accommodation === "hosteller" && (
             <>
+              <SelectField 
+                label="Year of Study" 
+                value={formData.yearOfStudy} 
+                onChange={handleChange("yearOfStudy")} 
+                required 
+                options={[
+                  {value: "", label: "Select Year"}, 
+                  {value: "1st Year", label: "1st Year"}, 
+                  {value: "2nd Year", label: "2nd Year"}, 
+                  {value: "3rd Year", label: "3rd Year"}, 
+                  {value: "4th Year", label: "4th Year"}
+                ]} 
+              />
               <Field label="Hostel Block" value={formData.hostelBlock} onChange={handleChange("hostelBlock")} required />
               <Field label="Hostel Room" value={formData.hostelRoom} onChange={handleChange("hostelRoom")} required />
             </>
@@ -327,7 +353,11 @@ function SignupForm({ onSwitch }) {
           {formData.accommodation === "non-hosteller" && (
             <>
               <Field label="Address Line 1" value={formData.addressLine1} onChange={handleChange("addressLine1")} required />
-              <Field label="Landmark" value={formData.landmark} onChange={handleChange("landmark")} required />
+              <Field label="City" value={formData.city} onChange={handleChange("city")} required />
+              <Field label="State" value={formData.state} onChange={handleChange("state")} required />
+              <Field label="ZIP Code" value={formData.zipCode} onChange={handleChange("zipCode")} required />
+              <Field label="Landmark" value={formData.landmark} onChange={handleChange("landmark")} />
+              <Field label="Address Label" value={formData.addressLabel} onChange={handleChange("addressLabel")} required placeholder="e.g. Home, Office, etc." />
             </>
           )}
           <Field label="Confirm Password" type="password" value={formData.confirmPassword} onChange={handleChange("confirmPassword")} required enableToggle />

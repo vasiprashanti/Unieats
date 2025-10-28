@@ -12,6 +12,14 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
+  // Force cart icon refresh on auth state change
+  React.useEffect(() => {
+    if (!user) {
+      // Force refresh the component when user logs out
+      navigate(location.pathname);
+    }
+  }, [user, navigate, location.pathname]);
+  
   // Search functionality
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +52,8 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/home');
+      // Force a page reload to clear any stale state
+      window.location.href = '/home';
     } catch (error) {
       console.error('Error during logout:', error);
     }

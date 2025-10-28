@@ -1,7 +1,9 @@
 // User API functions for profile management
+import { getAuth } from 'firebase/auth';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-// Helper function for API calls
+// Helper function for API calls (kept for potential reuse)
 const apiRequest = async (endpoint, options = {}) => {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -13,7 +15,7 @@ const apiRequest = async (endpoint, options = {}) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.message || `HTTP ${response.status}`);
     }
 
@@ -24,111 +26,67 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 };
 
-// Mock user data for development
-const mockUserData = {
-  id: 'demo-user',
-  firebaseUid: 'demo-uid',
-  name: 'John Doe',
-  email: 'john.doe@university.edu',
-  phone: '+91 9876543210',
-  role: 'user',
-  addresses: [
-    {
-      id: '1',
-      label: 'Hostel Room',
-      street: 'Block A, Room 201, University Hostel',
-      city: 'Campus',
-      state: '123456',
-      zipCode: '123456',
-      phone: '+91 9876543210',
-      isDefault: true,
-    },
-    {
-      id: '2',
-      label: 'Library',
-      street: 'Central Library, Ground Floor, Campus',
-      city: 'Campus',
-      state: '123456',
-      zipCode: '123456',
-      phone: '+91 9876543210',
-      isDefault: false,
-    },
-  ],
-  paymentMethods: [
-    {
-      id: '1',
-      type: 'card',
-      cardType: 'visa',
-      lastFour: '1234',
-      expiryMonth: 12,
-      expiryYear: 2025,
-      isDefault: true,
-    },
-    {
-      id: '2',
-      type: 'card',
-      cardType: 'mastercard',
-      lastFour: '5678',
-      expiryMonth: 8,
-      expiryYear: 2026,
-      isDefault: false,
-    },
-  ],
-  createdAt: '2024-01-01T00:00:00.000Z',
-  updatedAt: '2024-01-01T00:00:00.000Z',
-};
 
-// Get user profile
+// Get user profile from backend using Firebase ID token
 export const getUserProfile = async () => {
   try {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Return mock data for development
-    return {
-      success: true,
-      data: mockUserData,
-    };
-    
-    // Uncomment for actual API call:
-    // return await apiRequest('/api/v1/users/profile', {
-    //   method: 'GET',
-    //   headers: {
-    //     'Authorization': `Bearer ${getAuthToken()}`,
-    //   },
-    // });
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    const token = await currentUser.getIdToken();
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message || `HTTP ${res.status}`);
+    }
+
+    // Backend `getMe` returns the user object directly
+    return { success: true, data };
   } catch (error) {
     console.error('Failed to fetch user profile:', error);
     throw error;
   }
 };
 
-// Update user profile
+// Update user profile on backend using Firebase ID token
 export const updateUserProfile = async (profileData) => {
   try {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Update mock data
-    Object.assign(mockUserData, {
-      ...profileData,
-      updatedAt: new Date().toISOString(),
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    const token = await currentUser.getIdToken();
+    console.log("gnggg");
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(profileData),
     });
-    
-    return {
-      success: true,
-      message: 'Profile updated successfully',
-      data: mockUserData,
-    };
-    
-    // Uncomment for actual API call:
-    // return await apiRequest('/api/v1/users/profile', {
-    //   method: 'PUT',
-    //   headers: {
-    //     'Authorization': `Bearer ${getAuthToken()}`,
-    //   },
-    //   body: JSON.stringify(profileData),
-    // });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message || `HTTP ${res.status}`);
+    }
+
+    // Expecting { message, user } shape from backend updateMe
+    return { success: true, data };
   } catch (error) {
     console.error('Failed to update profile:', error);
     throw error;

@@ -70,7 +70,12 @@ const placeOrder = async (req, res) => {
                 });
             }
 
-            orderPayload.status = "payment_pending";
+            orderPayload.status = "pending";
+            orderPayload.paymentDetails = {
+                method: "UPI",
+                status: "pending",
+                upiId: vendor.upiId // Store the UPI ID in the order
+            };
             const order = new Order(orderPayload);
             await order.save();
 
@@ -182,10 +187,23 @@ const getUserOrders = async (req, res) => {
     const userId = req.user._id;
 
     const orders = await Order.find({ user: userId })
-      .populate("vendor", "businessName profileImage") // Get vendor details for display
+      .populate("vendor", "businessName profileImage upiId") // Include upiId from vendor
       .sort({ createdAt: -1 }); // Show the most recent orders first
 
-    res.status(200).json({ success: true, count: orders.length, data: orders });
+    // Process orders to include UPI ID for payment_pending orders
+    const processedOrders = orders.map(order => {
+      const orderObj = order.toObject();
+      
+      // If order is payment_pending and using UPI, include vendor's UPI ID
+      if (orderObj.status === "payment_pending" && 
+          orderObj.paymentDetails?.method === "UPI" && 
+          orderObj.vendor?.upiId) {
+            orderObj.paymentDetails.upiId = orderObj.vendor.upiId;
+      }
+      return orderObj;
+    });
+
+    res.status(200).json({ success: true, count: processedOrders.length, data: processedOrders });
   } catch (error) {
     console.error("Error fetching user orders:", error);
     res.status(500).json({ success: false, message: "Server Error" });

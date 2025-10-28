@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Alert from "../components/Alert";
 
 // Vendor Login page with the same visual style as Signup
 export default function Login() {
@@ -116,19 +117,35 @@ function PrimaryButton({ children, type = "button", disabled }) {
 }
 
 function VendorLoginForm() {
-  const { login, loading } = useAuth();
+  const { login, loading, error, setError } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const friendly = (code) => {
+    if (!code) return null;
+    const map = {
+      "vendor/not-registered": "Vendor not registered. Please register your business.",
+      "auth/backend-unreachable": "Cannot reach backend. Please try again later.",
+      "auth/backend-error": "Server error. Please try again later.",
+      "auth/wrong-password": "Invalid email or password",
+      "auth/user-not-found": "Invalid email or password",
+      default: "Something went wrong. Please try again.",
+    };
+    return map[code] || map.default;
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       const res = await login({ email, password });
-      if (res?.ok) navigate('/vendor/dashboard');
+      console.log("result enti--",res);
+      if (res?.ok) {
+        navigate('/vendor/dashboard');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -136,6 +153,7 @@ function VendorLoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="block">
+      <Alert type="error" message={friendly(error) || null} />
       <Input type="email" placeholder="Email Address" value={email} onChange={setEmail} required />
       <Input type="password" placeholder="Password" value={password} onChange={setPassword} required />
       <div className="text-right -mt-2 mb-2">

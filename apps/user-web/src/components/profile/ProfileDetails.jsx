@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone } from 'lucide-react';
-import { getAuth } from 'firebase/auth';
 
-const ProfileDetails = ({ user, isLoading = false}) => {
+const ProfileDetails = ({ user, isLoading = false, onUpdateProfile }) => {
   const [formData, setFormData] = useState({
     firstName: user?.name?.first || '',
     lastName: user?.name?.last || '',
@@ -35,11 +34,7 @@ const ProfileDetails = ({ user, isLoading = false}) => {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-
-      const auth = getAuth();
-      if (!auth.currentUser) throw new Error('User not authenticated');
-
-      const userToken = await auth.currentUser.getIdToken();
+      console.log('ProfileDetails: handleSave called', formData);
 
       const payload = {
         name: {
@@ -50,31 +45,19 @@ const ProfileDetails = ({ user, isLoading = false}) => {
         phone: formData.phone,
       };
 
-      const res = await fetch(`${baseUrl}/api/v1/users/me`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${userToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      // Delegate saving to parent so it can call the shared API helper and update top-level state
+      if (typeof onUpdateProfile === 'function') {
+        console.log('ProfileDetails: calling onUpdateProfile');
+        await onUpdateProfile(payload);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error('API response:', data);
-        throw new Error(data.message || 'Failed to update profile');
+        // Update local form with the latest data
+        setFormData({
+          firstName: payload.name.first,
+          lastName: payload.name.last,
+          email: payload.email,
+          phone: payload.phone,
+        });
       }
-
-      console.log('Profile updated:', data);
-
-      // Update local state with API response
-      setFormData({
-        firstName: data.user.name.first,
-        lastName: data.user.name.last,
-        email: data.user.email,
-        phone: data.user.phone,
-      });
 
       setIsEditing(false);
     } catch (error) {
