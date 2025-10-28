@@ -203,72 +203,106 @@ const getVendorOrders = async (req, res) => {
 };
 
 const updateOrderStatus = async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const { status: newStatus } = req.body;
+    try {
+        const { orderId } = req.params;
+        // Optional 'rejectionReason' from the frontend
+        const { status: newStatus, rejectionReason } = req.body;
 
-    // Security: Find the vendor profile for the logged-in user
-    const vendorProfile = await Vendor.findOne({ owner: req.user._id });
-    if (!vendorProfile) {
-      return res.status(403).json({ message: "Vendor profile not found." });
+        // Added Input Validation
+        const validStatuses = ['preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'];
+        if (!newStatus || !validStatuses.includes(newStatus)) {
+            return res.status(400).json({ message: "Invalid status provided." });
+        }
+
+        // Security: Find the vendor profile for the logged-in user
+        const vendorProfile = await Vendor.findOne({ owner: req.user._id });
+        if (!vendorProfile) {
+            return res.status(403).json({ message: "Vendor profile not found." });
+        }
+
+        const order = await Order.findById(orderId).populate("user", "_id"); // Populate user for notifications
+        if (!order) {
+            return res.status(404).json({ message: "Order not found." });
+        }
+
+        // CRITICAL Security Check: Ensure the order belongs to the logged-in vendor
+        if (order.vendor.toString() !== vendorProfile._id.toString()) {
+            return res
+                .status(403)
+                .json({ message: "You are not authorized to update this order." });
+        }
+
+        // Order Status Transition Validation (State Machine)
+        const currentStatus = order.status;
+        const allowedTransitions = {
+            pending: ["preparing", "cancelled"],
+            preparing: ["ready"],
+            ready: ["out_for_delivery", "delivered"],
+            out_for_delivery: ["delivered"],
+            delivered: [], // Cannot change after delivery
+            cancelled: [], // Cannot change after cancellation
+        };
+
+        if (
+            !allowedTransitions[currentStatus] ||
+            !allowedTransitions[currentStatus].includes(newStatus)
+        ) {
+            return res
+                .status(400)
+                .json({
+                    message: `Invalid status transition from ${currentStatus} to ${newStatus}.`,
+                });
+        }
+
+        // Handle the Rejection Reason
+        // If the vendor is rejecting (cancelling) the order, we must have a reason.
+        if (newStatus === 'cancelled') {
+            if (!rejectionReason || rejectionReason.trim() === '') {
+                // Check if reason was provided in the request body
+                return res.status(400).json({ message: 'A reason is required for rejecting an order.' });
+            }
+            order.rejectionReason = rejectionReason.trim(); // Save the reason to the order
+        }
+        
+
+        // Add timestamps for analytics
+        if (newStatus === 'preparing' && !order.acceptedAt) {
+            order.acceptedAt = new Date();
+        }
+        if (newStatus === 'ready' && !order.readyAt) {
+            order.readyAt = new Date();
+        }
+
+        order.status = newStatus;
+        // The pre-save hook on the Order model should automatically update the statusHistory array now.
+
+        const updatedOrder = await order.save();
+
+        // Add Admin Notification
+        const io = req.app.get("socketio");
+
+        // Notify the vendor's own dashboard
+        io.to(vendorProfile._id.toString()).emit("order_update", updatedOrder);
+        
+        // Notify the user who placed the order
+        io.to(order.user._id.toString()).emit("order_update", updatedOrder);
+        
+        // Notify any connected admins in the dedicated admin room
+        io.to('admin_room').emit('live_order_update', updatedOrder);
+        
+         res.status(200)
+            .json({
+                message: "Order status updated successfully!",
+                order: updatedOrder,
+            });
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        // Add more specific error handling for validation errors during save
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: 'Order validation failed on save.', details: error.message });
+        }
+        res.status(500).json({ message: "Server error while updating status." });
     }
-
-    const order = await Order.findById(orderId).populate("user", "_id");
-    if (!order) {
-      return res.status(404).json({ message: "Order not found." });
-    }
-
-    // CRITICAL Security Check: Ensure the order belongs to the logged-in vendor
-    if (order.vendor.toString() !== vendorProfile._id.toString()) {
-      return res
-        .status(403)
-        .json({ message: "You are not authorized to update this order." });
-    }
-
-    // Order Status Transition Validation (State Machine)
-    const currentStatus = order.status;
-    const allowedTransitions = {
-      pending: ["preparing", "cancelled"],
-      preparing: ["ready"],
-      ready: ["out_for_delivery", "delivered"],
-      out_for_delivery: ["delivered"],
-      delivered: [], // Cannot change after delivery
-      cancelled: [], // Cannot change after cancellation
-    };
-
-    if (
-      !allowedTransitions[currentStatus] ||
-      !allowedTransitions[currentStatus].includes(newStatus)
-    ) {
-      return res
-        .status(400)
-        .json({
-          message: `Invalid status transition from ${currentStatus} to ${newStatus}.`,
-        });
-    }
-
-    order.status = newStatus;
-    // The pre-save hook on the Order model will automatically update the statusHistory
-
-    const updatedOrder = await order.save();
-
-    // Socket.io Broadcasting for Status Changes
-    const io = req.app.get("socketio");
-    // Notify the vendor's own dashboard
-    io.to(vendorProfile._id.toString()).emit("order_update", updatedOrder);
-    // Notify the user who placed the order
-    io.to(order.user._id.toString()).emit("order_update", updatedOrder);
-
-    res
-      .status(200)
-      .json({
-        message: "Order status updated successfully!",
-        order: updatedOrder,
-      });
-  } catch (error) {
-    console.error("Error updating order status:", error);
-    res.status(500).json({ message: "Server error while updating status." });
-  }
 };
 
 // GET all vendors (restaurants)
