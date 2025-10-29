@@ -89,23 +89,33 @@ const getVendorAnalytics = async (req, res) => {
 
     // Assemble the Final Report
     const summary = summaryResult[0] || {};
+
+    // Simpler structure the frontend expects currently
     const finalReport = {
-      summary: {
-        totalRevenue: summary.totalRevenue || 0,
-        totalOrders: summary.totalOrders || 0,
-        avgOrderValue: summary.avgOrderValue || 0,
-        avgPrepTime: summary.avgPrepTime || 0,
-        // These are placeholders as we aren't calculating period-over-period changes yet
-        revenueChange: 0,
-        ordersChange: 0,
-        avgOrderValueChange: 0,
-        avgPrepTimeChange: 0,
-      },
+      totalRevenue: summary.totalRevenue || 0,
+      totalOrders: summary.totalOrders || 0,
+      averagePrepTime: summary.avgPrepTime || 0,
       revenueData: revenueData,
       topItems: topItems,
     };
 
-    res.status(200).json({ success: true, data: finalReport });
+    // const finalReport = {
+    //   summary: {
+    //     totalRevenue: summary.totalRevenue || 0,
+    //     totalOrders: summary.totalOrders || 0,
+    //     avgOrderValue: summary.avgOrderValue || 0,
+    //     avgPrepTime: summary.avgPrepTime || 0,
+    //     revenueChange: 0,
+    //     ordersChange: 0,
+    //     avgOrderValueChange: 0,
+    //     avgPrepTimeChange: 0,
+    //   },
+    //   revenueData: revenueData,
+    //   topItems: topItems,
+    // };
+    // res.status(200).json({ success: true, data: finalReport });
+
+    res.status(200).json(finalReport);
   } catch (error) {
     console.error("Error fetching vendor analytics:", error);
     res.status(500).json({ message: "Server error while fetching analytics." });

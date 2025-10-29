@@ -6,7 +6,6 @@ import {
   getAllVendors,
   getVendorDetails,
   getVendorStatus,
-  
 } from "../controllers/vendorController.js";
 import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
 import { cacheMiddleware } from "../middleware/cacheMiddleware.js";
@@ -55,12 +54,13 @@ router.get(
 // @desc    Register a new vendor profile
 // @access  Private (requires user to be logged in)
 router.post(
-    '/register',
-    uploadDocuments.fields([ // The file handler is still needed
-        { name: 'businessLicense', maxCount: 1 },
-        { name: 'foodSafetyCertificate', maxCount: 1 }
-    ]),
-    registerVendor 
+  "/register",
+  uploadDocuments.fields([
+    // The file handler is still needed
+    { name: "businessLicense", maxCount: 1 },
+    { name: "foodSafetyCertificate", maxCount: 1 },
+  ]),
+  registerVendor
 );
 
 // @route   GET /api/v1/vendors/profile
