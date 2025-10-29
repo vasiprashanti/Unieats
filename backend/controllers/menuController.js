@@ -96,7 +96,7 @@ const getVendorMenu = async (req, res) => {
 const createCategory = async (req, res) => {
   try {
     const { name } = req.body;
-    if (typeof name !== 'string' || !name.trim()) {
+    if (typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ message: "Category name is required" });
     }
 
@@ -231,7 +231,6 @@ const createMenuItem = async (req, res) => {
   }
 };
 
-
 // UPDATE menu item
 const updateMenuItem = async (req, res) => {
   try {
@@ -269,7 +268,9 @@ const updateMenuItem = async (req, res) => {
     let imageData = menuItem.image;
     if (req.file) {
       if (menuItem.image?.public_id) {
-        await cloudinary.uploader.destroy(menuItem.image.public_id).catch(console.error);
+        await cloudinary.uploader
+          .destroy(menuItem.image.public_id)
+          .catch(console.error);
       }
       imageData = await uploadImageToCloudinary(req.file);
     }
@@ -314,7 +315,6 @@ const updateMenuItem = async (req, res) => {
     };
 
     return res.status(200).json(responseItem);
-
   } catch (error) {
     res
       .status(error.message === "Vendor profile not found" ? 404 : 500)
@@ -322,12 +322,11 @@ const updateMenuItem = async (req, res) => {
   }
 };
 
-
 // DELETE menu item
 const deleteMenuItem = async (req, res) => {
   try {
     const { itemId } = req.params;
-    const id=itemId;
+    const id = itemId;
     const vendor = await getVendor(req.user._id);
 
     const menuItem = await MenuItem.findOne({ _id: id, vendor: vendor._id });
@@ -359,7 +358,10 @@ const toggleAvailability = async (req, res) => {
     const vendor = await getVendor(req.user._id);
 
     // Step 1: Find the item
-    const menuItem = await MenuItem.findOne({ _id: itemId, vendor: vendor._id });
+    const menuItem = await MenuItem.findOne({
+      _id: itemId,
+      vendor: vendor._id,
+    });
     if (!menuItem) {
       return res.status(404).json({ message: "Menu item not found" });
     }
@@ -377,14 +379,12 @@ const toggleAvailability = async (req, res) => {
         menuItem.isAvailable ? "marked as available" : "marked as sold out"
       }`,
     });
-
   } catch (error) {
     return res
       .status(error.message === "Vendor profile not found" ? 404 : 500)
       .json({ message: error.message || "Server error" });
   }
 };
-
 
 export {
   getVendorMenu,

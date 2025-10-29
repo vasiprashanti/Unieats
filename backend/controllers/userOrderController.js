@@ -5,127 +5,131 @@ import Vendor from "../models/Vendor.model.js";
 
 // Step 1 - Place Order & Initiate Payment
 const placeOrder = async (req, res) => {
-    let { addressId, paymentMethod } = req.body;
-    const userId = req.user._id;
-    paymentMethod = paymentMethod ? paymentMethod.toUpperCase() : null;
+  let { addressId, paymentMethod } = req.body;
+  const userId = req.user._id;
+  paymentMethod = paymentMethod ? paymentMethod.toUpperCase() : null;
 
-    if (!paymentMethod) {
-        return res.status(400).json({ message: "Payment method is required." });
+  if (!paymentMethod) {
+    return res.status(400).json({ message: "Payment method is required." });
+  }
+
+  try {
+    // 1️⃣ Find the user's cart
+    const cart = await Cart.findOne({ user: userId }).populate(
+      "items.menuItem",
+      "name"
+    );
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Your cart is empty." });
     }
 
-    try {
-        // 1️⃣ Find the user's cart
-        const cart = await Cart.findOne({ user: userId }).populate("items.menuItem", "name");
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
 
-        if (!cart || cart.items.length === 0) {
-            return res.status(400).json({ message: "Your cart is empty." });
-        }
+    // 2️⃣ Determine the delivery address
+    if (!addressId) {
+      return res.status(400).json({ message: "Address ID is required." });
+    }
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: "User not found." });
-        }
+    const address = user.addresses.id(addressId);
+    if (!address) {
+      return res.status(404).json({ message: "Selected address not found." });
+    }
 
-        // 2️⃣ Determine the delivery address
-        if (!addressId) {
-            return res.status(400).json({ message: "Address ID is required." });
-        }
+    const deliveryAddressObject = {
+      city: address.city,
+      state: address.state,
+      zipCode: address.zipCode,
+    };
 
-        const address = user.addresses.id(addressId);
-        if (!address) {
-            return res.status(404).json({ message: "Selected address not found." });
-        }
+    // 3️⃣ Create snapshot items array
+    const orderItems = cart.items.map((item) => ({
+      menuItem: item.menuItem._id,
+      name: item.menuItem.name,
+      price: item.price,
+      quantity: item.quantity,
+    }));
 
-        const deliveryAddressObject = {
-            city: address.city,
-            state: address.state,
-            zipCode: address.zipCode,
-        };
+    // 4️⃣ Create order payload
+    const orderPayload = {
+      user: userId,
+      vendor: cart.vendor,
+      items: orderItems,
+      totalPrice: cart.total,
+      deliveryAddress: deliveryAddressObject,
+      paymentDetails: { method: paymentMethod },
+    };
 
-        // 3️⃣ Create snapshot items array
-        const orderItems = cart.items.map((item) => ({
-            menuItem: item.menuItem._id,
-            name: item.menuItem.name,
-            price: item.price,
-            quantity: item.quantity,
-        }));
+    // 5️⃣ Handle payment logic
+    if (paymentMethod === "UPI") {
+      const vendor = await Vendor.findById(cart.vendor);
 
-        // 4️⃣ Create order payload
-        const orderPayload = {
-            user: userId,
-            vendor: cart.vendor,
-            items: orderItems,
-            totalPrice: cart.total,
-            deliveryAddress: deliveryAddressObject,
-            paymentDetails: { method: paymentMethod },
-        };
-
-        // 5️⃣ Handle payment logic
-        if (paymentMethod === "UPI") {
-            const vendor = await Vendor.findById(cart.vendor);
-
-            if (!vendor || !vendor.upiId) {
-                return res.status(400).json({
-                    message: "This vendor is not currently accepting UPI payments.",
-                });
-            }
-
-            orderPayload.status = "pending";
-            orderPayload.paymentDetails = {
-                method: "UPI",
-                status: "pending",
-                upiId: vendor.upiId // Store the UPI ID in the order
-            };
-            const order = new Order(orderPayload);
-            await order.save();
-
-            return res.status(201).json({
-                success: true,
-                message: "Order placed. Please complete the payment.",
-                data: {
-                    orderId: order._id,
-                    amount: order.totalPrice,
-                    upiId: vendor.upiId,
-                },
-            });
-        } else if (paymentMethod === "COD") {
-            orderPayload.status = "pending";
-            orderPayload.paymentDetails.status = "pending";
-
-            const order = new Order(orderPayload);
-            await order.save();
-
-            // Clear cart
-            await Cart.deleteOne({ user: userId });
-
-            // Notify vendor
-            const io = req.app.get("socketio");
-            io.to(order.vendor.toString()).emit("new_order", order);
-
-            return res.status(201).json({
-                success: true,
-                message: "Order placed successfully!",
-                data: order,
-            });
-        }
-
-        return res.status(400).json({ message: "Invalid payment method provided." });
-    } catch (error) {
-        if (error.name === "ValidationError") {
-            return res.status(400).json({
-                success: false,
-                message: "Order validation failed.",
-                details: error.message,
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            message: "Server error while placing order.",
+      if (!vendor || !vendor.upiId) {
+        return res.status(400).json({
+          message: "This vendor is not currently accepting UPI payments.",
         });
-    }
-};
+      }
 
+      orderPayload.status = "pending";
+      orderPayload.paymentDetails = {
+        method: "UPI",
+        status: "pending",
+        upiId: vendor.upiId, // Store the UPI ID in the order
+      };
+      const order = new Order(orderPayload);
+      await order.save();
+
+      return res.status(201).json({
+        success: true,
+        message: "Order placed. Please complete the payment.",
+        data: {
+          orderId: order._id,
+          amount: order.totalPrice,
+          upiId: vendor.upiId,
+        },
+      });
+    } else if (paymentMethod === "COD") {
+      orderPayload.status = "pending";
+      orderPayload.paymentDetails.status = "pending";
+
+      const order = new Order(orderPayload);
+      await order.save();
+
+      // Clear cart
+      await Cart.deleteOne({ user: userId });
+
+      // Notify vendor
+      const io = req.app.get("socketio");
+      io.to(order.vendor.toString()).emit("new_order", order);
+
+      return res.status(201).json({
+        success: true,
+        message: "Order placed successfully!",
+        data: order,
+      });
+    }
+
+    return res
+      .status(400)
+      .json({ message: "Invalid payment method provided." });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Order validation failed.",
+        details: error.message,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Server error while placing order.",
+    });
+  }
+};
 
 // Step 2 - Confirm UPI Payment
 const confirmUpiPayment = async (req, res) => {
@@ -191,19 +195,27 @@ const getUserOrders = async (req, res) => {
       .sort({ createdAt: -1 }); // Show the most recent orders first
 
     // Process orders to include UPI ID for payment_pending orders
-    const processedOrders = orders.map(order => {
+    const processedOrders = orders.map((order) => {
       const orderObj = order.toObject();
-      
+
       // If order is payment_pending and using UPI, include vendor's UPI ID
-      if (orderObj.status === "payment_pending" && 
-          orderObj.paymentDetails?.method === "UPI" && 
-          orderObj.vendor?.upiId) {
-            orderObj.paymentDetails.upiId = orderObj.vendor.upiId;
+      if (
+        orderObj.status === "payment_pending" &&
+        orderObj.paymentDetails?.method === "UPI" &&
+        orderObj.vendor?.upiId
+      ) {
+        orderObj.paymentDetails.upiId = orderObj.vendor.upiId;
       }
       return orderObj;
     });
 
-    res.status(200).json({ success: true, count: processedOrders.length, data: processedOrders });
+    res
+      .status(200)
+      .json({
+        success: true,
+        count: processedOrders.length,
+        data: processedOrders,
+      });
   } catch (error) {
     console.error("Error fetching user orders:", error);
     res.status(500).json({ success: false, message: "Server Error" });

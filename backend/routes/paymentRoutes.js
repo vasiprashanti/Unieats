@@ -1,8 +1,11 @@
 import express from "express";
 import { check } from "express-validator";
-import { placeOrder, confirmUpiPayment} from "../controllers/userOrderController.js";
+import {
+  placeOrder,
+  confirmUpiPayment,
+} from "../controllers/userOrderController.js";
 import { verifyFirebaseToken } from "../middleware/authMiddleware.js";
-import { updateOrderStatus} from "../controllers/vendorController.js";
+import { updateOrderStatus } from "../controllers/vendorController.js";
 
 const router = express.Router();
 const authenticated = [verifyFirebaseToken];

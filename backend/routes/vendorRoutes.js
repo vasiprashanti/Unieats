@@ -21,7 +21,7 @@ import {
   updateMenuItem,
   deleteMenuItem,
   createCategory,
-  toggleAvailability
+  toggleAvailability,
 } from "../controllers/menuController.js";
 import { getVendorAnalytics } from "../controllers/vendorAnalyticsController.js";
 import {
@@ -91,7 +91,7 @@ router.post(
 router.get("/orders", verifyFirebaseToken, getVendorOrders);
 
 // Get vendor status
-router.get("/vendorStatus", verifyFirebaseToken,getVendorStatus );
+router.get("/vendorStatus", verifyFirebaseToken, getVendorStatus);
 
 // Update the status of a specific order
 router.patch("/orders/:orderId/status", verifyFirebaseToken, updateOrderStatus);
@@ -106,8 +106,6 @@ router.patch(
 );
 
 router.delete("/menu/:itemId", verifyFirebaseToken, deleteMenuItem);
-
-
 
 router.patch(
   "/menu/:itemId/availability",

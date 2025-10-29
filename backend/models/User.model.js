@@ -1,12 +1,12 @@
 import mongoose, { Schema } from "mongoose";
 
 const addressSchema = new Schema({
-    label: { type: String, required: true, trim: true },
-    addressLine1: { type: String, required: true, trim: true },
-    landmark: { type: String, trim: true },
-    city: { type: String, required: true, trim: true },
-    state: { type: String, required: true, trim: true },
-    zipCode: { type: String, required: true, trim: true },
+  label: { type: String, required: true, trim: true },
+  addressLine1: { type: String, required: true, trim: true },
+  landmark: { type: String, trim: true },
+  city: { type: String, required: true, trim: true },
+  state: { type: String, required: true, trim: true },
+  zipCode: { type: String, required: true, trim: true },
 });
 
 const userSchema = new Schema(
@@ -35,7 +35,7 @@ const userSchema = new Schema(
     },
     yearOfStudy: {
       type: String,
-      enum: ['',"1st Year", "2nd Year", "3rd Year", "4th Year"],
+      enum: ["", "1st Year", "2nd Year", "3rd Year", "4th Year"],
     },
     accommodation: {
       type: String,
