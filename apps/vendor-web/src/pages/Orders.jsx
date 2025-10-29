@@ -5,6 +5,7 @@ import Alert from "../components/Alert";
 import { getVendorOrders, updateOrderStatus } from "../api/vendor";
 import { useAuth } from "../context/AuthContext";
 
+
 const STATUS_MAP = {
   new: "new",
   preparing: "preparing",
@@ -15,6 +16,7 @@ const STATUS_MAP = {
   accepted: "accepted",
   pending: "new",
 };
+
 
 const FILTERS = [
   { key: "new", label: "NEW" },
@@ -27,12 +29,15 @@ const FILTERS = [
   { key: "accepted", label: "ACCEPTED" },
 
 
+
 ];
+
 
 
 export default function Orders() {
   const { user } = useAuth();
   const [orders, setOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState("placedAt");
@@ -45,6 +50,7 @@ export default function Orders() {
   const [notice, setNotice] = useState("");
 
 
+
   const fetchOrders = async () => {
   setLoading(true); 
   setError("");
@@ -53,8 +59,10 @@ export default function Orders() {
     console.log("orders data-", data);
 
 
+
     // Backend returns { success: true, count, orders: [...] }
     const raw = data?.orders ?? [];
+
 
 
     const timeAgo = (iso) => {
@@ -67,12 +75,14 @@ export default function Orders() {
     };
 
 
+
     const mapItem = (it) => {
       return {
         name: it.name || it.title || it.productName || 'Item',
         qty: it.qty ?? it.quantity ?? it.count ?? 1,
       };
     };
+
 
 
     const mapOrders = raw.map((o) => {
@@ -88,7 +98,9 @@ export default function Orders() {
       customerName = customerName || o.customerName || (customer.fullName || '') || 'Customer';
 
 
+
       const customerPhone = customer.phone || customer.phoneNumber || customer.mobile || o.customerPhone || '';
+
 
 
       const addr = o.deliveryAddress || o.customerAddress || o.address || null;
@@ -107,10 +119,13 @@ export default function Orders() {
       }
 
 
+
       const items = Array.isArray(o.items) ? o.items.map(mapItem) : [];
+
 
       const originalStatus = o.status || 'pending';
       const normalizedStatus = STATUS_MAP[originalStatus] || originalStatus;
+
 
       return {
         id: o._id || o.id,
@@ -129,6 +144,7 @@ export default function Orders() {
     });
 
 
+
     setOrders(Array.isArray(mapOrders) ? mapOrders : []);
   } catch (e) {
     setError("Failed to load orders");
@@ -137,15 +153,82 @@ export default function Orders() {
   }
 };
 
+  const fetchAllOrders = async () => {
+  try {
+    const data = await getVendorOrders({ status: "", search: "", sortKey: "placedAt", sortDir: "desc" });
+    const raw = data?.orders ?? [];
+
+    const mapItem = (it) => {
+      return {
+        name: it.name || it.title || it.productName || 'Item',
+        qty: it.qty ?? it.quantity ?? it.count ?? 1,
+      };
+    };
+
+    const mapOrders = raw.map((o) => {
+      const customer = o.user || {};
+      let customerName = '';
+      if (customer.name) {
+        if (typeof customer.name === 'string') customerName = customer.name;
+        else if (typeof customer.name === 'object') {
+          customerName = [customer.name.first, customer.name.last].filter(Boolean).join(' ') || customer.name.full || '';
+        }
+      }
+      customerName = customerName || o.customerName || (customer.fullName || '') || 'Customer';
+
+      const customerPhone = customer.phone || customer.phoneNumber || customer.mobile || o.customerPhone || '';
+
+      const addr = o.deliveryAddress || o.customerAddress || o.address || null;
+      let customerAddress = null;
+      if (addr) {
+        if (typeof addr === 'string') customerAddress = addr;
+        else {
+          customerAddress = {
+            line1: addr.line1 || addr.addressLine || '',
+            line2: addr.line2 || '',
+            city: addr.city || addr.town || '',
+            block: addr.block || addr.blockNo || '',
+            zip: addr.zipCode || addr.postalCode || addr.zip || ''
+          };
+        }
+      }
+
+      const items = Array.isArray(o.items) ? o.items.map(mapItem) : [];
+
+      const originalStatus = o.status || 'pending';
+      const normalizedStatus = STATUS_MAP[originalStatus] || originalStatus;
+
+      return {
+        id: o._id || o.id,
+        code: o.code || (o._id ? `ORD_${String(o._id).slice(0,6).toUpperCase()}` : 'ORD_000'),
+        status: normalizedStatus,
+        items,
+        customerAddress,
+        customerName,
+        customerPhone,
+        total: o.totalPrice ?? o.total ?? o.amount ?? 0,
+        placedAt: o.createdAt || o.placedAt || o.created_at,
+        raw: o,
+      };
+    });
+
+    setAllOrders(Array.isArray(mapOrders) ? mapOrders : []);
+  } catch (e) {
+    // Silent fail for count fetching
+  }
+};
 
 
   useEffect(() => { fetchOrders(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [filter, sortKey, sortDir]);
 
+  useEffect(() => { fetchAllOrders(); }, []);
+
 
   const counts = useMemo(() => {
-    const by = orders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc; }, {});
-    return { all: orders.length, ...by };
-  }, [orders]);
+    const by = allOrders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc; }, {});
+    return { all: allOrders.length, ...by };
+  }, [allOrders]);
+
 
 
   const displayedOrders = useMemo(() => {
@@ -168,10 +251,12 @@ export default function Orders() {
   }, [orders, filter, search, sortKey, sortDir]);
 
 
+
   const onSort = (key) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
   };
+
 
 
   const onToggleSelect = (id, checked) => {
@@ -182,12 +267,14 @@ export default function Orders() {
   };
 
 
+
   const openDetails = (order) => { setActiveOrder(order); setModalOpen(true); };
   const closeDetails = () => { setModalOpen(false); setActiveOrder(null); };
   const acceptOrder = async (order) => {
     try {
       await updateOrderStatus(order.id, "accepted");
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "accepted" } : o)));
+      setAllOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "accepted" } : o)));
       setNotice(`Order ${order.code} has been accepted.`);
     } catch (e) {
       setError("Failed to accept order");
@@ -195,15 +282,18 @@ export default function Orders() {
   };
 
 
+
   const rejectOrder = async (order) => {
     try {
       await updateOrderStatus(order.id, "rejected");
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "rejected" } : o)));
+      setAllOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "rejected" } : o)));
       setNotice(`Order ${order.code} has been rejected.`);
     } catch (e) {
       setError("Failed to reject order");
     }
   };
+
 
 
   const bulkUpdate = async (status) => {
@@ -223,6 +313,7 @@ export default function Orders() {
 
 
       setOrders((prev) => prev.map((o) => (successIds.includes(o.id) ? { ...o, status } : o)));
+      setAllOrders((prev) => prev.map((o) => (successIds.includes(o.id) ? { ...o, status } : o)));
       setSelectedIds([]);
       setNotice(`${successIds.length} orders updated to ${status}.`);
       const failed = results.length - successIds.length;
@@ -252,7 +343,6 @@ export default function Orders() {
         </div>
       </div>
 
-
       {/* Filters */}
       <div className="flex items-center gap-2 overflow-x-auto">
         {FILTERS.map((f) => (
@@ -275,9 +365,7 @@ export default function Orders() {
         ))}
       </div>
 
-
       <Alert type={error ? 'error' : 'success'} message={error || notice} />
-
 
       {/* Bulk actions */}
       {/* <div className="flex items-center gap-2">
@@ -311,7 +399,6 @@ export default function Orders() {
         </button>
       </div> */}
 
-
       {/* Table */}
       <OrdersTable
         orders={displayedOrders}
@@ -328,7 +415,6 @@ export default function Orders() {
         search={search}
       />
 
-
       {/* Modal */}
       <OrderDetailsModal
         open={modalOpen}
@@ -337,7 +423,6 @@ export default function Orders() {
         onAccept={acceptOrder}
         onReject={rejectOrder}
       />
-
 
       {/* Loading overlay */}
       {loading && (
