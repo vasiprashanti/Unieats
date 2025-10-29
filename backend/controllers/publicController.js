@@ -61,12 +61,10 @@ const getRestaurantDetails = async (req, res) => {
     }).select("-commissionRate -documents"); // Exclude sensitive info
 
     if (!vendor) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Restaurant not found or not approved.",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found or not approved.",
+      });
     }
 
     // Step 2: Find all menu items for that vendor

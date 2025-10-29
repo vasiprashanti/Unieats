@@ -1,10 +1,19 @@
-import express from 'express';
-import { check } from 'express-validator';
-import { verifyFirebaseToken, checkRole } from '../middleware/authMiddleware.js';
-import { registerUser, getMe, verifyToken } from '../controllers/authController.js';
+import express from "express";
+import { check } from "express-validator";
+import {
+  verifyFirebaseToken,
+  checkRole,
+} from "../middleware/authMiddleware.js";
+import {
+  registerUser,
+  getMe,
+  verifyToken,
+} from "../controllers/authController.js";
 
-import { monitorRealTimeOrders, exportOrdersToCSV } from '../controllers/adminOrderController.js'; 
-
+import {
+  monitorRealTimeOrders,
+  exportOrdersToCSV,
+} from "../controllers/adminOrderController.js";
 
 const router = express.Router();
 const adminOnly = [verifyFirebaseToken, checkRole("admin")];
@@ -24,11 +33,11 @@ router.post(
   registerUser
 );
 
-// GET ME (PROFILE) ROUTE 
+// GET ME (PROFILE) ROUTE
 // @route   GET /api/v1/auth/me
 // @desc    Get current user's profile
 // @access  Private
-router.get('/me', verifyFirebaseToken, getMe); 
+router.get("/me", verifyFirebaseToken, getMe);
 
 // @route   GET /api/v1/auth/verify
 // @desc    Verify a token is still valid
@@ -36,7 +45,6 @@ router.get('/me', verifyFirebaseToken, getMe);
 router.get("/verify", verifyFirebaseToken, verifyToken);
 
 // --- Analytics Routes ---
-
 
 // Order Management & Export Routes
 router.get("/orders/monitor", ...adminOnly, monitorRealTimeOrders);

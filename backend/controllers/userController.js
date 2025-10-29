@@ -142,7 +142,7 @@ const updateAddress = async (req, res) => {
     if (landmark !== undefined) address.landmark = landmark;
 
     // Save the user document to persist address changes
-  await user.save({ validateModifiedOnly: true });
+    await user.save({ validateModifiedOnly: true });
 
     res.status(200).json({
       message: "Address updated successfully.",

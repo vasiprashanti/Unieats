@@ -4,98 +4,118 @@ import { cloudinary } from "../config/cloudinary.js";
 import MenuItem, { MenuCategory } from "../models/MenuItem.model.js";
 
 const registerVendor = async (req, res) => {
-    // 1. Get ALL the data from the frontend form
-    const {
-        email,
-        password,
-        fullName, // From the 'Owner Name' field
-        phone,    // From the 'Phone' field
-        restaurantName, // From the 'Business Name' field
-        address, // The single address string
-        cuisineType
-    } = req.body;
+  // 1. Get ALL the data from the frontend form
+  const {
+    email,
+    password,
+    fullName, // From the 'Owner Name' field
+    phone, // From the 'Phone' field
+    restaurantName, // From the 'Business Name' field
+    address, // The single address string
+    cuisineType,
+  } = req.body;
 
-    // 2. Basic Validation: Check if the most important fields were sent
-    if (!email || !password || !restaurantName || !fullName) {
-        return res.status(400).json({ message: 'Email, password, owner name, and business name are required.' });
+  // 2. Basic Validation: Check if the most important fields were sent
+  if (!email || !password || !restaurantName || !fullName) {
+    return res.status(400).json({
+      message: "Email, password, owner name, and business name are required.",
+    });
+  }
+  if (
+    !req.files ||
+    !req.files.businessLicense ||
+    !req.files.foodSafetyCertificate
+  ) {
+    return res.status(400).json({
+      message:
+        "Both business license and food safety certificate are required.",
+    });
+  }
+
+  try {
+    // JOB 1: CREATE THE FIREBASE USER
+    console.log("Attempting to create user in Firebase...");
+    const userRecord = await admin.auth().createUser({
+      email: email,
+      password: password,
+      displayName: fullName,
+    });
+    console.log("Firebase user created successfully:", userRecord.uid);
+
+    // JOB 2: CREATE THE USER IN YOUR MONGODB
+    const newUser = new User({
+      firebaseUid: userRecord.uid,
+      email: email,
+      name: {
+        first: fullName.split(" ")[0] || "",
+        last: fullName.split(" ")[1] || "",
+      },
+      phone: phone,
+      // Add default values for other required User fields
+      yearOfStudy: "1st Year",
+      accommodation: "Non-Hosteller",
+    });
+    const savedUser = await newUser.save();
+    console.log("MongoDB user created successfully:", savedUser._id);
+
+    // JOB 3: CREATE THE VENDOR PROFILE IN MONGODB
+
+    // File Upload Logic (This part is the same)
+    const uploadToCloudinary = (file) => {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { resource_type: "auto", folder: "unieats_documents" },
+          (error, result) => {
+            if (error) reject(error);
+            else
+              resolve({ url: result.secure_url, public_id: result.public_id });
+          }
+        );
+        uploadStream.end(file.buffer);
+      });
+    };
+    const [licenseResult, certificateResult] = await Promise.all([
+      uploadToCloudinary(req.files.businessLicense[0]),
+      uploadToCloudinary(req.files.foodSafetyCertificate[0]),
+    ]);
+
+    // Assemble the new Vendor, matching the frontend's data names
+    const newVendor = new Vendor({
+      owner: savedUser._id, // Link to the user we just created
+      businessName: restaurantName, // Use the name from the form
+      contactPhone: phone, // Use the phone from the form
+      cuisineType: [cuisineType],
+      // Create a simple address object from the single string
+      businessAddress: {
+        street: address,
+        city: "Unknown",
+        state: "Unknown",
+        zipCode: "000000",
+      },
+      documents: {
+        businessLicense: licenseResult,
+        foodSafetyCertificate: certificateResult,
+      },
+    });
+
+    await newVendor.save();
+    console.log("Vendor profile created successfully.");
+
+    res.status(201).json({
+      success: true,
+      message: "Registration successful! Your application is pending approval.",
+    });
+  } catch (error) {
+    console.error("Error during vendor registration:", error);
+    // This will catch errors from Firebase (like 'email-already-exists')
+    // and Mongoose (like validation errors)
+    if (error.code === "auth/email-already-exists") {
+      return res.status(400).json({
+        message: "This email is already registered. Please login instead.",
+      });
     }
-    if (!req.files || !req.files.businessLicense || !req.files.foodSafetyCertificate) {
-        return res.status(400).json({ message: 'Both business license and food safety certificate are required.' });
-    }
-
-    try {
-        // JOB 1: CREATE THE FIREBASE USER
-        console.log("Attempting to create user in Firebase...");
-        const userRecord = await admin.auth().createUser({
-            email: email,
-            password: password,
-            displayName: fullName,
-        });
-        console.log("Firebase user created successfully:", userRecord.uid);
-
-        // JOB 2: CREATE THE USER IN YOUR MONGODB
-        const newUser = new User({
-            firebaseUid: userRecord.uid,
-            email: email,
-            name: { first: fullName.split(' ')[0] || '', last: fullName.split(' ')[1] || '' },
-            phone: phone,
-            // Add default values for other required User fields
-            yearOfStudy: '1st Year', 
-            accommodation: 'Non-Hosteller',
-        });
-        const savedUser = await newUser.save();
-        console.log("MongoDB user created successfully:", savedUser._id);
-
-        // JOB 3: CREATE THE VENDOR PROFILE IN MONGODB
-
-        // File Upload Logic (This part is the same)
-        const uploadToCloudinary = (file) => {
-            return new Promise((resolve, reject) => {
-                const uploadStream = cloudinary.uploader.upload_stream({ resource_type: 'auto', folder: 'unieats_documents' }, (error, result) => {
-                    if (error) reject(error);
-                    else resolve({ url: result.secure_url, public_id: result.public_id });
-                });
-                uploadStream.end(file.buffer);
-            });
-        };
-        const [licenseResult, certificateResult] = await Promise.all([
-            uploadToCloudinary(req.files.businessLicense[0]),
-            uploadToCloudinary(req.files.foodSafetyCertificate[0]),
-        ]);
-
-        // Assemble the new Vendor, matching the frontend's data names
-        const newVendor = new Vendor({
-            owner: savedUser._id, // Link to the user we just created
-            businessName: restaurantName, // Use the name from the form
-            contactPhone: phone, // Use the phone from the form
-            cuisineType: [cuisineType],
-            // Create a simple address object from the single string
-            businessAddress: {
-                street: address,
-                city: 'Unknown',
-                state: 'Unknown',
-                zipCode: '000000',
-            },
-            documents: {
-                businessLicense: licenseResult,
-                foodSafetyCertificate: certificateResult,
-            },
-        });
-
-        await newVendor.save();
-        console.log("Vendor profile created successfully.");
-
-        res.status(201).json({ success: true, message: 'Registration successful! Your application is pending approval.' });
-
-    } catch (error) {
-        console.error("Error during vendor registration:", error);
-        // This will catch errors from Firebase (like 'email-already-exists')
-        // and Mongoose (like validation errors)
-        if (error.code === 'auth/email-already-exists') {
-            return res.status(400).json({ message: 'This email is already registered. Please login instead.' });
-        }
-        res.status(500).json({ message: 'Server error during registration.' });
-    }
+    res.status(500).json({ message: "Server error during registration." });
+  }
 };
 
 const getVendorProfile = async (req, res) => {
@@ -153,48 +173,54 @@ const updateVendorProfile = async (req, res) => {
 const getVendorOrders = async (req, res) => {
   try {
     // 1. SECURITY: Find the vendor profile for the logged-in user
-    // This is the most important step. We need the vendor's specific ID
-    // to ensure we only fetch THEIR orders.
-    const vendorProfile = await Vendor.findOne({ owner: req.user._id });
+    const vendorProfile = await Vendor.findOne({ owner: req.user._id }).lean();
     if (!vendorProfile) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Vendor profile not found. You are not authorized to view orders.",
-        });
+      return res.status(403).json({
+        message:
+          "Vendor profile not found. You are not authorized to view orders.",
+      });
     }
 
     // 2. FILTERING LOGIC: Build a dynamic query object
-    // We start with the base security filter: only find orders for this vendor.
     const query = { vendor: vendorProfile._id };
 
-    // Now, we check for optional filters from the URL (req.query)
-    // Example: /orders?status=pending
-    const { status, date } = req.query;
+    // Get filters from URL
+    const { status, date, page = 1, limit = 50 } = req.query;
 
     if (status) {
       query.status = status;
     }
 
-    // Example date filter: /orders?date=2025-10-03
+    // Date filter
     if (date) {
       const startDate = new Date(date);
       const endDate = new Date(date);
-      endDate.setDate(endDate.getDate() + 1); // Get all orders from the start of the day to the end
+      endDate.setDate(endDate.getDate() + 1);
       query.createdAt = { $gte: startDate, $lt: endDate };
     }
 
-    // 3. EXECUTE THE QUERY
-    // We use our dynamically built 'query' object to find the matching orders.
-    const orders = await Order.find(query)
-      .populate("user", "name") // Pull in the customer's name for display
-      .sort({ createdAt: -1 }); // Show the newest orders first
+    // 3. OPTIMIZED QUERY with pagination and lean()
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // 4. SEND THE RESPONSE
+    // Execute query with lean() for better performance
+    const [orders, totalCount] = await Promise.all([
+      Order.find(query)
+        .populate("user", "name phone") // Only needed fields
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(), // Returns plain JS objects, faster than Mongoose documents
+      Order.countDocuments(query), // Get total count for pagination
+    ]);
+
+    // 4. SEND THE RESPONSE with pagination metadata
     res.status(200).json({
       success: true,
       count: orders.length,
+      totalCount,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalCount / parseInt(limit)),
+      hasMore: skip + orders.length < totalCount,
       orders: orders,
     });
   } catch (error) {
@@ -204,106 +230,113 @@ const getVendorOrders = async (req, res) => {
 };
 
 const updateOrderStatus = async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        // Optional 'rejectionReason' from the frontend
-        const { status: newStatus, rejectionReason } = req.body;
+  try {
+    const { orderId } = req.params;
+    // Optional 'rejectionReason' from the frontend
+    const { status: newStatus, rejectionReason } = req.body;
 
-        // Added Input Validation
-        const validStatuses = ['preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'];
-        if (!newStatus || !validStatuses.includes(newStatus)) {
-            return res.status(400).json({ message: "Invalid status provided." });
-        }
-
-        // Security: Find the vendor profile for the logged-in user
-        const vendorProfile = await Vendor.findOne({ owner: req.user._id });
-        if (!vendorProfile) {
-            return res.status(403).json({ message: "Vendor profile not found." });
-        }
-
-        const order = await Order.findById(orderId).populate("user", "_id"); // Populate user for notifications
-        if (!order) {
-            return res.status(404).json({ message: "Order not found." });
-        }
-
-        // CRITICAL Security Check: Ensure the order belongs to the logged-in vendor
-        if (order.vendor.toString() !== vendorProfile._id.toString()) {
-            return res
-                .status(403)
-                .json({ message: "You are not authorized to update this order." });
-        }
-
-        // Order Status Transition Validation (State Machine)
-        const currentStatus = order.status;
-        const allowedTransitions = {
-            pending: ["preparing", "cancelled"],
-            preparing: ["ready"],
-            ready: ["out_for_delivery", "delivered"],
-            out_for_delivery: ["delivered"],
-            delivered: [], // Cannot change after delivery
-            cancelled: [], // Cannot change after cancellation
-        };
-
-        if (
-            !allowedTransitions[currentStatus] ||
-            !allowedTransitions[currentStatus].includes(newStatus)
-        ) {
-            return res
-                .status(400)
-                .json({
-                    message: `Invalid status transition from ${currentStatus} to ${newStatus}.`,
-                });
-        }
-
-        // Handle the Rejection Reason
-        // If the vendor is rejecting (cancelling) the order, we must have a reason.
-        if (newStatus === 'cancelled') {
-            if (!rejectionReason || rejectionReason.trim() === '') {
-                // Check if reason was provided in the request body
-                return res.status(400).json({ message: 'A reason is required for rejecting an order.' });
-            }
-            order.rejectionReason = rejectionReason.trim(); // Save the reason to the order
-        }
-        
-
-        // Add timestamps for analytics
-        if (newStatus === 'preparing' && !order.acceptedAt) {
-            order.acceptedAt = new Date();
-        }
-        if (newStatus === 'ready' && !order.readyAt) {
-            order.readyAt = new Date();
-        }
-
-        order.status = newStatus;
-        // The pre-save hook on the Order model should automatically update the statusHistory array now.
-
-        const updatedOrder = await order.save();
-
-        // Add Admin Notification
-        const io = req.app.get("socketio");
-
-        // Notify the vendor's own dashboard
-        io.to(vendorProfile._id.toString()).emit("order_update", updatedOrder);
-        
-        // Notify the user who placed the order
-        io.to(order.user._id.toString()).emit("order_update", updatedOrder);
-        
-        // Notify any connected admins in the dedicated admin room
-        io.to('admin_room').emit('live_order_update', updatedOrder);
-        
-         res.status(200)
-            .json({
-                message: "Order status updated successfully!",
-                order: updatedOrder,
-            });
-    } catch (error) {
-        console.error("Error updating order status:", error);
-        // Add more specific error handling for validation errors during save
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ message: 'Order validation failed on save.', details: error.message });
-        }
-        res.status(500).json({ message: "Server error while updating status." });
+    // Added Input Validation
+    const validStatuses = [
+      "preparing",
+      "ready",
+      "out_for_delivery",
+      "delivered",
+      "cancelled",
+    ];
+    if (!newStatus || !validStatuses.includes(newStatus)) {
+      return res.status(400).json({ message: "Invalid status provided." });
     }
+
+    // Security: Find the vendor profile for the logged-in user
+    const vendorProfile = await Vendor.findOne({ owner: req.user._id });
+    if (!vendorProfile) {
+      return res.status(403).json({ message: "Vendor profile not found." });
+    }
+
+    const order = await Order.findById(orderId).populate("user", "_id"); // Populate user for notifications
+    if (!order) {
+      return res.status(404).json({ message: "Order not found." });
+    }
+
+    // CRITICAL Security Check: Ensure the order belongs to the logged-in vendor
+    if (order.vendor.toString() !== vendorProfile._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to update this order." });
+    }
+
+    // Order Status Transition Validation (State Machine)
+    const currentStatus = order.status;
+    const allowedTransitions = {
+      pending: ["preparing", "cancelled"],
+      preparing: ["ready"],
+      ready: ["out_for_delivery", "delivered"],
+      out_for_delivery: ["delivered"],
+      delivered: [], // Cannot change after delivery
+      cancelled: [], // Cannot change after cancellation
+    };
+
+    if (
+      !allowedTransitions[currentStatus] ||
+      !allowedTransitions[currentStatus].includes(newStatus)
+    ) {
+      return res.status(400).json({
+        message: `Invalid status transition from ${currentStatus} to ${newStatus}.`,
+      });
+    }
+
+    // Handle the Rejection Reason
+    // If the vendor is rejecting (cancelling) the order, we must have a reason.
+    if (newStatus === "cancelled") {
+      if (!rejectionReason || rejectionReason.trim() === "") {
+        // Check if reason was provided in the request body
+        return res
+          .status(400)
+          .json({ message: "A reason is required for rejecting an order." });
+      }
+      order.rejectionReason = rejectionReason.trim(); // Save the reason to the order
+    }
+
+    // Add timestamps for analytics
+    if (newStatus === "preparing" && !order.acceptedAt) {
+      order.acceptedAt = new Date();
+    }
+    if (newStatus === "ready" && !order.readyAt) {
+      order.readyAt = new Date();
+    }
+
+    order.status = newStatus;
+    // The pre-save hook on the Order model should automatically update the statusHistory array now.
+
+    const updatedOrder = await order.save();
+
+    // Add Admin Notification
+    const io = req.app.get("socketio");
+
+    // Notify the vendor's own dashboard
+    io.to(vendorProfile._id.toString()).emit("order_update", updatedOrder);
+
+    // Notify the user who placed the order
+    io.to(order.user._id.toString()).emit("order_update", updatedOrder);
+
+    // Notify any connected admins in the dedicated admin room
+    io.to("admin_room").emit("live_order_update", updatedOrder);
+
+    res.status(200).json({
+      message: "Order status updated successfully!",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    // Add more specific error handling for validation errors during save
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Order validation failed on save.",
+        details: error.message,
+      });
+    }
+    res.status(500).json({ message: "Server error while updating status." });
+  }
 };
 
 //GET VENDOR STATUS
@@ -312,7 +345,9 @@ const getVendorStatus = async (req, res) => {
     const userId = req.user._id; // from verifyFirebaseToken middleware
 
     // Find the vendor profile for this user
-    const vendor = await Vendor.findOne({ owner: userId }).select("approvalStatus"); // fetch only approvalStatus
+    const vendor = await Vendor.findOne({ owner: userId }).select(
+      "approvalStatus"
+    ); // fetch only approvalStatus
     if (!vendor) {
       return res.status(404).json({ message: "Vendor profile not found." });
     }
@@ -324,7 +359,9 @@ const getVendorStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching vendor approval status:", error);
-    return res.status(500).json({ message: "Server error fetching vendor approval status." });
+    return res
+      .status(500)
+      .json({ message: "Server error fetching vendor approval status." });
   }
 };
 

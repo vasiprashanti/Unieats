@@ -14,13 +14,11 @@ const createReview = async (req, res) => {
       status: "delivered",
     });
     if (!hasOrdered) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message:
-            "You must complete an order from this vendor before leaving a review.",
-        });
+      return res.status(403).json({
+        success: false,
+        message:
+          "You must complete an order from this vendor before leaving a review.",
+      });
     }
 
     // Business Logic: Check if the user has already reviewed this vendor
@@ -29,12 +27,10 @@ const createReview = async (req, res) => {
       vendor: vendorId,
     });
     if (existingReview) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "You have already submitted a review for this vendor.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "You have already submitted a review for this vendor.",
+      });
     }
 
     const review = await Review.create({

@@ -152,16 +152,13 @@ const updateCartItem = async (req, res) => {
       const formattedCart = formatCart(cart);
 
       res.status(200).json({ success: true, data: formattedCart });
-
     } else {
       return res.status(404).json({ message: "Item not in cart." });
     }
-
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
-
 
 // Clear the entire cart
 const clearCart = async (req, res) => {

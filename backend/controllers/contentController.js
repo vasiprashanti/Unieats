@@ -46,7 +46,9 @@ const createContent = async (req, res) => {
     res.status(201).json({ success: true, data: savedContent });
   } catch (error) {
     console.error("Error creating content:", error);
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
@@ -61,8 +63,10 @@ const getAllContent = async (req, res) => {
       query.isActive = true;
     }
 
-    const content = await Content.find();;
-    res.status(200).json({ success: true, count: content.length, data: content });
+    const content = await Content.find();
+    res
+      .status(200)
+      .json({ success: true, count: content.length, data: content });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
   }
@@ -73,7 +77,9 @@ const getContentById = async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
     if (!content) {
-      return res.status(404).json({ success: false, message: "Content not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Content not found" });
     }
     res.status(200).json({ success: true, data: content });
   } catch (error) {
@@ -86,7 +92,9 @@ const updateContent = async (req, res) => {
   try {
     let content = await Content.findById(req.params.id);
     if (!content) {
-      return res.status(404).json({ success: false, message: "Content not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Content not found" });
     }
 
     let imageData = content.image;
@@ -115,7 +123,9 @@ const updateContent = async (req, res) => {
 
     res.status(200).json({ success: true, data: updatedContent });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
@@ -124,7 +134,9 @@ const deleteContent = async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
     if (!content) {
-      return res.status(404).json({ success: false, message: "Content not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Content not found" });
     }
 
     if (content.image && content.image.public_id) {
@@ -136,7 +148,9 @@ const deleteContent = async (req, res) => {
     clearCache(`/api/v1/content`);
     clearCache(`/api/v1/content/${req.params.id}`);
 
-    res.status(200).json({ success: true, message: "Content deleted successfully." });
+    res
+      .status(200)
+      .json({ success: true, message: "Content deleted successfully." });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
   }

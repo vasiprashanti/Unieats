@@ -16,17 +16,23 @@ const registerUser = async (req, res) => {
 
   // Basic validation
   if (!firebaseUid || !email || !phone || !name || !accommodation) {
-    return res.status(400).json({ message: "Missing required fields for registration." });
+    return res
+      .status(400)
+      .json({ message: "Missing required fields for registration." });
   }
 
   // Additional validation only for HOSTELLERS
   if (accommodation === "Hosteller" && !yearOfStudy) {
-    return res.status(400).json({ message: "Year of study is required for hostellers." });
+    return res
+      .status(400)
+      .json({ message: "Year of study is required for hostellers." });
   }
 
   // Additional validation only for NON-HOSTELLERS
   if (accommodation === "Non-Hosteller" && !offCampusAddress) {
-    return res.status(400).json({ message: "Address is required for non-hostellers." });
+    return res
+      .status(400)
+      .json({ message: "Address is required for non-hostellers." });
   }
 
   try {
@@ -35,7 +41,6 @@ const registerUser = async (req, res) => {
     if (user) {
       return res.status(400).json({ message: "User already exists." });
     }
-
 
     const newUserPayload = {
       firebaseUid,
@@ -69,7 +74,6 @@ const registerUser = async (req, res) => {
     user = new User(newUserPayload);
     await user.save();
 
-
     res.status(201).json({
       message: "User registered successfully!",
       user: {
@@ -83,7 +87,6 @@ const registerUser = async (req, res) => {
     res.status(500).json({ message: "Server error during registration." });
   }
 };
-
 
 // GET USER PROFILE CONTROLLER
 const getMe = async (req, res) => {

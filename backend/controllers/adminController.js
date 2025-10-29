@@ -94,7 +94,4 @@ const updateVendorApproval = async (req, res) => {
   }
 };
 
-
-
-
 export { getAdminDashboard, getVendors, updateVendorApproval };
