@@ -79,6 +79,11 @@ const orderSchema = new mongoose.Schema(
         timestamp: { type: Date, default: Date.now },
       },
     ],
+
+    orderCode: {
+        type: String,
+        unique: true, 
+    },
   },
   { timestamps: true }
 );
@@ -87,11 +92,29 @@ const orderSchema = new mongoose.Schema(
 orderSchema.index({ status: 1, createdAt: -1 });
 
 // Pre-save middleware for status history
-orderSchema.pre("save", function (next) {
-  if (this.isNew) {
-    this.statusHistory.push({ status: this.status, timestamp: new Date() });
-  }
-  next();
+orderSchema.pre('save', async function(next) {
+    // Add status to history if it's new or modified
+    if (this.isModified('status')) {
+        const lastStatus = this.statusHistory[this.statusHistory.length - 1];
+        if (!lastStatus || lastStatus.status !== this.status) {
+            this.statusHistory.push({ status: this.status, timestamp: new Date() });
+        }
+    }
+
+    // Generate custom order code ONLY if it's a new order and doesn't have one yet
+    if (this.isNew && !this.orderCode) {
+        try {
+            // Get the next number from our 'orderId' sequence
+            const nextId = await Counter.getNextSequenceValue('orderId');
+            // Format it as 3 digits with leading zeros (e.g., 001, 015, 123)
+            this.orderCode = nextId.toString().padStart(3, '0');
+        } catch (error) {
+            // If the counter fails, pass the error along
+            return next(error);
+        }
+    }
+    
+    next(); // Continue with the save operation
 });
 
 const Order = mongoose.model("Order", orderSchema);
