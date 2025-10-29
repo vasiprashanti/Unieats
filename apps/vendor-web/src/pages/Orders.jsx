@@ -5,16 +5,30 @@ import Alert from "../components/Alert";
 import { getVendorOrders, updateOrderStatus } from "../api/vendor";
 import { useAuth } from "../context/AuthContext";
 
+const STATUS_MAP = {
+  new: "new",
+  preparing: "preparing",
+  ready: "ready",
+  out_for_delivery: "out_for_delivery",
+  delivered: "delivered",
+  rejected: "rejected",
+  accepted: "accepted",
+  pending: "new",
+};
+
 const FILTERS = [
-  { key: "", label: "All Orders" },
-  { key: "new", label: "New" },
-  { key: "accepted", label: "Accepted" },
-  { key: "preparing", label: "Preparing" },
-  { key: "ready", label: "Ready" },
-  { key: "delivery", label: "Delivery" },
-  { key: "delivered", label: "Delivered" },
-  { key: "rejected", label: "Rejected" },
+  { key: "new", label: "NEW" },
+  { key: "", label: "ALL ORDERS" },
+  { key: "preparing", label: "PREPARING" },
+  { key: "ready", label: "READY" },
+  { key: "out_for_delivery", label: "OUT FOR DELIVERY" },
+  { key: "delivered", label: "DELIVERED" },
+  { key: "rejected", label: "REJECTED" },
+  { key: "accepted", label: "ACCEPTED" },
+
+
 ];
+
 
 export default function Orders() {
   const { user } = useAuth();
@@ -30,6 +44,7 @@ export default function Orders() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+
   const fetchOrders = async () => {
   setLoading(true); 
   setError("");
@@ -37,8 +52,10 @@ export default function Orders() {
     const data = await getVendorOrders({ status: filter, search, sortKey, sortDir });
     console.log("orders data-", data);
 
+
     // Backend returns { success: true, count, orders: [...] }
     const raw = data?.orders ?? [];
+
 
     const timeAgo = (iso) => {
       if (!iso) return '';
@@ -49,12 +66,14 @@ export default function Orders() {
       return `about ${Math.floor(diff / 86400)} days ago`;
     };
 
+
     const mapItem = (it) => {
       return {
         name: it.name || it.title || it.productName || 'Item',
         qty: it.qty ?? it.quantity ?? it.count ?? 1,
       };
     };
+
 
     const mapOrders = raw.map((o) => {
       const customer = o.user || {};
@@ -68,7 +87,9 @@ export default function Orders() {
       }
       customerName = customerName || o.customerName || (customer.fullName || '') || 'Customer';
 
+
       const customerPhone = customer.phone || customer.phoneNumber || customer.mobile || o.customerPhone || '';
+
 
       const addr = o.deliveryAddress || o.customerAddress || o.address || null;
       let customerAddress = null;
@@ -85,12 +106,16 @@ export default function Orders() {
         }
       }
 
+
       const items = Array.isArray(o.items) ? o.items.map(mapItem) : [];
+
+      const originalStatus = o.status || 'pending';
+      const normalizedStatus = STATUS_MAP[originalStatus] || originalStatus;
 
       return {
         id: o._id || o.id,
         code: o.code || (o._id ? `ORD_${String(o._id).slice(0,6).toUpperCase()}` : 'ORD_000'),
-        status: o.status || 'pending',
+        status: normalizedStatus,
         items,
         customerAddress,
         customerName,
@@ -99,10 +124,10 @@ export default function Orders() {
         placedAt: o.createdAt || o.placedAt || o.created_at,
         placedAgoText: timeAgo(o.createdAt || o.placedAt || o.created_at),
         timeLeftText: o.timeLeftText || '',
-        // keep original raw object for details modal
         raw: o,
       };
     });
+
 
     setOrders(Array.isArray(mapOrders) ? mapOrders : []);
   } catch (e) {
@@ -113,12 +138,15 @@ export default function Orders() {
 };
 
 
+
   useEffect(() => { fetchOrders(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [filter, sortKey, sortDir]);
+
 
   const counts = useMemo(() => {
     const by = orders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc; }, {});
     return { all: orders.length, ...by };
   }, [orders]);
+
 
   const displayedOrders = useMemo(() => {
     const filtered = filter ? orders.filter((o) => o.status === filter) : orders;
@@ -139,10 +167,12 @@ export default function Orders() {
     return sorted;
   }, [orders, filter, search, sortKey, sortDir]);
 
+
   const onSort = (key) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
   };
+
 
   const onToggleSelect = (id, checked) => {
     setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
@@ -150,6 +180,7 @@ export default function Orders() {
   const onToggleSelectAll = (checked) => {
     setSelectedIds(checked ? displayedOrders.map((o) => o.id) : []);
   };
+
 
   const openDetails = (order) => { setActiveOrder(order); setModalOpen(true); };
   const closeDetails = () => { setModalOpen(false); setActiveOrder(null); };
@@ -163,6 +194,7 @@ export default function Orders() {
     }
   };
 
+
   const rejectOrder = async (order) => {
     try {
       await updateOrderStatus(order.id, "rejected");
@@ -172,6 +204,7 @@ export default function Orders() {
       setError("Failed to reject order");
     }
   };
+
 
   const bulkUpdate = async (status) => {
     if (selectedIds.length === 0) return;
@@ -185,7 +218,9 @@ export default function Orders() {
         )
       );
 
+
       const successIds = results.filter((r) => r.ok).map((r) => r.id);
+
 
       setOrders((prev) => prev.map((o) => (successIds.includes(o.id) ? { ...o, status } : o)));
       setSelectedIds([]);
@@ -217,6 +252,7 @@ export default function Orders() {
         </div>
       </div>
 
+
       {/* Filters */}
       <div className="flex items-center gap-2 overflow-x-auto">
         {FILTERS.map((f) => (
@@ -239,10 +275,12 @@ export default function Orders() {
         ))}
       </div>
 
+
       <Alert type={error ? 'error' : 'success'} message={error || notice} />
 
+
       {/* Bulk actions */}
-      <div className="flex items-center gap-2">
+      {/* <div className="flex items-center gap-2">
         <button
           className="rounded-lg border border-base px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
           disabled={selectedIds.length === 0}
@@ -271,7 +309,8 @@ export default function Orders() {
         >
           Mark as Delivered
         </button>
-      </div>
+      </div> */}
+
 
       {/* Table */}
       <OrdersTable
@@ -289,6 +328,7 @@ export default function Orders() {
         search={search}
       />
 
+
       {/* Modal */}
       <OrderDetailsModal
         open={modalOpen}
@@ -297,6 +337,7 @@ export default function Orders() {
         onAccept={acceptOrder}
         onReject={rejectOrder}
       />
+
 
       {/* Loading overlay */}
       {loading && (
