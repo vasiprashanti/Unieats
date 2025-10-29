@@ -83,19 +83,20 @@ export default function AppRoutes() {
 
       {/* Protected vendor area */}
       <Route
-        path="/vendor"
-        element={
-          <ProtectedVendor>
-            <VendorLayout />
-          </ProtectedVendor>
-        }
-      >
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="orders" element={<Orders />} />
-        <Route path="menu" element={<Menu />} />
-        <Route path="analytics" element={<Analytics />} />
-        <Route path="profile" element={<Profile />} />
-      </Route>
+  path="/vendor"
+  element={
+    <ProtectedVendor>
+      <VendorLayout />
+    </ProtectedVendor>
+  }
+>
+  <Route index element={<Navigate to="orders" replace />} />
+  <Route path="dashboard" element={<Dashboard />} />
+  <Route path="orders" element={<Orders />} />
+  <Route path="menu" element={<Menu />} />
+  <Route path="analytics" element={<Analytics />} />
+  <Route path="profile" element={<Profile />} />
+</Route>
 
       {/* Default fallback */}
       <Route path="*" element={<Navigate to="/vendor/signup" replace />} />
