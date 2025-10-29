@@ -13,11 +13,6 @@ const orderItemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema(
   {
-    orderId: {
-      type: Number,
-      unique: true,
-      index: true,
-    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -31,6 +26,8 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
     items: [orderItemSchema],
+    subtotal: { type: Number, required: true },
+    platformFee: { type: Number, required: true },
     totalPrice: { type: Number, required: true },
     status: {
       type: String,
@@ -86,46 +83,14 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Compound indexes for efficient monitoring queries
+// Compound index for efficient monitoring queries
 orderSchema.index({ status: 1, createdAt: -1 });
-orderSchema.index({ vendor: 1, status: 1, createdAt: -1 }); // Optimize vendor order queries
-orderSchema.index({ vendor: 1, createdAt: -1 }); // Fast vendor order listing
-orderSchema.index({ user: 1, createdAt: -1 }); // Fast user order history
 
-// Counter schema for auto-incrementing order IDs
-const counterSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  sequence_value: { type: Number, default: 100 }, // Start from 100 for 3-digit IDs
-});
-
-const Counter = mongoose.model("Counter", counterSchema);
-
-// Function to get next order ID
-async function getNextOrderId() {
-  const counter = await Counter.findByIdAndUpdate(
-    { _id: "orderId" },
-    { $inc: { sequence_value: 1 } },
-    { new: true, upsert: true }
-  );
-  return counter.sequence_value;
-}
-
-// Pre-save middleware for auto-generating order ID and status history
-orderSchema.pre("save", async function (next) {
-  // Auto-generate orderId for new orders
-  if (this.isNew && !this.orderId) {
-    try {
-      this.orderId = await getNextOrderId();
-    } catch (error) {
-      return next(error);
-    }
-  }
-
-  // Add to status history for new orders
+// Pre-save middleware for status history
+orderSchema.pre("save", function (next) {
   if (this.isNew) {
     this.statusHistory.push({ status: this.status, timestamp: new Date() });
   }
-  
   next();
 });
 

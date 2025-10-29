@@ -58,6 +58,8 @@ const placeOrder = async (req, res) => {
       user: userId,
       vendor: cart.vendor,
       items: orderItems,
+      subtotal: cart.subtotal,
+      platformFee: cart.platformFee,
       totalPrice: cart.total,
       deliveryAddress: deliveryAddressObject,
       paymentDetails: { method: paymentMethod },
@@ -104,6 +106,22 @@ const placeOrder = async (req, res) => {
       // Notify vendor
       const io = req.app.get("socketio");
       io.to(order.vendor.toString()).emit("new_order", order);
+
+      // TRIGGER ANALYTICS UPDATE - New order placed
+      io.to(order.vendor.toString()).emit("analytics_update", {
+        vendorId: order.vendor,
+        orderId: order._id,
+        status: "pending",
+        totalPrice: order.totalPrice,
+      });
+
+      // Notify admin analytics
+      io.to("admin_room").emit("analytics_update", {
+        vendorId: order.vendor,
+        orderId: order._id,
+        status: "pending",
+        totalPrice: order.totalPrice,
+      });
 
       return res.status(201).json({
         success: true,
@@ -209,13 +227,11 @@ const getUserOrders = async (req, res) => {
       return orderObj;
     });
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        count: processedOrders.length,
-        data: processedOrders,
-      });
+    res.status(200).json({
+      success: true,
+      count: processedOrders.length,
+      data: processedOrders,
+    });
   } catch (error) {
     console.error("Error fetching user orders:", error);
     res.status(500).json({ success: false, message: "Server Error" });

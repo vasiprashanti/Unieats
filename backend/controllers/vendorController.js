@@ -169,11 +169,13 @@ const updateVendorProfile = async (req, res) => {
   }
 };
 
-// GET all orders for a vendor, with advanced filtering
+// GET all orders for a vendor - Been Worked on.
 const getVendorOrders = async (req, res) => {
   try {
-    // 1. SECURITY: Find the vendor profile for the logged-in user
-    const vendorProfile = await Vendor.findOne({ owner: req.user._id }).lean();
+    // 1. Find the vendor profile for the logged-in user
+    // This is the most important step. We need the vendor's specific ID
+    // to ensure we only fetch THEIR orders.
+    const vendorProfile = await Vendor.findOne({ owner: req.user._id });
     if (!vendorProfile) {
       return res.status(403).json({
         message:
@@ -182,45 +184,48 @@ const getVendorOrders = async (req, res) => {
     }
 
     // 2. FILTERING LOGIC: Build a dynamic query object
+    // We start with the base security filter: only find orders for this vendor.
     const query = { vendor: vendorProfile._id };
 
-    // Get filters from URL
-    const { status, date, page = 1, limit = 50 } = req.query;
+    // Now, we check for optional filters from the URL (req.query)
+    // Example: /orders?status=pending
+    const { status, date } = req.query;
 
     if (status) {
-      query.status = status;
+      // Map frontend filter values to database status values
+      const statusMap = {
+        new: "pending",
+        delivery: "out_for_delivery",
+        accepted: "accepted",
+        preparing: "preparing",
+        ready: "ready",
+        delivered: "delivered",
+        rejected: "rejected",
+        cancelled: "cancelled",
+      };
+
+      const mappedStatus = statusMap[status] || status;
+      query.status = mappedStatus;
     }
 
-    // Date filter
+    // Example date filter: /orders?date=2025-10-03
     if (date) {
       const startDate = new Date(date);
       const endDate = new Date(date);
-      endDate.setDate(endDate.getDate() + 1);
+      endDate.setDate(endDate.getDate() + 1); // Get all orders from the start of the day to the end
       query.createdAt = { $gte: startDate, $lt: endDate };
     }
 
-    // 3. OPTIMIZED QUERY with pagination and lean()
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    // 3. EXECUTE THE QUERY
+    // We use our dynamically built 'query' object to find the matching orders.
+    const orders = await Order.find(query)
+      .populate("user", "name") // Pull in the customer's name for display
+      .sort({ createdAt: -1 }); // Show the newest orders first
 
-    // Execute query with lean() for better performance
-    const [orders, totalCount] = await Promise.all([
-      Order.find(query)
-        .populate("user", "name phone") // Only needed fields
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit))
-        .lean(), // Returns plain JS objects, faster than Mongoose documents
-      Order.countDocuments(query), // Get total count for pagination
-    ]);
-
-    // 4. SEND THE RESPONSE with pagination metadata
+    // 4. SEND THE RESPONSE
     res.status(200).json({
       success: true,
       count: orders.length,
-      totalCount,
-      currentPage: parseInt(page),
-      totalPages: Math.ceil(totalCount / parseInt(limit)),
-      hasMore: skip + orders.length < totalCount,
       orders: orders,
     });
   } catch (error) {
@@ -237,11 +242,13 @@ const updateOrderStatus = async (req, res) => {
 
     // Added Input Validation
     const validStatuses = [
+      "accepted",
       "preparing",
       "ready",
       "out_for_delivery",
       "delivered",
       "cancelled",
+      "rejected",
     ];
     if (!newStatus || !validStatuses.includes(newStatus)) {
       return res.status(400).json({ message: "Invalid status provided." });
@@ -268,12 +275,14 @@ const updateOrderStatus = async (req, res) => {
     // Order Status Transition Validation (State Machine)
     const currentStatus = order.status;
     const allowedTransitions = {
-      pending: ["preparing", "cancelled"],
-      preparing: ["ready"],
+      pending: ["accepted", "preparing", "cancelled", "rejected"],
+      accepted: ["preparing", "rejected"],
+      preparing: ["ready", "cancelled"],
       ready: ["out_for_delivery", "delivered"],
       out_for_delivery: ["delivered"],
       delivered: [], // Cannot change after delivery
       cancelled: [], // Cannot change after cancellation
+      rejected: [], // Cannot change after rejection
     };
 
     if (
@@ -287,18 +296,27 @@ const updateOrderStatus = async (req, res) => {
 
     // Handle the Rejection Reason
     // If the vendor is rejecting (cancelling) the order, we must have a reason.
-    if (newStatus === "cancelled") {
+    if (newStatus === "cancelled" || newStatus === "rejected") {
       if (!rejectionReason || rejectionReason.trim() === "") {
         // Check if reason was provided in the request body
         return res
           .status(400)
-          .json({ message: "A reason is required for rejecting an order." });
+          .json({
+            message: "A reason is required for rejecting/cancelling an order.",
+          });
       }
       order.rejectionReason = rejectionReason.trim(); // Save the reason to the order
+      if (newStatus === "rejected") {
+        order.rejectedAt = new Date();
+      }
     }
 
     // Add timestamps for analytics
+    if (newStatus === "accepted" && !order.acceptedAt) {
+      order.acceptedAt = new Date();
+    }
     if (newStatus === "preparing" && !order.acceptedAt) {
+      // Fallback: if vendor skips "accepted" and goes straight to "preparing"
       order.acceptedAt = new Date();
     }
     if (newStatus === "ready" && !order.readyAt) {
@@ -321,6 +339,22 @@ const updateOrderStatus = async (req, res) => {
 
     // Notify any connected admins in the dedicated admin room
     io.to("admin_room").emit("live_order_update", updatedOrder);
+
+    // TRIGGER ANALYTICS UPDATE - Emit event to refresh analytics in real-time
+    io.to(vendorProfile._id.toString()).emit("analytics_update", {
+      vendorId: vendorProfile._id,
+      orderId: updatedOrder._id,
+      status: newStatus,
+      totalPrice: updatedOrder.totalPrice,
+    });
+
+    // Also notify admin analytics
+    io.to("admin_room").emit("analytics_update", {
+      vendorId: vendorProfile._id,
+      orderId: updatedOrder._id,
+      status: newStatus,
+      totalPrice: updatedOrder.totalPrice,
+    });
 
     res.status(200).json({
       message: "Order status updated successfully!",

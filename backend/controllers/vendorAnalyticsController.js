@@ -37,7 +37,13 @@ const getVendorAnalytics = async (req, res) => {
           avgOrderValue: { $avg: "$totalPrice" },
           avgPrepTime: {
             $avg: {
-              $divide: [{ $subtract: ["$readyAt", "$acceptedAt"] }, 60000],
+              $cond: {
+                if: { $and: ["$readyAt", "$acceptedAt"] },
+                then: {
+                  $divide: [{ $subtract: ["$readyAt", "$acceptedAt"] }, 60000],
+                },
+                else: null,
+              },
             },
           },
         },

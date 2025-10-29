@@ -1,6 +1,7 @@
 import Cart from "../models/Cart.model.js";
 import MenuItem from "../models/MenuItem.model.js";
 import Vendor from "../models/Vendor.model.js";
+import { calculatePlatformFee } from "../utils/fees.js";
 
 // Helper function to calculate cart totals
 const calculateTotals = (cart) => {
@@ -8,9 +9,11 @@ const calculateTotals = (cart) => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  // Placeholder for delivery fee logic (Day 16 task)
-  cart.deliveryFee = cart.subtotal > 0 ? 50 : 0; // Fixed fee for now
-  cart.total = cart.subtotal + cart.deliveryFee;
+
+  // Calculate platform fee using the tiered fee utility
+  cart.platformFee = calculatePlatformFee(cart.subtotal);
+
+  cart.total = cart.subtotal + cart.platformFee;
   return cart;
 };
 
@@ -22,7 +25,7 @@ const formatCart = (cart) => {
     user: cart.user,
     vendor: cart.vendor,
     subtotal: cart.subtotal,
-    deliveryFee: cart.deliveryFee,
+    platformFee: cart.platformFee,
     total: cart.total,
     items: cart.items
       .map((item) => {

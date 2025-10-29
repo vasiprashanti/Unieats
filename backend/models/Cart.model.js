@@ -40,7 +40,7 @@ const cartSchema = new Schema(
     items: [cartItemSchema],
     // These will be calculated dynamically
     subtotal: { type: Number, default: 0 },
-    deliveryFee: { type: Number, default: 0 }, // Placeholder for calculation
+    platformFee: { type: Number, default: 0 }, // Tiered platform fee based on subtotal
     total: { type: Number, default: 0 },
   },
   { timestamps: true }
