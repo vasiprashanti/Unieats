@@ -103,9 +103,9 @@ export default function OrdersTable({
                 <td className="p-3 align-top">
                   <div className="flex flex-col">
                     <span className="font-medium tracking-wide">{o.code}</span>
-                    {o.status === "new" && (
+                    {/* {o.status === "new" && (
                       <span className="text-xs text-red-500">{o.timeLeftText || "\u231A 2m left"}</span>
-                    )}
+                    )} */}
                   </div>
                 </td>
                 <td className="p-3 align-top">
