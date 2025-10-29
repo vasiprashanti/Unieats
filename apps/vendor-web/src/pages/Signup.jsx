@@ -150,65 +150,38 @@ export default function Signup() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="px-[10%] py-16 bg-white border-t border-[#f0f0f0]">
-        <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Pricing</h2>
+     {/* Pricing / Partnership Model Section */}
+<section id="pricing" className="bg-white py-12 px-6 md:px-20">
+  <div className="text-center mb-10">
+    <h2 className="text-3xl font-bold text-gray-800 mb-2">
+      Partnership Model
+    </h2>
+    <p className="text-gray-600">
+      Start your journey with Unieats at zero upfront cost!
+    </p>
+  </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-         {/* Commission-Based Plan */}
-        <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative flex flex-col">
-          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-          
-          </div>
-          <h3 className="text-xl font-semibold text-[#333] mb-3">Commission-Based Plan</h3>
-          <ul className="text-[15px] text-[#333] space-y-3 mb-6 flex-1">
-            <li>Pay % commission only on orders above ₹50.</li>
-            <li>Unlimited orders per month.</li>
-            <li>Add, manage, and customize your menu easily.</li>
-            <li>Accept online orders via app or website.</li>
-            <li>Real-time sales and customer analytics.</li>
-            <li>Single admin access, compatible on mobile, tablet, and PC.</li>
-          </ul>
-          <button className="mt-auto w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">
-            Choose Commission
-          </button>
-        </div>
+  <div className="grid md:grid-cols-1 gap-6 mt-6 max-w-3xl mx-auto">
+    {/* Only one plan retained */}
+    <div className="p-6 border rounded-2xl shadow hover:shadow-lg transition">
+      <h3 className="text-xl font-semibold mb-2 text-gray-800">
+        Commission-Based
+      </h3>
+      <p className="text-gray-600 mb-4">
+        Pay a small commission per order. No upfront cost, no subscription fees.
+      </p>
+      <ul className="text-gray-500 text-sm mb-4 space-y-2">
+        <li>✅ Zero setup fee</li>
+        <li>✅ Pay as you earn</li>
+        <li>✅ Ideal for small and growing restaurants</li>
+      </ul>
+      <button className="mt-4 bg-[#FF6B00] text-white px-6 py-2 rounded-xl font-semibold hover:bg-[#e65c00] transition">
+        Get Started
+      </button>
+    </div>
+  </div>
+</section>
 
-        {/* Subscription-Based Plan */}
-        <div className="bg-white border border-[#f0f0f0] p-8 rounded-xl shadow hover:shadow-lg transition flex flex-col">
-          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Subscription-Based Plan</h3>
-          <p className="text-[#555] mb-6">Fixed monthly or annual fee.</p>
-          <ul className="space-y-3 text-[15px] text-[#333] flex-1">
-            <li>Limited orders per month</li>
-            <li>Easy menu management and customization</li>
-            <li>Accept online orders seamlessly</li>
-            <li>Full analytics dashboard</li>
-            <li>Single admin access, compatible on mobile, tablet, and PC.</li>
-          </ul>
-          <button className="mt-auto w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
-            Choose Subscription
-          </button>
-        </div>
-
-        {/* Hybrid Plan */}
-        <div className="relative bg-white border-2 border-[#ff6600] p-8 rounded-xl shadow-[0_10px_25px_rgba(255,102,0,0.2)] flex flex-col">
-          <span className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">
-            Most Popular
-          </span>
-          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Hybrid Plan (Recommended)</h3>
-          <p className="text-[#555] mb-6">Fixed subscription + % commission per order.</p>
-          <ul className="space-y-3 text-[15px] text-[#333] flex-1">
-            <li>Unlimited orders per month.</li>
-            <li>Advanced menu management and customizations.</li>
-            <li>Effortless online order acceptance.</li>
-            <li>Real-time analytics & insights.</li>
-            <li>Single admin access, compatible on mobile, tablet, and PC.</li>
-          </ul>
-          <button className="mt-auto w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
-            Choose Hybrid
-          </button>
-        </div>
-
-        </div>
         
         {/* Additional Features */}
         <div className="mt-16 text-center">
