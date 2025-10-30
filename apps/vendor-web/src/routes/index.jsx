@@ -17,6 +17,7 @@ const roleHome = (role) => {
   return '/home';
 };
 
+
 // Wrap protected vendor routes
 function ProtectedVendor({ children }) {
   const { user, role, initializing } = useAuth();
@@ -34,6 +35,7 @@ function ProtectedVendor({ children }) {
 
   return children;
 }
+
 
 // Restrict routes to guests only
 function GuestOnly({ children }) {
@@ -98,6 +100,7 @@ export default function AppRoutes() {
   <Route path="profile" element={<Profile />} />
 </Route>
 
+      
       {/* Default fallback */}
       <Route path="*" element={<Navigate to="/vendor/signup" replace />} />
     </Routes>
