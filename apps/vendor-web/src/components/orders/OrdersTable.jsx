@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 
-
 // Status badge styles mapped to tokens
 const statusStyles = {
   new: "bg-amber-100 text-amber-700 border border-amber-200",
@@ -13,7 +12,6 @@ const statusStyles = {
   rejected: "bg-red-100 text-red-700 border border-red-200",
 };
 
-
 function StatusBadge({ status }) {
   const cls = statusStyles[status] || "bg-accent";
   return (
@@ -23,7 +21,6 @@ function StatusBadge({ status }) {
     </span>
   );
 }
-
 
 // Format time to HH:MM AM/PM
 const formatTime = (isoString) => {
@@ -57,7 +54,6 @@ export default function OrdersTable({
 }) {
   const [menuOpenId, setMenuOpenId] = useState(null);
 
-
   const visibleOrders = useMemo(() => {
     if (!search) return orders;
     const q = search.toLowerCase();
@@ -68,9 +64,7 @@ export default function OrdersTable({
     );
   }, [orders, search]);
 
-
   const toggleMenu = (id) => setMenuOpenId((v) => (v === id ? null : id));
-
 
   const sortIndicator = (key) => (
     <button
