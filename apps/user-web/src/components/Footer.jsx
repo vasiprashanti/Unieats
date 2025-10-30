@@ -30,7 +30,7 @@ function Footer() {
               { id: "01", label: "ORDER", path: "/restaurants" },
               { id: "02", label: "ABOUT", path: "/about" },
               { id: "03", label: "TEAM", path: "/team" },
-              { id: "04", label: "CAREERS", path: "/careers" }
+              { id: "04", label: "CAREERS", path: "/careers" },
        { id: "05", label: "PARTNER WITH US", path: "/careers" }
             ].map((item) => (
               <Link
