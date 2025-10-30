@@ -1,6 +1,5 @@
 import React from "react";
 
-
 const badgeByStatus = {
   new: "bg-amber-100 text-amber-700 border border-amber-200",
   pending: "bg-amber-100 text-amber-700 border border-amber-200",
@@ -12,13 +11,11 @@ const badgeByStatus = {
   rejected: "bg-red-100 text-red-700 border border-red-200",
 };
 
-
 export default function OrderDetailsModal({ open, onClose, order, onAccept, onReject }) {
   if (!open || !order) return null;
 
   const platformFee = Math.floor(order.total / 50); // Calculate platform fee
   const subtotal = order.total - (order.deliveryFee ?? 0);
-
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0, 0, 0, 0.5)' }}>
