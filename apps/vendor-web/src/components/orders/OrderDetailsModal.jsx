@@ -1,16 +1,9 @@
 import React from "react";
 
-function Row({ label, children }) {
-  return (
-    <div className="flex items-start justify-between py-2">
-      <div className="text-muted">{label}</div>
-      <div className="font-medium text-right">{children}</div>
-    </div>
-  );
-}
 
 const badgeByStatus = {
   new: "bg-amber-100 text-amber-700 border border-amber-200",
+  pending: "bg-amber-100 text-amber-700 border border-amber-200",
   accepted: "bg-blue-100 text-blue-700 border border-blue-200",
   preparing: "bg-yellow-100 text-yellow-800 border border-yellow-200",
   ready: "bg-emerald-100 text-emerald-700 border border-emerald-200",
@@ -19,104 +12,131 @@ const badgeByStatus = {
   rejected: "bg-red-100 text-red-700 border border-red-200",
 };
 
+
 export default function OrderDetailsModal({ open, onClose, order, onAccept, onReject }) {
   if (!open || !order) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+  const platformFee = Math.floor(order.total / 50); // Calculate platform fee
+  const subtotal = order.total - (order.deliveryFee ?? 0);
 
-      <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-base bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] shadow-2xl">
-        <div className="flex items-start justify-between p-5 border-b border-base">
-          <div>
-            <h2 className="text-xl font-semibold">Order Details</h2>
-            <div className="text-sm text-muted">Order #{order.code} • {order.placedAgoText}</div>
-          </div>
-          <div className={`ml-2 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${badgeByStatus[order.status]}`}>
-            {order.status?.[0]?.toUpperCase()}{order.status?.slice(1)}
-          </div>
-          <button className="ml-2 p-2 rounded hover:bg-accent" onClick={onClose} aria-label="Close">✕</button>
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0, 0, 0, 0.5)' }}>
+      <div className="relative w-full max-w-md max-h-[90vh] rounded-xl border border-gray-200 bg-gray-200 text-gray-900 shadow-lg flex flex-col" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
+        
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-6 py-6 border-b border-gray-200" style={{ borderBottomWidth: '1px', borderBottomColor: 'hsl(240, 6%, 90%)' }}>
+          <h3 className="text-lg font-semibold" style={{ fontSize: '20px', fontWeight: '600' }}>Order Bill - #{order.code}</h3>
+          <button 
+            className="p-2 rounded-md hover:bg-gray-100 transition-colors" 
+            onClick={onClose} 
+            aria-label="Close"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+          >
+            ✕
+          </button>
         </div>
 
-        <div className="p-5 space-y-6">
-          {/* Customer */}
+        {/* Modal Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          
+          {/* Customer Information Section */}
           <div>
-            <h3 className="font-semibold mb-2">Customer Information</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="font-medium">{order.customerName}</div>
-                <div className="text-muted">{order.customerPhone}</div>
-              </div>
-              <div className="text-right">
-                <div>{order.address?.line1}</div>
-                <div className="text-muted">{order.address?.city}</div>
-              </div>
+            <div className="flex justify-between mb-3" style={{ marginBottom: '12px' }}>
+              <span style={{ color: 'hsl(240, 4%, 46%)', fontSize: '14px' }}>Customer Name:</span>
+              <span style={{ fontWeight: '500', fontSize: '14px' }}>{order.customerName}</span>
+            </div>
+            <div className="flex justify-between mb-3" style={{ marginBottom: '12px' }}>
+              <span style={{ color: 'hsl(240, 4%, 46%)', fontSize: '14px' }}>Mobile:</span>
+              <span style={{ fontWeight: '500', fontSize: '14px' }}>{order.customerPhone}</span>
+            </div>
+            <div className="flex justify-between" style={{ marginBottom: '0' }}>
+              <span style={{ color: 'hsl(240, 4%, 46%)', fontSize: '14px' }}>Block Number:</span>
+              <span style={{ fontWeight: '500', fontSize: '14px' }}>{order.customerAddress?.block || 'N/A'}</span>
             </div>
           </div>
 
-          {/* Items */}
+          {/* Divider */}
+          <hr style={{ border: '0', borderTop: '1px solid hsl(240, 6%, 90%)', margin: '0' }} />
+
+          {/* Order Details Section */}
           <div>
-            <h3 className="font-semibold mb-2">Order Items</h3>
-            <div className="space-y-3">
+            <h4 style={{ fontWeight: '600', marginBottom: '16px', fontSize: '14px' }}>Order Details</h4>
+            <div className="space-y-2">
               {order.items?.map((it, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-xl border border-base bg-[hsl(var(--background))] p-3">
-                  <div className="inline-flex items-center gap-3">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-base text-xs">{it.qty}</span>
-                    <div>
-                      <div className="font-medium">{it.name}</div>
-                      {it.note && (
-                        <div className="mt-0.5 inline-flex rounded-md bg-amber-100 text-amber-700 px-2 py-0.5 text-xs">Note: {it.note}</div>
-                      )}
-                    </div>
+                <div key={idx} className="flex justify-between" style={{ fontSize: '14px', marginBottom: '12px' }}>
+                  <div className="flex gap-2">
+                    <span style={{ color: 'hsl(14, 100%, 57%)', fontWeight: '600' }}>{it.qty}x</span>
+                    <span>{it.name}</span>
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold">₹{Number(it.total).toLocaleString()}</div>
-                    <div className="text-xs text-muted">₹{Number(it.price).toLocaleString()} each</div>
-                  </div>
+                  <span style={{ fontWeight: '500' }}>₹{Number(it.total || it.price * it.qty).toLocaleString()}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Summary */}
+          {/* Divider */}
+          <hr style={{ border: '0', borderTop: '1px solid hsl(240, 6%, 90%)', margin: '0' }} />
+
+          {/* Summary Section */}
           <div>
-            <h3 className="font-semibold mb-2">Order Summary</h3>
-            <div className="divide-y divide-base">
-              <Row label="Subtotal">₹{Number(order.subtotal ?? order.total).toLocaleString()}</Row>
-              <Row label="Delivery Fee">₹{Number(order.deliveryFee ?? 0).toLocaleString()}</Row>
-              <div className="flex items-center justify-between pt-2">
-                <div className="font-semibold">Total</div>
-                <div className="text-right font-bold">₹{Number(order.total).toLocaleString()}</div>
-              </div>
+            <div className="flex justify-between mb-3" style={{ fontSize: '14px', marginBottom: '12px' }}>
+              <span style={{ color: 'hsl(240, 4%, 46%)' }}>Subtotal:</span>
+              <span>₹{Number(subtotal).toLocaleString()}</span>
             </div>
-            <div className="mt-3 inline-flex items-center rounded-lg border border-base px-2 py-1 text-sm">
-              <svg className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                <line x1="1" y1="10" x2="23" y2="10" />
-              </svg>
-              Online Payment
-              <span className="ml-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-2 text-xs">Paid</span>
+            <div className="flex justify-between" style={{ fontSize: '14px' }}>
+              <span style={{ color: 'hsl(240, 4%, 46%)' }}>Platform Fee:</span>
+              <span>₹{Number(platformFee).toLocaleString()}</span>
             </div>
+          </div>
+
+          {/* Divider */}
+          <hr style={{ border: '0', borderTop: '1px solid hsl(240, 6%, 90%)', margin: '0' }} />
+
+          {/* Final Total */}
+          <div className="flex justify-between items-center pt-4" style={{ paddingTop: '16px' }}>
+            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>Final Total:</span>
+            <span style={{ fontWeight: 'bold', fontSize: '16px', color: 'hsl(240, 10%, 10%)' }}>₹{Number(order.total).toLocaleString()}</span>
           </div>
         </div>
 
-        {/* Footer actions for new orders */}
-        {order.status === "new" && (
-          <div className="flex items-center justify-end gap-2 p-5 border-t border-base bg-[hsl(var(--card))]">
+        {/* Footer Actions */}
+        {/* {order.status === "new" && (
+          <div className="flex items-center justify-end gap-2 px-6 py-6 border-t border-gray-200" style={{ borderTopWidth: '1px', borderTopColor: 'hsl(240, 6%, 90%)', background: 'hsl(240, 5%, 96%)' }}>
             <button
-              className="px-4 py-2 rounded-lg border border-base hover:bg-accent"
+              className="px-4 py-2 rounded-md border font-medium text-sm transition-all"
               onClick={() => onReject(order)}
+              style={{ 
+                background: 'hsl(0, 0%, 100%)',
+                border: '1px solid hsl(240, 6%, 90%)',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'hsl(240, 10%, 10%)'
+              }}
+              onMouseEnter={(e) => e.target.style.background = 'hsl(240, 5%, 96%)'}
+              onMouseLeave={(e) => e.target.style.background = 'hsl(0, 0%, 100%)'}
             >
               Reject
             </button>
             <button
-              className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+              className="px-4 py-2 rounded-md font-medium text-sm transition-all text-white"
               onClick={() => onAccept(order)}
+              style={{ 
+                background: 'hsl(14, 100%, 57%)',
+                border: '1px solid hsl(14, 100%, 57%)',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'hsl(0, 0%, 100%)'
+              }}
+              onMouseEnter={(e) => e.target.style.background = 'hsl(14, 100%, 52%)'}
+              onMouseLeave={(e) => e.target.style.background = 'hsl(14, 100%, 57%)'}
             >
               Accept
             </button>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
