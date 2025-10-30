@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 
 const roleHome = (role) => {
   if (role === 'admin') return '/admin/dashboard';
-  if (role === 'vendor') return '/vendor/dashboard';
+  if (role === 'vendor') return '/vendor/orders';
   return '/home';
 };
 
