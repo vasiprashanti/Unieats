@@ -36,7 +36,7 @@ export default function VendorLayout() {
           </button>
         </div>
         <nav className="p-3 space-y-1 text-sm">
-          <NavLink to="/vendor/dashboard" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
+          {/* <NavLink to="/vendor/dashboard" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
             <span className="inline-flex h-6 w-6 items-center justify-center">
               <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="9" />
@@ -46,7 +46,7 @@ export default function VendorLayout() {
               </svg>
             </span>
             {sidebarOpen && <span>Dashboard</span>}
-          </NavLink>
+          </NavLink>  */}
           <NavLink to="/vendor/orders" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
             <span className="inline-flex h-6 w-6 items-center justify-center">
               <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
