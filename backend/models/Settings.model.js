@@ -36,9 +36,13 @@ const settingsSchema = new mongoose.Schema(
       default: "platform-settings",
       unique: true,
     },
+    deliveryFee: {
+      type: Number,
+      default: 5.0,
+    },
     commissionRate: {
-      type: Number, // e.g., 0.15 for 15%
-      default: 0.15,
+      type: Number,
+      default: 0.05,
     },
     // --- Encrypted Fields ---
     razorpayKeyId: {

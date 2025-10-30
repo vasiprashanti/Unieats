@@ -2,6 +2,7 @@ import Cart from "../models/Cart.model.js";
 import Order from "../models/Order.model.js";
 import User from "../models/User.model.js";
 import Vendor from "../models/Vendor.model.js";
+import { calculateOrderFees } from "../utils/fees.js";
 
 // Step 1 - Place Order & Initiate Payment
 const placeOrder = async (req, res) => {
@@ -53,7 +54,20 @@ const placeOrder = async (req, res) => {
       quantity: item.quantity,
     }));
 
-    // 4️⃣ Create order payload
+    // 4️⃣ Fetch vendor and calculate fees
+    const vendor = await Vendor.findById(cart.vendor);
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found." });
+    }
+
+    const isCommissionActive = !vendor.isTrialActive();
+    const feeBreakdown = calculateOrderFees(
+      cart.subtotal,
+      paymentMethod,
+      isCommissionActive
+    );
+
+    // 5️⃣ Create order payload
     const orderPayload = {
       user: userId,
       vendor: cart.vendor,
@@ -61,15 +75,16 @@ const placeOrder = async (req, res) => {
       subtotal: cart.subtotal,
       platformFee: cart.platformFee,
       totalPrice: cart.total,
+      vendorCommission: feeBreakdown.vendorCommission,
+      vendorReceives: feeBreakdown.vendorReceives || 0,
+      vendorOwes: feeBreakdown.vendorOwes || 0,
       deliveryAddress: deliveryAddressObject,
       paymentDetails: { method: paymentMethod },
     };
 
-    // 5️⃣ Handle payment logic
+    // 7️⃣ Handle payment logic
     if (paymentMethod === "UPI") {
-      const vendor = await Vendor.findById(cart.vendor);
-
-      if (!vendor || !vendor.upiId) {
+      if (!vendor.upiId) {
         return res.status(400).json({
           message: "This vendor is not currently accepting UPI payments.",
         });
@@ -79,7 +94,7 @@ const placeOrder = async (req, res) => {
       orderPayload.paymentDetails = {
         method: "UPI",
         status: "pending",
-        upiId: vendor.upiId, // Store the UPI ID in the order
+        upiId: vendor.upiId,
       };
       const order = new Order(orderPayload);
       await order.save();

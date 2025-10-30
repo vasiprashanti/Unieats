@@ -299,11 +299,9 @@ const updateOrderStatus = async (req, res) => {
     if (newStatus === "cancelled" || newStatus === "rejected") {
       if (!rejectionReason || rejectionReason.trim() === "") {
         // Check if reason was provided in the request body
-        return res
-          .status(400)
-          .json({
-            message: "A reason is required for rejecting/cancelling an order.",
-          });
+        return res.status(400).json({
+          message: "A reason is required for rejecting/cancelling an order.",
+        });
       }
       order.rejectionReason = rejectionReason.trim(); // Save the reason to the order
       if (newStatus === "rejected") {
@@ -327,6 +325,12 @@ const updateOrderStatus = async (req, res) => {
     // The pre-save hook on the Order model should automatically update the statusHistory array now.
 
     const updatedOrder = await order.save();
+
+    // set firstDeliveredOrderDate when first order is delivered
+    if (newStatus === "delivered" && !vendorProfile.firstDeliveredOrderDate) {
+      vendorProfile.firstDeliveredOrderDate = new Date();
+      await vendorProfile.save();
+    }
 
     // Add Admin Notification
     const io = req.app.get("socketio");

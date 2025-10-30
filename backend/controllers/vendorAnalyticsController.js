@@ -26,15 +26,16 @@ const getVendorAnalytics = async (req, res) => {
       ...dateFilter, // Apply the date filter
     };
 
-    // Pipeline 1: Calculate Summary Stats
+    // Pipeline 1: Calculate Summary Stats with Fee Breakdown
     const summaryPipeline = [
       { $match: baseMatch },
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: "$totalPrice" }, // Use totalPrice to match Order model
+          totalRevenue: { $sum: "$totalPrice" },
           totalOrders: { $sum: 1 },
           avgOrderValue: { $avg: "$totalPrice" },
+          amountOwedToUnieats: { $sum: "$vendorOwes" },
           avgPrepTime: {
             $avg: {
               $cond: {
@@ -90,13 +91,30 @@ const getVendorAnalytics = async (req, res) => {
     // Assemble the Final Report
     const summary = summaryResult[0] || {};
 
-    // Simpler structure the frontend expects currently
+    const totalRevenue = summary.totalRevenue || 0;
+    const amountOwedToUnieats = summary.amountOwedToUnieats || 0;
+    const netRevenue = totalRevenue - amountOwedToUnieats;
+
+    // trial status
+    const isTrialActive = vendorProfile.isTrialActive();
+    const trialDaysRemaining = isTrialActive
+      ? vendorProfile.getTrialDaysRemaining()
+      : 0;
+    const trialEndDate = vendorProfile.getTrialEndDate();
+
     const finalReport = {
-      totalRevenue: summary.totalRevenue || 0,
+      totalRevenue,
+      amountOwedToUnieats,
+      netRevenue,
       totalOrders: summary.totalOrders || 0,
       averagePrepTime: summary.avgPrepTime || 0,
       revenueData: revenueData,
       topItems: topItems,
+      trialStatus: {
+        isActive: isTrialActive,
+        daysRemaining: trialDaysRemaining,
+        endDate: trialEndDate,
+      },
     };
 
     // const finalReport = {

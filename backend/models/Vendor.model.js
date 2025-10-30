@@ -46,9 +46,14 @@ const vendorSchema = new mongoose.Schema(
     profileImage: { url: String, public_id: String },
     commissionRate: {
       type: Number,
-      default: 0.1,
+      default: 0.05, // 5% commission rate
       min: 0,
       max: 1,
+    },
+    // Trial period tracking starts when first order is delivered
+    firstDeliveredOrderDate: {
+      type: Date,
+      default: null,
     },
     operatingHours: [
       {
@@ -106,6 +111,46 @@ const vendorSchema = new mongoose.Schema(
 );
 
 vendorSchema.index({ businessName: "text", cuisineType: "text" });
+
+// check if vendor is still in trial period
+vendorSchema.methods.isTrialActive = function () {
+  if (!this.firstDeliveredOrderDate) {
+    return true;
+  }
+
+  const now = new Date();
+  const daysSinceFirstDelivery = Math.floor(
+    (now - this.firstDeliveredOrderDate) / (1000 * 60 * 60 * 24)
+  );
+
+  return daysSinceFirstDelivery < 30;
+};
+
+// get days remaining in trial
+vendorSchema.methods.getTrialDaysRemaining = function () {
+  if (!this.firstDeliveredOrderDate) {
+    return 30;
+  }
+
+  const now = new Date();
+  const daysSinceFirstDelivery = Math.floor(
+    (now - this.firstDeliveredOrderDate) / (1000 * 60 * 60 * 24)
+  );
+
+  const daysRemaining = 30 - daysSinceFirstDelivery;
+  return daysRemaining > 0 ? daysRemaining : 0;
+};
+
+// get trial end date
+vendorSchema.methods.getTrialEndDate = function () {
+  if (!this.firstDeliveredOrderDate) {
+    return null;
+  }
+
+  const trialEndDate = new Date(this.firstDeliveredOrderDate);
+  trialEndDate.setDate(trialEndDate.getDate() + 30);
+  return trialEndDate;
+};
 
 const Vendor = mongoose.model("Vendor", vendorSchema);
 export default Vendor;

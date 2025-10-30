@@ -22,3 +22,46 @@ export function calculatePlatformFee(orderValue) {
 
   return Math.round(platformFee * 100) / 100;
 }
+
+export function calculateOrderFees(
+  orderValue,
+  paymentMethod,
+  isCommissionActive = false
+) {
+  const platformFee = calculatePlatformFee(orderValue);
+  const vendorCommission = isCommissionActive
+    ? Math.round(orderValue * 0.05 * 100) / 100
+    : 0;
+  const totalUserPays = Math.round((orderValue + platformFee) * 100) / 100;
+  const isOnlinePayment = paymentMethod === "RAZORPAY";
+
+  if (!isOnlinePayment) {
+    const vendorReceives = totalUserPays;
+    const vendorOwes = platformFee + vendorCommission;
+    const netRevenue = vendorReceives - vendorOwes;
+
+    return {
+      orderValue: Math.round(orderValue * 100) / 100,
+      platformFee: Math.round(platformFee * 100) / 100,
+      vendorCommission: Math.round(vendorCommission * 100) / 100,
+      totalUserPays: Math.round(totalUserPays * 100) / 100,
+      vendorReceives: Math.round(vendorReceives * 100) / 100,
+      vendorOwes: Math.round(vendorOwes * 100) / 100,
+      netRevenue: Math.round(netRevenue * 100) / 100,
+    };
+  }
+
+  const unieatsReceives = totalUserPays;
+  const unieatsGross = platformFee + vendorCommission;
+  const vendorPayout = unieatsReceives - unieatsGross;
+
+  return {
+    orderValue: Math.round(orderValue * 100) / 100,
+    platformFee: Math.round(platformFee * 100) / 100,
+    vendorCommission: Math.round(vendorCommission * 100) / 100,
+    totalUserPays: Math.round(totalUserPays * 100) / 100,
+    unieatsReceives: Math.round(unieatsReceives * 100) / 100,
+    unieatsGross: Math.round(unieatsGross * 100) / 100,
+    vendorPayout: Math.round(vendorPayout * 100) / 100,
+  };
+}
