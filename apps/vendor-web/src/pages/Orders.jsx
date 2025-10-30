@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import OrdersTable from "../components/orders/OrdersTable";
 import OrderDetailsModal from "../components/orders/OrderDetailsModal";
 import Alert from "../components/Alert";
@@ -27,11 +27,72 @@ const FILTERS = [
   { key: "delivered", label: "DELIVERED" },
   { key: "rejected", label: "REJECTED" },
   { key: "accepted", label: "ACCEPTED" },
-
-
-
 ];
 
+
+// Helper function to normalize orders (extracted and memoized)
+const normalizeOrder = (o) => {
+  const customer = o.user || {};
+  let customerName = '';
+  if (customer.name) {
+    if (typeof customer.name === 'string') customerName = customer.name;
+    else if (typeof customer.name === 'object') {
+      customerName = [customer.name.first, customer.name.last].filter(Boolean).join(' ') || customer.name.full || '';
+    }
+  }
+  customerName = customerName || o.customerName || (customer.fullName || '') || 'Customer';
+
+  const customerPhone = customer.phone || customer.phoneNumber || customer.mobile || o.customerPhone || '';
+
+  const addr = o.deliveryAddress || o.customerAddress || o.address || null;
+  let customerAddress = null;
+  if (addr) {
+    if (typeof addr === 'string') customerAddress = addr;
+    else {
+      customerAddress = {
+        line1: addr.line1 || addr.addressLine || '',
+        line2: addr.line2 || '',
+        city: addr.city || addr.town || '',
+        block: addr.block || addr.blockNo || '',
+        zip: addr.zipCode || addr.postalCode || addr.zip || ''
+      };
+    }
+  }
+
+  const items = Array.isArray(o.items) ? o.items.map((it) => ({
+    name: it.name || it.title || it.productName || 'Item',
+    qty: it.qty ?? it.quantity ?? it.count ?? 1,
+  })) : [];
+
+  const originalStatus = o.status || 'pending';
+  const normalizedStatus = STATUS_MAP[originalStatus] || originalStatus;
+
+  return {
+    id: o._id || o.id,
+    code: o.code || (o._id ? `ORD_${String(o._id).slice(0,6).toUpperCase()}` : 'ORD_000'),
+    status: normalizedStatus,
+    items,
+    customerAddress,
+    customerName,
+    customerPhone,
+    total: o.totalPrice ?? o.total ?? o.amount ?? 0,
+    placedAt: o.createdAt || o.placedAt || o.created_at,
+    placedAgoText: getTimeAgo(o.createdAt || o.placedAt || o.created_at),
+    timeLeftText: o.timeLeftText || '',
+    raw: o,
+  };
+};
+
+
+// Time formatting helper
+const getTimeAgo = (iso) => {
+  if (!iso) return '';
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return `${Math.floor(diff)} seconds ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+  return `about ${Math.floor(diff / 86400)} days ago`;
+};
 
 
 export default function Orders() {
@@ -48,258 +109,154 @@ export default function Orders() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const abortControllerRef = useRef(null);
 
 
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    
+    // Cancel previous request if still pending
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
 
-  const fetchOrders = async () => {
-  setLoading(true); 
-  setError("");
-  try {
-    const data = await getVendorOrders({ status: filter, search, sortKey, sortDir });
-    console.log("orders data-", data);
+    try {
+      const data = await getVendorOrders({ status: filter, search, sortKey, sortDir });
+      const raw = data?.orders ?? [];
 
-
-
-    // Backend returns { success: true, count, orders: [...] }
-    const raw = data?.orders ?? [];
-
-
-
-    const timeAgo = (iso) => {
-      if (!iso) return '';
-      const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-      if (diff < 60) return `${Math.floor(diff)} seconds ago`;
-      if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
-      if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-      return `about ${Math.floor(diff / 86400)} days ago`;
-    };
-
-
-
-    const mapItem = (it) => {
-      return {
-        name: it.name || it.title || it.productName || 'Item',
-        qty: it.qty ?? it.quantity ?? it.count ?? 1,
-      };
-    };
-
-
-
-    const mapOrders = raw.map((o) => {
-      const customer = o.user || {};
-      // customer name may be nested object
-      let customerName = '';
-      if (customer.name) {
-        if (typeof customer.name === 'string') customerName = customer.name;
-        else if (typeof customer.name === 'object') {
-          customerName = [customer.name.first, customer.name.last].filter(Boolean).join(' ') || customer.name.full || '';
-        }
+      // Batch map operations for better performance
+      const mapped = raw.map(normalizeOrder);
+      setOrders(Array.isArray(mapped) ? mapped : []);
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        setError("Failed to load orders");
       }
-      customerName = customerName || o.customerName || (customer.fullName || '') || 'Customer';
+    } finally {
+      setLoading(false);
+    }
+  }, [filter, search, sortKey, sortDir]);
 
 
-
-      const customerPhone = customer.phone || customer.phoneNumber || customer.mobile || o.customerPhone || '';
-
-
-
-      const addr = o.deliveryAddress || o.customerAddress || o.address || null;
-      let customerAddress = null;
-      if (addr) {
-        if (typeof addr === 'string') customerAddress = addr;
-        else {
-          customerAddress = {
-            line1: addr.line1 || addr.addressLine || '',
-            line2: addr.line2 || '',
-            city: addr.city || addr.town || '',
-            block: addr.block || addr.blockNo || '',
-            zip: addr.zipCode || addr.postalCode || addr.zip || ''
-          };
-        }
-      }
+  const fetchAllOrders = useCallback(async () => {
+    try {
+      const data = await getVendorOrders({ status: "", search: "", sortKey: "placedAt", sortDir: "desc" });
+      const raw = data?.orders ?? [];
+      const mapped = raw.map(normalizeOrder);
+      setAllOrders(Array.isArray(mapped) ? mapped : []);
+    } catch (e) {
+      // Silent fail for count fetching
+    }
+  }, []);
 
 
-
-      const items = Array.isArray(o.items) ? o.items.map(mapItem) : [];
-
-
-      const originalStatus = o.status || 'pending';
-      const normalizedStatus = STATUS_MAP[originalStatus] || originalStatus;
+  // Fetch filtered orders when dependencies change
+  useEffect(() => {
+    fetchOrders();
+  }, [filter, sortKey, sortDir, fetchOrders]);
 
 
-      return {
-        id: o._id || o.id,
-        code: o.code || (o._id ? `ORD_${String(o._id).slice(0,6).toUpperCase()}` : 'ORD_000'),
-        status: normalizedStatus,
-        items,
-        customerAddress,
-        customerName,
-        customerPhone,
-        total: o.totalPrice ?? o.total ?? o.amount ?? 0,
-        placedAt: o.createdAt || o.placedAt || o.created_at,
-        placedAgoText: timeAgo(o.createdAt || o.placedAt || o.created_at),
-        timeLeftText: o.timeLeftText || '',
-        raw: o,
-      };
-    });
+  // Fetch all orders on mount only
+  useEffect(() => {
+    fetchAllOrders();
+  }, []);
 
 
-
-    setOrders(Array.isArray(mapOrders) ? mapOrders : []);
-  } catch (e) {
-    setError("Failed to load orders");
-  } finally { 
-    setLoading(false); 
-  }
-};
-
-  const fetchAllOrders = async () => {
-  try {
-    const data = await getVendorOrders({ status: "", search: "", sortKey: "placedAt", sortDir: "desc" });
-    const raw = data?.orders ?? [];
-
-    const mapItem = (it) => {
-      return {
-        name: it.name || it.title || it.productName || 'Item',
-        qty: it.qty ?? it.quantity ?? it.count ?? 1,
-      };
-    };
-
-    const mapOrders = raw.map((o) => {
-      const customer = o.user || {};
-      let customerName = '';
-      if (customer.name) {
-        if (typeof customer.name === 'string') customerName = customer.name;
-        else if (typeof customer.name === 'object') {
-          customerName = [customer.name.first, customer.name.last].filter(Boolean).join(' ') || customer.name.full || '';
-        }
-      }
-      customerName = customerName || o.customerName || (customer.fullName || '') || 'Customer';
-
-      const customerPhone = customer.phone || customer.phoneNumber || customer.mobile || o.customerPhone || '';
-
-      const addr = o.deliveryAddress || o.customerAddress || o.address || null;
-      let customerAddress = null;
-      if (addr) {
-        if (typeof addr === 'string') customerAddress = addr;
-        else {
-          customerAddress = {
-            line1: addr.line1 || addr.addressLine || '',
-            line2: addr.line2 || '',
-            city: addr.city || addr.town || '',
-            block: addr.block || addr.blockNo || '',
-            zip: addr.zipCode || addr.postalCode || addr.zip || ''
-          };
-        }
-      }
-
-      const items = Array.isArray(o.items) ? o.items.map(mapItem) : [];
-
-      const originalStatus = o.status || 'pending';
-      const normalizedStatus = STATUS_MAP[originalStatus] || originalStatus;
-
-      return {
-        id: o._id || o.id,
-        code: o.code || (o._id ? `ORD_${String(o._id).slice(0,6).toUpperCase()}` : 'ORD_000'),
-        status: normalizedStatus,
-        items,
-        customerAddress,
-        customerName,
-        customerPhone,
-        total: o.totalPrice ?? o.total ?? o.amount ?? 0,
-        placedAt: o.createdAt || o.placedAt || o.created_at,
-        raw: o,
-      };
-    });
-
-    setAllOrders(Array.isArray(mapOrders) ? mapOrders : []);
-  } catch (e) {
-    // Silent fail for count fetching
-  }
-};
-
-
-  useEffect(() => { fetchOrders(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [filter, sortKey, sortDir]);
-
-  useEffect(() => { fetchAllOrders(); }, []);
-
-
+  // Memoized counts calculation
   const counts = useMemo(() => {
-    const by = allOrders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc; }, {});
+    const by = {};
+    for (let i = 0; i < allOrders.length; i++) {
+      const status = allOrders[i].status;
+      by[status] = (by[status] || 0) + 1;
+    }
     return { all: allOrders.length, ...by };
   }, [allOrders]);
 
 
-
+  // Memoized displayed orders with optimized filtering
   const displayedOrders = useMemo(() => {
-    const filtered = filter ? orders.filter((o) => o.status === filter) : orders;
-    const withSearch = search
-      ? filtered.filter((o) =>
-          [o.code, o.customerName, o.customerPhone, o.items?.map((i) => i.name).join(", ")]
-            .filter(Boolean)
-            .some((t) => String(t).toLowerCase().includes(search.toLowerCase()))
-        )
-      : filtered;
-    const sorted = [...withSearch].sort((a, b) => {
+    let result = filter ? orders.filter((o) => o.status === filter) : orders;
+
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter((o) => {
+        const searchFields = [o.code, o.customerName, o.customerPhone];
+        if (o.items?.length > 0) {
+          searchFields.push(o.items.map((i) => i.name).join(" "));
+        }
+        return searchFields.some((t) => t && String(t).toLowerCase().includes(q));
+      });
+    }
+
+    // Sort only once
+    result.sort((a, b) => {
       const va = a[sortKey];
       const vb = b[sortKey];
       if (va === vb) return 0;
       const dir = sortDir === "asc" ? 1 : -1;
       return (va > vb ? 1 : -1) * dir;
     });
-    return sorted;
+
+    return result;
   }, [orders, filter, search, sortKey, sortDir]);
 
 
-
-  const onSort = (key) => {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
-  };
-
+  const onSort = useCallback((key) => {
+    setSortDir((d) => sortKey === key ? (d === "asc" ? "desc" : "asc") : "asc");
+    if (sortKey !== key) setSortKey(key);
+  }, [sortKey]);
 
 
-  const onToggleSelect = (id, checked) => {
-    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
-  };
-  const onToggleSelectAll = (checked) => {
+  const onToggleSelect = useCallback((id, checked) => {
+    setSelectedIds((prev) => checked ? [...prev, id] : prev.filter((x) => x !== id));
+  }, []);
+
+
+  const onToggleSelectAll = useCallback((checked) => {
     setSelectedIds(checked ? displayedOrders.map((o) => o.id) : []);
-  };
+  }, [displayedOrders]);
 
 
+  const openDetails = useCallback((order) => {
+    setActiveOrder(order);
+    setModalOpen(true);
+  }, []);
 
-  const openDetails = (order) => { setActiveOrder(order); setModalOpen(true); };
-  const closeDetails = () => { setModalOpen(false); setActiveOrder(null); };
-  const acceptOrder = async (order) => {
+
+  const closeDetails = useCallback(() => {
+    setModalOpen(false);
+    setActiveOrder(null);
+  }, []);
+
+
+  const acceptOrder = useCallback(async (order) => {
     try {
       await updateOrderStatus(order.id, "accepted");
-      setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "accepted" } : o)));
-      setAllOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "accepted" } : o)));
+      setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status: "accepted" } : o));
+      setAllOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status: "accepted" } : o));
       setNotice(`Order ${order.code} has been accepted.`);
     } catch (e) {
       setError("Failed to accept order");
     }
-  };
+  }, []);
 
 
-
-  const rejectOrder = async (order) => {
+  const rejectOrder = useCallback(async (order) => {
     try {
       await updateOrderStatus(order.id, "rejected");
-      setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "rejected" } : o)));
-      setAllOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "rejected" } : o)));
+      setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status: "rejected" } : o));
+      setAllOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status: "rejected" } : o));
       setNotice(`Order ${order.code} has been rejected.`);
     } catch (e) {
       setError("Failed to reject order");
     }
-  };
+  }, []);
 
 
-
-  const bulkUpdate = async (status) => {
+  const bulkUpdate = useCallback(async (status) => {
     if (selectedIds.length === 0) return;
     try {
-      // Update each order individually using the existing single-order endpoint
       const results = await Promise.all(
         selectedIds.map((id) =>
           updateOrderStatus(id, status)
@@ -308,12 +265,10 @@ export default function Orders() {
         )
       );
 
-
       const successIds = results.filter((r) => r.ok).map((r) => r.id);
 
-
-      setOrders((prev) => prev.map((o) => (successIds.includes(o.id) ? { ...o, status } : o)));
-      setAllOrders((prev) => prev.map((o) => (successIds.includes(o.id) ? { ...o, status } : o)));
+      setOrders((prev) => prev.map((o) => successIds.includes(o.id) ? { ...o, status } : o));
+      setAllOrders((prev) => prev.map((o) => successIds.includes(o.id) ? { ...o, status } : o));
       setSelectedIds([]);
       setNotice(`${successIds.length} orders updated to ${status}.`);
       const failed = results.length - successIds.length;
@@ -321,7 +276,9 @@ export default function Orders() {
     } catch (e) {
       setError("Failed to update orders");
     }
-  };
+  }, [selectedIds]);
+
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -343,7 +300,6 @@ export default function Orders() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex items-center gap-2 overflow-x-auto">
         {FILTERS.map((f) => (
           <button
@@ -367,39 +323,6 @@ export default function Orders() {
 
       <Alert type={error ? 'error' : 'success'} message={error || notice} />
 
-      {/* Bulk actions */}
-      {/* <div className="flex items-center gap-2">
-        <button
-          className="rounded-lg border border-base px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
-          disabled={selectedIds.length === 0}
-          onClick={() => bulkUpdate('preparing')}
-        >
-          Mark as Preparing
-        </button>
-        <button
-          className="rounded-lg border border-base px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
-          disabled={selectedIds.length === 0}
-          onClick={() => bulkUpdate('ready')}
-        >
-          Mark as Ready
-        </button>
-        <button
-          className="rounded-lg border border-base px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
-          disabled={selectedIds.length === 0}
-          onClick={() => bulkUpdate('out_for_delivery')}
-        >
-          Mark as Out for Delivery
-        </button>
-        <button
-          className="rounded-lg border border-base px-3 py-2 text-sm hover:bg-accent disabled:opacity-60"
-          disabled={selectedIds.length === 0}
-          onClick={() => bulkUpdate('delivered')}
-        >
-          Mark as Delivered
-        </button>
-      </div> */}
-
-      {/* Table */}
       <OrdersTable
         orders={displayedOrders}
         selectedIds={selectedIds}
@@ -415,7 +338,6 @@ export default function Orders() {
         search={search}
       />
 
-      {/* Modal */}
       <OrderDetailsModal
         open={modalOpen}
         onClose={closeDetails}
@@ -424,7 +346,6 @@ export default function Orders() {
         onReject={rejectOrder}
       />
 
-      {/* Loading overlay */}
       {loading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/20">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-[hsl(var(--primary))] border-t-transparent" />
