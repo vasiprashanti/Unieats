@@ -15,6 +15,7 @@ export default function VendorLayout() {
     navigate("/vendor/login");
   };
 
+  
   return (
     <div className="flex h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
       {/* Sidebar */}
@@ -47,6 +48,7 @@ export default function VendorLayout() {
             </span>
             {sidebarOpen && <span>Dashboard</span>}
           </NavLink>  */}
+          
           <NavLink to="/vendor/orders" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
             <span className="inline-flex h-6 w-6 items-center justify-center">
               <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -89,6 +91,7 @@ export default function VendorLayout() {
         </nav>
       </aside>
 
+      
       {/* Content area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
@@ -105,6 +108,7 @@ export default function VendorLayout() {
               aria-label="Toggle Theme"
               title="Toggle Theme"
             >
+              
               {isDark ? (
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="4" />
@@ -117,6 +121,7 @@ export default function VendorLayout() {
               )}
             </button>
 
+            
             {/* Notification bell (placeholder) */}
             <div className="relative group">
               <button type="button" className="p-2 rounded hover:bg-accent" title="Notifications">
