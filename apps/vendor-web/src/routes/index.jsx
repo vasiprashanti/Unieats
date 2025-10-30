@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/Login';
 import Signup from '../pages/Signup';
 import Register from '../pages/Register';
-import Dashboard from '../pages/Dashboard';
+{/* import Dashboard from '../pages/Dashboard'; */}
 import Orders from '../pages/Orders';
 import Menu from '../pages/Menu';
 import Analytics from '../pages/Analytics';
@@ -16,7 +16,6 @@ const roleHome = (role) => {
   if (role === 'vendor') return '/vendor/dashboard';
   return '/home';
 };
-
 
 // Wrap protected vendor routes
 function ProtectedVendor({ children }) {
@@ -36,7 +35,6 @@ function ProtectedVendor({ children }) {
   return children;
 }
 
-
 // Restrict routes to guests only
 function GuestOnly({ children }) {
   const { user, role, initializing } = useAuth();
@@ -50,7 +48,6 @@ function GuestOnly({ children }) {
   }
 
   if (user) return <Navigate to={roleHome(role)} replace />;
-
   return children;
 }
 
@@ -93,14 +90,13 @@ export default function AppRoutes() {
   }
 >
   <Route index element={<Navigate to="orders" replace />} />
-  <Route path="dashboard" element={<Dashboard />} />
+  {/* <Route path="dashboard" element={<Dashboard />} /> */}
   <Route path="orders" element={<Orders />} />
   <Route path="menu" element={<Menu />} />
   <Route path="analytics" element={<Analytics />} />
   <Route path="profile" element={<Profile />} />
 </Route>
 
-      
       {/* Default fallback */}
       <Route path="*" element={<Navigate to="/vendor/signup" replace />} />
     </Routes>
