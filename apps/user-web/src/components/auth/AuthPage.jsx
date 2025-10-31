@@ -406,32 +406,28 @@ function Field({ label, type = "text", value, onChange, onBlur, required, enable
 }
 
 function SelectField({ label, value, onChange, options, error, required }) {
-    return (
-        <div className="relative mb-5 w-full">
-            <select
-                className={`w-full px-3 text-[15px] bg-white border rounded-xl transition-all duration-200 outline-none appearance-none leading-normal ${
-                    value ? "pt-6 pb-2" : "py-3.5"
-                } ${error ? "border-red-400 focus:border-red-500" : "border-black/8 focus:border-orange-500 focus:shadow-[0_0_0_4px_rgba(255,106,0,0.12)]"}`}
-                value={value}
-                onChange={(e) => onChange?.(e.target.value)}
-                required={required}
-            >
-                {options?.map((option) => (
-                    <option key={option.value} value={option.value} disabled={option.value === ""}>
-                        {option.label}
-                    </option>
-                ))}
-            </select>
-            <label className={`absolute left-3 text-[14px] text-gray-500 pointer-events-none transition-all duration-200 ${value ? "top-1.5 left-2.5 text-[11px] font-semibold text-orange-500 bg-white px-1" : "top-1/2 transform -translate-y-1/2"}`}>
-                {label}
-            </label>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-            </div>
-            {error ? <div className="mt-1.5 text-xs text-red-600">{error}</div> : null}
-        </div>
-    );
+  return (
+    <div className="mb-5 w-full">
+      <label className="block text-[14px] text-gray-600 font-medium mb-1" htmlFor={label.replace(" ", "_")}>{label}</label>
+      <select
+        id={label.replace(" ", "_")}
+        className={`w-full px-3 text-[15px] bg-white border rounded-xl transition-all duration-200 outline-none appearance-none leading-normal py-3.5 ${error ? "border-red-400 focus:border-red-500" : "border-black/8 focus:border-orange-500 focus:shadow-[0_0_0_4px_rgba(255,106,0,0.12)]"}`}
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        required={required}
+      >
+        <option value="" disabled>Select</option>
+        {options?.filter(opt => opt.value !== "").map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {error ? <div className="mt-1.5 text-xs text-red-600">{error}</div> : null}
+    </div>
+  );
 }
+
 
 function PrimaryButton({ children, type = "button", disabled = false, onClick }) {
     return (
