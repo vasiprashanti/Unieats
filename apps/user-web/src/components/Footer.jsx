@@ -28,10 +28,10 @@ function Footer() {
           <nav className="flex flex-col w-full md:w-[50%]">
             {[
               { id: "01", label: "ORDER", path: "/restaurants" },
-              { id: "02", label: "ABOUT", path: "/about" },
-              { id: "03", label: "TEAM", path: "/team" },
+              { id: "02", label: "TEAM", path: "/team" },
+       { id: "03", label: "ABOUT", path: "/about" },
               { id: "04", label: "CAREERS", path: "/careers" },
-       { id: "05", label: "PARTNER WITH US", path: "/careers" }
+       { id: "05", label: "PARTNERS", external: "https://vendor.unieats.co/vendor/orders" },
             ].map((item) => (
               <Link
                 key={item.id}
