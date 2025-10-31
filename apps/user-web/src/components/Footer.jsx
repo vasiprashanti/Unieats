@@ -31,7 +31,7 @@ function Footer() {
               { id: "02", label: "TEAM", path: "/team" },
        { id: "03", label: "ABOUT", path: "/about" },
               { id: "04", label: "CAREERS", path: "/careers" },
-       { id: "05", label: "PARTNERS", external: "https://vendor.unieats.co/vendor/orders" },
+       { id: "05", label: "PARTNERS", external: "https://vendor.unieats.co/vendor/signup" },
             ].map((item) => (
               <Link
                 key={item.id}
