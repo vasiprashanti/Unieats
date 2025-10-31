@@ -1,18 +1,23 @@
 import React, { useMemo, useState } from "react";
 
-// Status badge styles mapped to tokens
-const statusStyles = {
-  new: "bg-amber-100 text-amber-700 border border-amber-200",
-  pending: "bg-amber-100 text-amber-700 border border-amber-200",
-  accepted: "bg-blue-100 text-blue-700 border border-blue-200",
-  preparing: "bg-yellow-100 text-yellow-800 border border-yellow-200",
-  ready: "bg-emerald-100 text-emerald-700 border border-emerald-200",
-  delivery: "bg-cyan-100 text-cyan-700 border border-cyan-200",
-  delivered: "bg-gray-100 text-gray-700 border border-gray-200",
-  rejected: "bg-red-100 text-red-700 border border-red-200",
-};
+
+const btnBase = "action-btn";
+const btnAccept = `${btnBase} accept`;
+const btnReject = `${btnBase} reject`;
+const btnPrimary = `${btnBase} primary`;
+
 
 function StatusBadge({ status }) {
+  const statusStyles = {
+    new: "bg-amber-100 text-amber-700 border border-amber-200",
+    pending: "bg-amber-100 text-amber-700 border border-amber-200",
+    accepted: "bg-blue-100 text-blue-700 border border-blue-200",
+    preparing: "bg-yellow-100 text-yellow-800 border border-yellow-200",
+    ready: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+    delivery: "bg-cyan-100 text-cyan-700 border border-cyan-200",
+    delivered: "bg-gray-100 text-gray-700 border border-gray-200",
+    rejected: "bg-red-100 text-red-700 border border-red-200",
+  };
   const cls = statusStyles[status] || "bg-accent";
   return (
     <span className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium ${cls}`}>
@@ -22,18 +27,18 @@ function StatusBadge({ status }) {
   );
 }
 
-// Format time to HH:MM AM/PM
+
 const formatTime = (isoString) => {
-  if (!isoString) return '';
+  if (!isoString) return "";
   try {
     const date = new Date(isoString);
-    return date.toLocaleString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+    return date.toLocaleString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
-  } catch (e) {
-    return '';
+  } catch {
+    return "";
   }
 };
 
@@ -50,10 +55,9 @@ export default function OrdersTable({
   onView,
   onAccept,
   onReject,
+  onUpdateStatus,
   search,
 }) {
-  const [menuOpenId, setMenuOpenId] = useState(null);
-
   const visibleOrders = useMemo(() => {
     if (!search) return orders;
     const q = search.toLowerCase();
@@ -64,16 +68,16 @@ export default function OrdersTable({
     );
   }, [orders, search]);
 
-  const toggleMenu = (id) => setMenuOpenId((v) => (v === id ? null : id));
 
   const sortIndicator = (key) => (
     <button
       type="button"
+      style={{ border: 0, background: "none", cursor: "pointer" }}
       className="inline-flex items-center gap-1 text-muted hover:text-[hsl(var(--foreground))]"
       onClick={() => onSort(key)}
       title="Sort"
     >
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M8 18L12 22 16 18" />
         <path d="M16 6L12 2 8 6" />
       </svg>
@@ -82,48 +86,106 @@ export default function OrdersTable({
   );
 
 
+  const getActionButton = (order) => {
+    if (order.status === "new" || order.status === "pending") {
+      return (
+        <div className="flex flex-col gap-1" >
+          <button
+            type="button"
+            className={btnAccept}
+            style={{ marginBottom: 4 }}
+            onClick={() => onAccept(order)}
+            title="Accept order"
+          >
+            Accept
+          </button>
+          <button
+            type="button"
+            className={btnReject}
+            onClick={() => onReject(order)}
+            title="Reject order"
+          >
+            Reject
+          </button>
+        </div>
+      );
+    } else if (order.status === "accepted") {
+      return (
+        <button
+          type="button"
+          className={btnPrimary}
+          onClick={() => onUpdateStatus(order, "preparing")}
+          title="Mark as preparing"
+          style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" }}
+        >
+          Mark as Preparing
+        </button>
+      );
+    } else if (order.status === "preparing") {
+      return (
+        <button
+          type="button"
+          className={btnPrimary}
+          onClick={() => onUpdateStatus(order, "ready")}
+          title="Mark as ready"
+          style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" }}
+        >
+          Mark as Ready
+        </button>
+      );
+    } else if (order.status === "ready") {
+      return (
+        <button
+          type="button"
+          className={btnPrimary}
+          onClick={() => onUpdateStatus(order, "out_for_delivery")}
+          title="Mark as out for delivery"
+          style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" }}
+        >
+          Mark as Out for Delivery
+        </button>
+      );
+    } else if (order.status === "out_for_delivery") {
+      return (
+        <button
+          type="button"
+          className={btnPrimary}
+          onClick={() => onUpdateStatus(order, "delivered")}
+          title="Mark as delivered"
+          style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" }}
+        >
+          Mark as Delivered
+        </button>
+      );
+    }
+    return null;
+  };
+
+
   return (
     <div className="rounded-2xl border border-base bg-[hsl(var(--card))]">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-left text-muted">
             <tr className="border-b border-base">
-              <th className="w-10 p-3">
-                {/* <input
-                  aria-label="Select all"
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={(e) => onToggleSelectAll(e.target.checked)}
-                /> */}
-              </th>
-              <th className="p-3">Order No {sortIndicator("code")}</th>
-              <th className="p-3">Item List</th>
-              <th className="p-3 text-right">Actions </th>
-              <th className="p-3">Status {sortIndicator("status")}</th>
-              <th className="p-3">Block No/Address</th>
-              {/* <th className="p-3">Customer {sortIndicator("customerName")}</th> */}
-              <th className="p-3 whitespace-nowrap">Amount {sortIndicator("total")}</th>
-              <th className="p-3 whitespace-nowrap">Time {sortIndicator("placedAt")}</th>
-              <th className="p-3 text-center">Bill</th>
+              <th className="w-10 p-3"></th>
+              <th className="p-3">ORDER ID {sortIndicator("code")}</th>
+              <th className="p-3">ITEM LIST</th>
+              <th className="p-3 ">ACTIONS </th>
+              <th className="p-3">STATUS {sortIndicator("status")}</th>
+              <th className="p-3">ADDRESS</th>
+              <th className="p-3 whitespace-nowrap">AMOUNT {sortIndicator("total")}</th>
+              <th className="p-3 whitespace-nowrap">TIME {sortIndicator("placedAt")}</th>
+              <th className="p-3 text-center">BILL</th>
             </tr>
           </thead>
           <tbody>
             {visibleOrders.map((o) => (
               <tr key={o.id} className="border-t border-base hover:bg-[hsl(var(--accent))]/30">
-                <td className="p-3 align-top">
-                  {/* <input
-                    aria-label={`Select ${o.code}`}
-                    type="checkbox"
-                    checked={selectedIds.includes(o.id)}
-                    onChange={(e) => onToggleSelect(o.id, e.target.checked)}
-                  /> */}
-                </td>
+                <td className="p-3 align-top"></td>
                 <td className="p-3 align-top">
                   <div className="flex flex-col">
                     <span className="font-medium tracking-wide">{o.code}</span>
-                    {/* {o.status === "new" && (
-                      <span className="text-xs text-red-500">{o.timeLeftText || "\u231A 2m left"}</span>
-                    )} */}
                   </div>
                 </td>
                 <td className="p-3 align-top">
@@ -139,66 +201,8 @@ export default function OrdersTable({
                   </div>
                 </td>
                 <td className="p-3 align-top">
-                  <div className="flex items-start justify-end gap-2 relative">
-                    {(o.status === "new" || o.status === "pending") && (
-                      <div className="flex flex-col gap-1">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 rounded-lg bg-green-700 text-white px-3 py-1.5 hover:bg-green-900 text-xs font-medium"
-                          onClick={() => onAccept(o)}
-                          title="Accept order"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 rounded-lg bg-red-700 text-white px-3 py-1.5 hover:bg-red-900 text-xs font-medium"
-                          onClick={() => onReject(o)}
-                          title="Reject order"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-
-
-                    {/* <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-lg border border-base px-2 py-1 hover:bg-accent"
-                      onClick={() => toggleMenu(o.id)}
-                      title="More"
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="1" />
-                        <circle cx="19" cy="12" r="1" />
-                        <circle cx="5" cy="12" r="1" />
-                      </svg>
-                    </button> */}
-
-
-                    {/* {menuOpenId === o.id && (
-                      <div className="absolute right-0 top-8 z-10 w-44 rounded-lg border border-base bg-[hsl(var(--card))] p-1 shadow-xl">
-                        {(o.status === "new" || o.status === "pending") && (
-                          <>
-                            <button
-                              className="w-full text-left px-3 py-2 rounded-md hover:bg-accent"
-                              onClick={() => { setMenuOpenId(null); onAccept(o); }}
-                            >
-                              ✅ Accept Order
-                            </button>
-                            <button
-                              className="w-full text-left px-3 py-2 rounded-md hover:bg-accent text-red-600"
-                              onClick={() => { setMenuOpenId(null); onReject(o); }}
-                            >
-                              ❌ Reject Order
-                            </button>
-                          </>
-                        )}
-                        {o.status !== "new" && o.status !== "pending" && (
-                          <div className="px-3 py-2 text-muted">No actions</div>
-                        )}
-                      </div>
-                    )} */}
+                  <div className="flex items-start justify-start gap-2 relative">
+                    {getActionButton(o)}
                   </div>
                 </td>
                 <td className="p-3 align-top">
@@ -209,27 +213,21 @@ export default function OrdersTable({
                     <div className="text-sm">
                       {(() => {
                         const addr = o.customerAddress || o.address;
-                        if (!addr) return 'N/A';
-                        if (typeof addr === 'string') return addr;
-                        if (typeof addr === 'object') {
+                        if (!addr) return "N/A";
+                        if (typeof addr === "string") return addr;
+                        if (typeof addr === "object") {
                           const parts = [];
                           if (addr.line1) parts.push(addr.line1);
                           if (addr.line2) parts.push(addr.line2);
                           if (addr.city) parts.push(addr.city);
                           if (addr.block) parts.push(`Block ${addr.block}`);
-                          return parts.length > 0 ? parts.join(', ') : 'N/A';
+                          return parts.length > 0 ? parts.join(", ") : "N/A";
                         }
-                        return 'N/A';
+                        return "N/A";
                       })()}
                     </div>
                   </div>
                 </td>
-                {/* <td className="p-3 align-top">
-                  <div className="leading-tight">
-                    <div className="text-sm text-[hsl(var(--foreground))]">{o.customerName}</div>
-                    <div className="text-muted text-xs">{o.customerPhone}</div>
-                  </div>
-                </td> */}
                 <td className="p-3 align-top font-semibold">₹{Number(o.total).toLocaleString()}</td>
                 <td className="p-3 align-top text-muted">{formatTime(o.placedAt)}</td>
                 <td className="p-3 align-top">
@@ -253,12 +251,70 @@ export default function OrdersTable({
 
             {visibleOrders.length === 0 && (
               <tr>
-                <td colSpan={9} className="p-10 text-center text-muted">No orders found.</td>
+                <td colSpan={9} className="p-10 text-center text-muted">
+                  No orders found.
+                </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+
+      {/* Action button styles */}
+      <style>
+        {`
+        .action-btn {
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: 1px solid hsl(240, 6%, 90%);
+          background: hsl(0, 0%, 100%);
+          cursor: pointer;
+          font-size: 13px;
+          font-weight: 500;
+          transition: all 0.2s;
+          white-space: nowrap;
+          margin-bottom: 2px;
+        }
+        .action-btn:hover {
+          background: hsl(240, 5%, 96%);
+        }
+        
+        .action-btn.accept {
+          background: hsl(120, 60%, 70%);
+          color: hsl(120, 40%, 20%);
+          border-color: hsl(120, 60%, 65%);
+          padding: 6px 12px;
+          font-size: 13px;
+        }
+        .action-btn.accept:hover {
+          background: hsl(120, 60%, 65%);
+        }
+        
+        .action-btn.reject {
+          background: hsl(0, 70%, 75%);
+          color: hsl(0, 50%, 25%);
+          border-color: hsl(0, 70%, 70%);
+          padding: 6px 12px;
+          font-size: 13px;
+        }
+        .action-btn.reject:hover {
+          background: hsl(0, 70%, 70%);
+        }
+        
+        /* Progressive buttons - all orange */
+        .action-btn.primary {
+          background: hsl(14, 100%, 57%);
+          color: #fff;
+          border-color: hsl(14, 100%, 57%);
+          padding: 6px 12px;
+          font-size: 13px;
+        }
+        .action-btn.primary:hover {
+          background: hsl(14, 100%, 52%);
+        }
+        `}
+      </style>
     </div>
   );
 }
