@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 
+
 // Vendor layout with theme toggle mirroring admin
 export default function VendorLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -10,10 +11,12 @@ export default function VendorLayout() {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
+
   const onLogout = async () => {
     await logout();
     navigate("/vendor/login");
   };
+
 
   
   return (
@@ -37,7 +40,7 @@ export default function VendorLayout() {
           </button>
         </div>
         <nav className="p-3 space-y-1 text-sm">
-          {/* <NavLink to="/vendor/dashboard" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
+          {/* <NavLink to="/vendor/dashboard" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent transition-all ${isActive ? "bg-[hsl(14,100%,57%)] text-white" : ""}`}>
             <span className="inline-flex h-6 w-6 items-center justify-center">
               <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="9" />
@@ -49,7 +52,7 @@ export default function VendorLayout() {
             {sidebarOpen && <span>Dashboard</span>}
           </NavLink>  */}
           
-          <NavLink to="/vendor/orders" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
+          <NavLink to="/vendor/orders" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent transition-all ${isActive ? "bg-[hsl(14,100%,57%)] text-white" : ""}`}>
             <span className="inline-flex h-6 w-6 items-center justify-center">
               <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15V8a2 2 0 0 0-2-2h-3l-2-2H8L6 6H5a2 2 0 0 0-2 2v7" />
@@ -59,7 +62,7 @@ export default function VendorLayout() {
             </span>
             {sidebarOpen && <span>Orders</span>}
           </NavLink>
-          <NavLink to="/vendor/menu" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
+          <NavLink to="/vendor/menu" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent transition-all ${isActive ? "bg-[hsl(14,100%,57%)] text-white" : ""}`}>
             <span className="inline-flex h-6 w-6 items-center justify-center">
               <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 19.5V4a2 2 0 0 1 2-2h9l5 5v12.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" />
@@ -68,7 +71,7 @@ export default function VendorLayout() {
             </span>
             {sidebarOpen && <span>Menu</span>}
           </NavLink>
-          <NavLink to="/vendor/analytics" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
+          <NavLink to="/vendor/analytics" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent transition-all ${isActive ? "bg-[hsl(14,100%,57%)] text-white" : ""}`}>
             <span className="inline-flex h-6 w-6 items-center justify-center">
               <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 3v18h18" />
@@ -77,7 +80,7 @@ export default function VendorLayout() {
             </span>
             {sidebarOpen && <span>Analytics</span>}
           </NavLink>
-          <NavLink to="/vendor/profile" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent ${isActive ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : ""}`}>
+          <NavLink to="/vendor/profile" className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent transition-all ${isActive ? "bg-[hsl(14,100%,57%)] text-white" : ""}`}>
             <span className="inline-flex h-6 w-6 items-center justify-center">
               <svg className="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -90,6 +93,7 @@ export default function VendorLayout() {
           </NavLink>
         </nav>
       </aside>
+
 
       
       {/* Content area */}
@@ -121,6 +125,7 @@ export default function VendorLayout() {
               )}
             </button>
 
+
             
             {/* Notification bell (placeholder) */}
             <div className="relative group">
@@ -135,16 +140,23 @@ export default function VendorLayout() {
               </div>
             </div>
 
+
             <button
               type="button"
               onClick={onLogout}
               disabled={loading}
-              className="px-3 py-2 rounded border border-base hover:bg-accent disabled:opacity-60"
+              className="flex items-center gap-2 px-3 py-2 rounded text-sm hover:bg-accent disabled:opacity-60 transition-all"
             >
-              Logout
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span classname = "font-semibold">Logout</span>
             </button>
           </div>
         </header>
+
 
         <main className="flex-1 overflow-auto p-4 bg-[hsl(var(--background))]">
           <Outlet />
