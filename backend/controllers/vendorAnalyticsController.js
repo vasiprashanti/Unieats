@@ -35,7 +35,10 @@ const getVendorAnalytics = async (req, res) => {
           totalRevenue: { $sum: "$totalPrice" },
           totalOrders: { $sum: 1 },
           avgOrderValue: { $avg: "$totalPrice" },
-          amountOwedToUnieats: { $sum: "$vendorOwes" },
+          // Mode 1 (COD/UPI): Money vendor owes to UniEats (platform fee + commission)
+          amountVendorOwesToUnieats: { $sum: "$vendorOwes" },
+          // Mode 2 (Razorpay): Money UniEats owes to vendor (payout amount)
+          amountUnieatsOwesToVendor: { $sum: "$vendorPayout" },
           avgPrepTime: {
             $avg: {
               $cond: {
@@ -92,8 +95,11 @@ const getVendorAnalytics = async (req, res) => {
     const summary = summaryResult[0] || {};
 
     const totalRevenue = summary.totalRevenue || 0;
-    const amountOwedToUnieats = summary.amountOwedToUnieats || 0;
-    const netRevenue = totalRevenue - amountOwedToUnieats;
+    const amountVendorOwesToUnieats = summary.amountVendorOwesToUnieats || 0;
+    const amountUnieatsOwesToVendor = summary.amountUnieatsOwesToVendor || 0;
+
+    // Calculate net balance: positive means vendor owes UniEats, negative means UniEats owes vendor
+    const netBalance = amountVendorOwesToUnieats - amountUnieatsOwesToVendor;
 
     // trial status
     const isTrialActive = vendorProfile.isTrialActive();
@@ -104,8 +110,10 @@ const getVendorAnalytics = async (req, res) => {
 
     const finalReport = {
       totalRevenue,
-      amountOwedToUnieats,
-      netRevenue,
+      // Bidirectional financial tracking
+      amountVendorOwesToUnieats, // From COD/UPI orders
+      amountUnieatsOwesToVendor, // From Razorpay orders (payouts)
+      netBalance, // Positive = vendor owes UniEats, Negative = UniEats owes vendor
       totalOrders: summary.totalOrders || 0,
       averagePrepTime: summary.avgPrepTime || 0,
       revenueData: revenueData,
@@ -116,22 +124,6 @@ const getVendorAnalytics = async (req, res) => {
         endDate: trialEndDate,
       },
     };
-
-    // const finalReport = {
-    //   summary: {
-    //     totalRevenue: summary.totalRevenue || 0,
-    //     totalOrders: summary.totalOrders || 0,
-    //     avgOrderValue: summary.avgOrderValue || 0,
-    //     avgPrepTime: summary.avgPrepTime || 0,
-    //     revenueChange: 0,
-    //     ordersChange: 0,
-    //     avgOrderValueChange: 0,
-    //     avgPrepTimeChange: 0,
-    //   },
-    //   revenueData: revenueData,
-    //   topItems: topItems,
-    // };
-    // res.status(200).json({ success: true, data: finalReport });
 
     res.status(200).json(finalReport);
   } catch (error) {

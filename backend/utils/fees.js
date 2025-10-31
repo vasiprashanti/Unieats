@@ -35,6 +35,7 @@ export function calculateOrderFees(
   const totalUserPays = Math.round((orderValue + platformFee) * 100) / 100;
   const isOnlinePayment = paymentMethod === "RAZORPAY";
 
+  // MODE 1: COD / UPI on Delivery
   if (!isOnlinePayment) {
     const vendorReceives = totalUserPays;
     const vendorOwes = platformFee + vendorCommission;
@@ -48,12 +49,17 @@ export function calculateOrderFees(
       vendorReceives: Math.round(vendorReceives * 100) / 100,
       vendorOwes: Math.round(vendorOwes * 100) / 100,
       netRevenue: Math.round(netRevenue * 100) / 100,
+      paymentMode: paymentMethod,
     };
   }
 
+  // MODE 2: Online Payment (Razorpay)
+  // Note: Razorpay automatically deducts their 3% fee before transferring to us.
+  // We don't calculate it here - it's handled externally by Razorpay.
+
   const unieatsReceives = totalUserPays;
-  const unieatsGross = platformFee + vendorCommission;
-  const vendorPayout = unieatsReceives - unieatsGross;
+  const unieatsGross = Math.round((platformFee + vendorCommission) * 100) / 100;
+  const vendorPayout = Math.round((orderValue - vendorCommission) * 100) / 100;
 
   return {
     orderValue: Math.round(orderValue * 100) / 100,
@@ -63,5 +69,6 @@ export function calculateOrderFees(
     unieatsReceives: Math.round(unieatsReceives * 100) / 100,
     unieatsGross: Math.round(unieatsGross * 100) / 100,
     vendorPayout: Math.round(vendorPayout * 100) / 100,
+    paymentMode: "RAZORPAY",
   };
 }

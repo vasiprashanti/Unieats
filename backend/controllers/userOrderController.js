@@ -3,6 +3,10 @@ import Order from "../models/Order.model.js";
 import User from "../models/User.model.js";
 import Vendor from "../models/Vendor.model.js";
 import { calculateOrderFees } from "../utils/fees.js";
+import {
+  createRazorpayOrder,
+  verifyRazorpaySignature,
+} from "../config/razorpay.js";
 
 // Step 1 - Place Order & Initiate Payment
 const placeOrder = async (req, res) => {
@@ -76,13 +80,23 @@ const placeOrder = async (req, res) => {
       platformFee: cart.platformFee,
       totalPrice: cart.total,
       vendorCommission: feeBreakdown.vendorCommission,
-      vendorReceives: feeBreakdown.vendorReceives || 0,
-      vendorOwes: feeBreakdown.vendorOwes || 0,
       deliveryAddress: deliveryAddressObject,
       paymentDetails: { method: paymentMethod },
     };
 
-    // 7️⃣ Handle payment logic
+    // Add payment mode specific fields
+    if (paymentMethod === "RAZORPAY") {
+      // Mode 2: Online payment fields
+      orderPayload.unieatsReceives = feeBreakdown.unieatsReceives;
+      orderPayload.unieatsGross = feeBreakdown.unieatsGross;
+      orderPayload.vendorPayout = feeBreakdown.vendorPayout;
+    } else {
+      // Mode 1: COD/UPI fields
+      orderPayload.vendorReceives = feeBreakdown.vendorReceives || 0;
+      orderPayload.vendorOwes = feeBreakdown.vendorOwes || 0;
+    }
+
+    // 6️⃣ Handle payment logic
     if (paymentMethod === "UPI") {
       if (!vendor.upiId) {
         return res.status(400).json({
@@ -143,6 +157,46 @@ const placeOrder = async (req, res) => {
         message: "Order placed successfully!",
         data: order,
       });
+    } else if (paymentMethod === "RAZORPAY") {
+      // MODE 2: Online Payment via Razorpay
+      orderPayload.status = "payment_pending";
+      orderPayload.paymentDetails.status = "pending";
+
+      // Create order in database first
+      const order = new Order(orderPayload);
+      await order.save();
+
+      try {
+        // Create Razorpay order
+        const razorpayOrder = await createRazorpayOrder(
+          order.totalPrice,
+          order._id
+        );
+
+        // Update order with Razorpay order ID
+        order.paymentDetails.razorpayOrderId = razorpayOrder.id;
+        await order.save();
+
+        return res.status(201).json({
+          success: true,
+          message: "Order created. Please complete the payment.",
+          data: {
+            orderId: order._id,
+            razorpayOrderId: razorpayOrder.id,
+            amount: order.totalPrice,
+            currency: razorpayOrder.currency,
+            razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+          },
+        });
+      } catch (razorpayError) {
+        // If Razorpay order creation fails, delete the order
+        await Order.findByIdAndDelete(order._id);
+        console.error("Razorpay order creation failed:", razorpayError);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to initiate payment. Please try again.",
+        });
+      }
     }
 
     return res
@@ -216,6 +270,103 @@ const confirmUpiPayment = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// Step 3 - Verify Razorpay Payment
+const verifyRazorpayPayment = async (req, res) => {
+  const { orderId } = req.params;
+  const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+  const userId = req.user._id;
+
+  if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing payment verification details.",
+    });
+  }
+
+  try {
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
+    }
+
+    if (order.user.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: "Unauthorized." });
+    }
+
+    if (order.paymentDetails.status === "completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment already verified.",
+      });
+    }
+
+    // Verify the payment signature
+    const isValidSignature = verifyRazorpaySignature(
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature
+    );
+
+    if (!isValidSignature) {
+      order.paymentDetails.status = "failed";
+      order.status = "cancelled";
+      await order.save();
+
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment signature. Payment verification failed.",
+      });
+    }
+
+    // Update order with payment details
+    order.paymentDetails.razorpayPaymentId = razorpayPaymentId;
+    order.paymentDetails.razorpaySignature = razorpaySignature;
+    order.paymentDetails.status = "completed";
+    order.status = "pending"; // Move to pending, vendor can now accept
+    order.statusHistory.push({ status: "pending", timestamp: new Date() });
+
+    await order.save();
+
+    // Clear cart after successful payment
+    await Cart.deleteOne({ user: userId });
+
+    // Notify vendor about new order
+    const io = req.app.get("socketio");
+    io.to(order.vendor.toString()).emit("new_order", order);
+
+    // TRIGGER ANALYTICS UPDATE - New order placed
+    io.to(order.vendor.toString()).emit("analytics_update", {
+      vendorId: order.vendor,
+      orderId: order._id,
+      status: "pending",
+      totalPrice: order.totalPrice,
+    });
+
+    // Notify admin analytics
+    io.to("admin_room").emit("analytics_update", {
+      vendorId: order.vendor,
+      orderId: order._id,
+      status: "pending",
+      totalPrice: order.totalPrice,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Payment verified successfully! Your order has been placed.",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Error verifying Razorpay payment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while verifying payment.",
+    });
   }
 };
 
@@ -342,4 +493,10 @@ const rateOrderItems = async (req, res) => {
   }
 };
 
-export { placeOrder, confirmUpiPayment, getUserOrders, rateOrderItems };
+export {
+  placeOrder,
+  confirmUpiPayment,
+  verifyRazorpayPayment,
+  getUserOrders,
+  rateOrderItems,
+};

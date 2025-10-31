@@ -38,6 +38,10 @@ router.post(
   "/settings",
   ...adminOnly,
   [
+    check("deliveryFee")
+      .optional()
+      .isNumeric()
+      .withMessage("Delivery fee must be a number."),
     check("commissionRate")
       .optional()
       .isFloat({ min: 0, max: 1 })
