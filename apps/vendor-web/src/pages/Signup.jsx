@@ -48,13 +48,13 @@ export default function Signup() {
       <div className="sticky top-0 z-10 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex items-center justify-between px-10 py-4">
           <h1 className="text-[24px] font-bold text-[#ff6600]">UniEats</h1>
-          <nav className="flex items-center gap-6 text-[#333]">
+          <nav className="flex items-center gap-6 text-[#333] font-sans">
             <button 
               onClick={() => {
                 const element = document.getElementById('how-it-works');
                 if (element) scrollToSection(element);
               }} 
-              className="hover:text-[#ff6600] transition-colors cursor-pointer"
+              className="hover:text-[#ff6600] transition-colors cursor-pointer font-sans"
             >
               How It Works
             </button>
@@ -153,60 +153,31 @@ export default function Signup() {
       <section id="pricing" className="px-[10%] py-16 bg-white border-t border-[#f0f0f0]">
         <h2 className="text-[28px] mb-12 text-[#ff6600] tracking-wide font-semibold text-center">Pricing</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 max-w-2xl mx-auto justify-items-center">
          {/* Commission-Based Plan */}
-        <div className="p-8 rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative flex flex-col">
+        <div className="p-6 min-h-[430px] rounded-xl border-2 border-[#ff6600] shadow-[0_10px_25px_rgba(255,102,0,0.15)] bg-white relative flex flex-col">
           <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
           
           </div>
-          <h3 className="text-xl font-semibold text-[#333] mb-3">Commission-Based Plan</h3>
+          <h3 className="text-xl font-semibold text-[#333] mb-3 text-center">Commission-Based Plan</h3>
           <ul className="text-[15px] text-[#333] space-y-3 mb-6 flex-1">
-            <li>Pay % commission only on orders above ₹50.</li>
-            <li>Unlimited orders per month.</li>
-            <li>Add, manage, and customize your menu easily.</li>
-            <li>Accept online orders via app or website.</li>
-            <li>Real-time sales and customer analytics.</li>
-            <li>Single admin access, compatible on mobile, tablet, and PC.</li>
+            <li><b>Zero Fixed Fees</b> </li>
+            <li>Pay only a small commission on orders above ₹20. No setup or monthly charges.</li>
+            <li><b>Unlimited Orders</b> </li>
+            <li>Take and manage unlimited online orders every month with no limits.</li>
+            <li><b>Smart Menu Management</b> </li>
+            <li>Add, edit, and customize your menu anytime with photos, prices, and availability.</li>
+            <li><b>Real-Time Dashboard</b> </li>
+            <li>Manage all orders, payments, and analytics live from web or mobile.</li>
+            <li><b>Secure Digital Payments</b> </li>
+            <li>Accept UPI, COD, and Razorpay payments with automatic settlements.</li>
+            <li><b>Sales & Performance Insights</b> </li>
+            <li>Get real-time reports on revenue, top dishes, and order trends.</li>
+            <li><b>Multi-Device Access & Vendor Support</b> </li>
+            <li>Use your account on desktop, tablet, or mobile with dedicated support.</li>
           </ul>
-          <button className="mt-auto w-full px-6 py-3 rounded-lg bg-[#ff6600] text-white font-semibold hover:bg-[#e65c00] transition-colors">
-            Choose Commission
-          </button>
         </div>
 
-        {/* Subscription-Based Plan */}
-        <div className="bg-white border border-[#f0f0f0] p-8 rounded-xl shadow hover:shadow-lg transition flex flex-col">
-          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Subscription-Based Plan</h3>
-          <p className="text-[#555] mb-6">Fixed monthly or annual fee.</p>
-          <ul className="space-y-3 text-[15px] text-[#333] flex-1">
-            <li>Limited orders per month</li>
-            <li>Easy menu management and customization</li>
-            <li>Accept online orders seamlessly</li>
-            <li>Full analytics dashboard</li>
-            <li>Single admin access, compatible on mobile, tablet, and PC.</li>
-          </ul>
-          <button className="mt-auto w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
-            Choose Subscription
-          </button>
-        </div>
-
-        {/* Hybrid Plan */}
-        <div className="relative bg-white border-2 border-[#ff6600] p-8 rounded-xl shadow-[0_10px_25px_rgba(255,102,0,0.2)] flex flex-col">
-          <span className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#ff6600] text-white px-4 py-1 rounded-full text-sm font-semibold">
-            Most Popular
-          </span>
-          <h3 className="text-[20px] font-semibold text-[#222] mb-3">Hybrid Plan (Recommended)</h3>
-          <p className="text-[#555] mb-6">Fixed subscription + % commission per order.</p>
-          <ul className="space-y-3 text-[15px] text-[#333] flex-1">
-            <li>Unlimited orders per month.</li>
-            <li>Advanced menu management and customizations.</li>
-            <li>Effortless online order acceptance.</li>
-            <li>Real-time analytics & insights.</li>
-            <li>Single admin access, compatible on mobile, tablet, and PC.</li>
-          </ul>
-          <button className="mt-auto w-full bg-[#ff6600] text-white py-3 rounded-lg hover:bg-[#e65c00]">
-            Choose Hybrid
-          </button>
-        </div>
 
         </div>
         
