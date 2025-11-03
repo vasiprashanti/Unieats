@@ -243,7 +243,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative min-h-screen w-full flex flex-col justify-center items-start px-[6vw] py-[10vh] overflow-hidden ">
         {/* Heading */}
-        <h1 className="text-[11vw] sm:text-[9vw] md:text-[6rem] leading-tight font-semibold relative z-[2]">
+        <h1 className="text-[11vw] sm:text-[9vw] md:text-[6rem] leading-tight font-semibold relative z-[2] -mt-82 md:mt-0">
           Ordering
           <br />
           <span
@@ -277,7 +277,7 @@ export default function Home() {
         )}
 
         {/* Small Description */}
-        <div className="absolute bottom-[12%] right-[8%] max-w-[250px] text-[0.9rem] text-left leading-[1.4] opacity-90">
+        <div className="absolute bottom-[40%] right-[8%] max-w-[250px] text-[0.9rem] text-left leading-[1.4] opacity-90">
           <span className="text-[#FF4500]">(1)</span> Small team. Big appetite.
           <br />
           Making food ordering simple,
@@ -286,18 +286,19 @@ export default function Home() {
         </div>
 
         {/* Scroll Indicator (always visible) */}
-        <div className="absolute bottom-5 right-5 text-[0.75rem] sm:text-[0.8rem] tracking-[2px] text-[#333] flex flex-col items-center animate-bounce-slow">
-          <div
-            className="mb-3"
-            style={{
-              writingMode: "vertical-rl",
-              transform: "rotate(180deg)",
-            }}
-          >
-            SCROLL TO DISCOVER
-          </div>
-          <div className="text-[1.1rem] sm:text-[1.2rem] text-[#FF4500]">↓</div>
-        </div>
+        <button 
+  onClick={() => {
+    document.querySelector('.categories-section').scrollIntoView({ behavior: 'smooth' });
+  }}
+  className="absolute bottom-30 left-1/2 transform -translate-x-1/2 text-[0.75rem] sm:text-[0.8rem] tracking-[2px] text-[#333] flex flex-col items-center animate-bounce-slow cursor-pointer hover:text-[#FF4500] transition-colors"
+>
+  <div
+    className="mb-3"
+  >
+    SCROLL TO DISCOVER
+  </div>
+  <div className="text-[1.1rem] sm:text-[1.2rem] text-[#FF4500]">↓</div>
+</button>
 
         {/* Background Accent */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#fff8f6] via-transparent to-transparent -z-[1]" />
@@ -617,14 +618,14 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="md:hidden fixed top-4 right-4 z-[20]">
+      {/* <div className="md:hidden fixed top-4 right-4 z-[20]">
         <button
           onClick={() => setMenuOpen(true)}
           className="text-[1.8rem] cursor-pointer text-[#FF4500] transition-transform duration-200 hover:scale-110 bg-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
         >
           ☰
         </button>
-      </div>
+      </div> */}
 
       <style jsx>{`
         @keyframes blink {
