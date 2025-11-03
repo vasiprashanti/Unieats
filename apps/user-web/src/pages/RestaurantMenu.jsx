@@ -236,7 +236,7 @@ export default function RestaurantMenu() {
 
   return (
     <div 
-      className="min-h-screen font-['Poppins',sans-serif] text-[#222] relative"
+      className="min-h-screen font-['Poppins',sans-serif] text-[#222] relative pb-14"
     >
       {/* Notebook background pattern */}
       <div 
@@ -260,56 +260,34 @@ export default function RestaurantMenu() {
       
       {/* Bottom Navigation */}
       <div 
-        className="md:hidden fixed left-1/2 transform -translate-x-1/2 bg-white/70 backdrop-blur-sm z-[100] flex justify-around"
-        style={{
-          bottom: '12px',
-          width: 'calc(100% - 32px)',
-          maxWidth: '500px',
-          padding: '6px 0',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-          borderRadius: '15px'
-        }}
+        className="md:hidden fixed bottom-3 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-2xl z-[100] w-[calc(100%-2rem)] max-w-[500px] h-12 flex items-center"
+        style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}
       >
+      <div className="flex items-center justify-around w-full h-full">
         <Link 
           to="/home" 
           className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
-          style={{ fontSize: '1.5rem' }}
         >
-          <i className="fas fa-home"></i>
-          <span className="text-[0.6rem] mt-0.5 text-[#444]">Home</span>
+          <i className="fas fa-home "></i>
         </Link>
         
         <Link 
           to="/restaurants" 
           className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
-          style={{ fontSize: '1.5rem' }}
         >
           <i className="fas fa-utensils"></i>
-          <span className="text-[0.6rem] mt-0.5 text-[#444]">Eats</span>
         </Link>
-        
-        <button 
-          onClick={toggleCategoryPanel}
-          className="flex flex-col items-center justify-center text-[#ff7e2d] bg-transparent border-none cursor-pointer relative"
-          style={{ fontSize: '1.5rem' }}
-        >
-          <i className="fas fa-list"></i>
-          <span className="text-[0.6rem] mt-0.5 text-[#444]">Categories</span>
-        </button>
         
         <Link 
           to="/search" 
           className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
-          style={{ fontSize: '1.5rem' }}
         >
           <i className="fas fa-search"></i>
-          <span className="text-[0.6rem] mt-0.5 text-[#444]">Search</span>
         </Link>
-
+  
         <Link 
           to="/cart" 
           className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
-          style={{ fontSize: '1.5rem' }}
         >
           <i className="fas fa-shopping-cart"></i>
           {totalItems > 0 && (
@@ -326,8 +304,16 @@ export default function RestaurantMenu() {
               {totalItems}
             </span>
           )}
-          <span className="text-[0.6rem] mt-0.5 text-[#444]">Cart</span>
         </Link>
+
+        <button 
+          onClick={toggleCategoryPanel}
+          className="flex flex-col items-center justify-center text-[#ff7e2d] bg-transparent border-none cursor-pointer relative"
+        >
+          <i className="fas fa-list"></i>
+        </button>
+
+        </div>
       </div>
 
       {/* Banner */}
