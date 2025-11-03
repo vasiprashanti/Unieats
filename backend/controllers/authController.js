@@ -3,89 +3,108 @@ import { validationResult } from "express-validator";
 
 // REGISTRATION CONTROLLER
 const registerUser = async (req, res) => {
-  const {
-    firebaseUid,
-    email,
-    phone,
-    name, // { first, last }
-    yearOfStudy,
-    accommodation,
-    hostelDetails, // { block, room }
-    offCampusAddress, // { addressLine1, landmark }
-  } = req.body;
+    //  BREADCRUMB 1: Did we get the request? 
+    console.log(" registerUser function STARTED ");
+    console.log("Received body:", JSON.stringify(req.body, null, 2));
 
-  // Basic validation
-  if (!firebaseUid || !email || !phone || !name || !accommodation) {
-    return res
-      .status(400)
-      .json({ message: "Missing required fields for registration." });
-  }
+    const {
+        firebaseUid,
+        email,
+        phone,
+        name,
+        yearOfStudy,
+        accommodation,
+        hostelDetails,
+        offCampusAddress,
+    } = req.body;
 
-  // Additional validation only for HOSTELLERS
-  if (accommodation === "Hosteller" && !yearOfStudy) {
-    return res
-      .status(400)
-      .json({ message: "Year of study is required for hostellers." });
-  }
-
-  // Additional validation only for NON-HOSTELLERS
-  if (accommodation === "Non-Hosteller" && !offCampusAddress) {
-    return res
-      .status(400)
-      .json({ message: "Address is required for non-hostellers." });
-  }
-
-  try {
-    let user = await User.findOne({ $or: [{ email }, { firebaseUid }] });
-
-    if (user) {
-      return res.status(400).json({ message: "User already exists." });
+    //  BREADCRUMB 2: Basic Validation 
+    if (!firebaseUid || !email || !phone || !name || !accommodation) {
+        console.log("Validation FAILED: Missing required fields (firebaseUid, email, phone, name, or accommodation).");
+        return res
+            .status(400)
+            .json({ message: "Missing required fields for registration." });
     }
 
-    const newUserPayload = {
-      firebaseUid,
-      email,
-      phone,
-      name,
-      accommodation,
-    };
-
-    // If Hosteller
-    if (accommodation === "Hosteller") {
-      newUserPayload.yearOfStudy = yearOfStudy;
-      newUserPayload.hostelDetails = hostelDetails;
-      console.log("🏠 Hosteller Payload:", newUserPayload);
+    //  BREADCRUMB 3: Hosteller Validation 
+    if (accommodation === "Hosteller" && !yearOfStudy) {
+        console.log("Validation FAILED: Hosteller is missing yearOfStudy.");
+        return res
+            .status(400)
+            .json({ message: "Year of study is required for hostellers." });
     }
 
-    // If Non-Hosteller
-    if (accommodation === "Non-Hosteller") {
-      newUserPayload.addresses = [
-        {
-          label: "Home",
-          addressLine1: offCampusAddress.addressLine1 || "",
-          landmark: offCampusAddress.landmark || "",
-          city: offCampusAddress.city || "",
-          state: offCampusAddress.state || "",
-          zipCode: offCampusAddress.zipCode || "",
-        },
-      ];
+    //  BREADCRUMB 4: Non-Hosteller Validation 
+    if (accommodation === "Non-Hosteller" && !offCampusAddress) {
+        console.log("Validation FAILED: Non-Hosteller is missing offCampusAddress.");
+        return res
+            .status(400)
+            .json({ message: "Address is required for non-hostellers." });
     }
 
-    user = new User(newUserPayload);
-    await user.save();
+    try {
+        //  BREADCRUMB 5: Check Database 
+        console.log(`Checking if user exists for email: ${email} OR firebaseUid: ${firebaseUid}`);
+        let user = await User.findOne({ $or: [{ email }, { firebaseUid }] });
 
-    res.status(201).json({
-      message: "User registered successfully!",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error during registration." });
-  }
+        if (user) {
+            console.log("Validation FAILED: User already exists in database.");
+            return res.status(400).json({ message: "User already exists." });
+        }
+
+        console.log("User does not exist. Building new user payload...");
+        const newUserPayload = {
+            firebaseUid,
+            email,
+            phone,
+            name,
+            accommodation,
+        };
+
+        if (accommodation === "Hosteller") {
+            newUserPayload.yearOfStudy = yearOfStudy;
+            newUserPayload.hostelDetails = hostelDetails;
+            console.log("Hosteller Payload built:", newUserPayload);
+        }
+
+        if (accommodation === "Non-Hosteller") {
+            // This is the structure from your User model
+            newUserPayload.addresses = [
+                {
+                    label: "Home", // Default label
+                    addressLine1: offCampusAddress.addressLine1 || "",
+                    landmark: offCampusAddress.landmark || "",
+                    city: offCampusAddress.city || "",
+                    state: offCampusAddress.state || "",
+                    zipCode: offCampusAddress.zipCode || "",
+                },
+            ];
+            console.log("Non-Hosteller Payload built:", newUserPayload);
+        }
+
+        //  BREADCRUMB 6: Save to Database 
+        console.log("Attempting to save new user to MongoDB...");
+        user = new User(newUserPayload);
+        await user.save();
+        console.log("User saved successfully! ID:", user._id);
+
+        //  BREADCRUMB 7: Send Success Response 
+        res.status(201).json({
+            message: "User registered successfully!",
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            },
+        });
+        console.log(" registerUser function FINISHED successfully ");
+
+    } catch (error) {
+        // This is the most important log. This will show us if the .save() fails.
+        console.error("CRITICAL ERROR in registerUser:", error);
+        res.status(500).json({ message: "Server error during registration." });
+    }
 };
 
 // GET USER PROFILE CONTROLLER
