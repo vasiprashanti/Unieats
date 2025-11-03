@@ -3,15 +3,18 @@ import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 
+
 const BottomNav = () => {
   const location = useLocation();
   const { totalItems } = useCart();
   const { user } = useAuth();
 
+
   // Don't show global bottom nav on restaurant menu pages - they have their own custom navigation
   if (location.pathname.match(/^\/restaurants\/[a-zA-Z0-9]+$/)) {
     return null;
   }
+
 
   const navItems = [
     {
@@ -49,7 +52,7 @@ const BottomNav = () => {
           <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
         </svg>
       ),
-      badge: totalItems
+      
     },
     {
       name: 'Profile',
@@ -63,6 +66,7 @@ const BottomNav = () => {
     }
   ];
 
+
   const getVisibleItems = () => {
     if (user) {
       return navItems;
@@ -70,10 +74,11 @@ const BottomNav = () => {
     return navItems.filter(item => !item.requiresAuth);
   };
 
+
   return (
-    <div className="md:hidden fixed bottom-3 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-2xl z-[100] w-[calc(100%-2rem)] max-w-[500px] py-1.5" 
+    <div className="md:hidden fixed bottom-3 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-2xl z-[100] w-[calc(100%-2rem)] max-w-[500px] h-12 flex items-center" 
          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
-      <div className="flex items-center justify-around">
+      <div className="flex items-center justify-around w-full h-full">
         {getVisibleItems().map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path === '/restaurants' && location.pathname.startsWith('/restaurants/'));
@@ -82,7 +87,7 @@ const BottomNav = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`flex flex-col items-center py-1 px-2 transition-all duration-200 relative hover:scale-110 ${
+              className={`flex items-center justify-center px-2 h-full transition-all duration-200 relative hover:scale-110 ${
                 isActive 
                   ? 'text-[#ff7e2d]' 
                   : 'text-[#ff7e2d]'
@@ -103,5 +108,6 @@ const BottomNav = () => {
     </div>
   );
 };
+
 
 export default BottomNav;
