@@ -24,6 +24,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import publicRoutes from "./routes/publicRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import { scheduleVendorDuesJob } from "./jobs/vendorDuesJob.js";
 
 dotenv.config();
 connectDB();
@@ -182,3 +183,11 @@ server.listen(PORT, () =>
     `Server is running in ${process.env.NODE_ENV} mode on port ${PORT}`
   )
 );
+
+// Schedule vendor dues job when server starts
+try {
+  scheduleVendorDuesJob();
+  console.log("Vendor dues job scheduled (Thu & Sat 00:00 IST)");
+} catch (err) {
+  console.error("Failed to schedule vendor dues job", err);
+}

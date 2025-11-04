@@ -58,6 +58,8 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+      // dueId references a VendorDues entry if this order has been included in a generated due
+      dueId: { type: mongoose.Schema.Types.ObjectId, ref: "VendorDues", index: true },
     deliveryAddress: {
       city: { type: String, required: true },
       state: { type: String, required: true },

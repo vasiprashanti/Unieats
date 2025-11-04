@@ -6,7 +6,7 @@ let razorpayInstance = null;
 export const initializeRazorpay = () => {
   if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
     console.warn(
-      "⚠️  Razorpay credentials not found in environment. Online payments will not work."
+      "Razorpay credentials not found in environment. Online payments will not work."
     );
     return null;
   }
@@ -16,7 +16,7 @@ export const initializeRazorpay = () => {
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 
-  console.log("✅ Razorpay initialized successfully");
+  console.log("Razorpay initialized successfully");
   return razorpayInstance;
 };
 

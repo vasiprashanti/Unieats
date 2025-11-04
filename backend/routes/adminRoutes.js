@@ -22,6 +22,10 @@ import {
   getBasicAnalytics,
   getComprehensiveAnalytics,
 } from "../controllers/adminAnalyticsController.js";
+import {
+  listVendorDues,
+  markVendorDuePaid,
+} from "../controllers/vendorDuesController.js";
 
 const router = express.Router();
 const adminOnly = [verifyFirebaseToken, checkRole("admin")];
@@ -64,6 +68,10 @@ router.get(
 
 router.get("/analytics/basic", ...adminOnly, getBasicAnalytics);
 router.get("/analytics/comprehensive", ...adminOnly, getComprehensiveAnalytics);
+
+// Vendor Dues admin endpoints
+router.get("/vendor-dues", ...adminOnly, listVendorDues);
+router.post("/vendor-dues/:id/mark-paid", ...adminOnly, markVendorDuePaid);
 
 // @route   GET /api/v1/admin/orders/export
 // @desc    Export all order data to a CSV file
