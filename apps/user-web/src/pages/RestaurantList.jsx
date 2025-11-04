@@ -40,7 +40,7 @@ export default function RestaurantList() {
       cuisines: ["Fast Food", "Multi-cuisine"],
     },
     {
-      id: 3,
+      id: 7,
       name: "Noodles",
       image: "/Chowmein.jpg",
       cuisines: ["Chinese", "Multi-cuisine", "Fast Food"],
@@ -64,7 +64,7 @@ export default function RestaurantList() {
       cuisines: ["Italian", "Multi-cuisine"],
     },
     {
-      id: 7,
+      id: 3,
       name: "Pizza",
       image: "/pizza.jpg",
       cuisines: ["Italian", "Multi-cuisine", "Fast Food"],
