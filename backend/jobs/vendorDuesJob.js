@@ -7,22 +7,13 @@ import { startOfDay, endOfDay, subDays } from "date-fns";
 import pkg from "date-fns-tz";
 const { zonedTimeToUtc } = pkg;
 
-// Helper: convert a date (in Asia/Kolkata) to UTC start/end of day
-function dayRangeInUTC(date) {
-  const tz = "Asia/Kolkata";
-  const start = startOfDay(date);
-  const end = endOfDay(date);
-  return { start: zonedTimeToUtc(start, tz), end: zonedTimeToUtc(end, tz) };
-}
-
-// Create dues for the most-recent period. The cron will run Thu & Sat 00:00 IST and collect
 // delivered orders (paymentDetails.method in ["COD","UPI"]) that have no dueId set.
 async function generateVendorDues({ dryRun = false } = {}) {
   // We group orders by vendor where status=delivered and payment method is COD/UPI and dueId is null
   const match = {
     status: "delivered",
     "paymentDetails.method": { $in: ["COD", "UPI"] },
-    dueId: null, // matches documents where dueId is null OR doesn't exist (more robust than $exists: false)
+    dueId: null, // matches documents where dueId is null OR doesn't exist
   };
 
   const pipeline = [
@@ -86,8 +77,6 @@ async function generateVendorDues({ dryRun = false } = {}) {
   return created;
 }
 
-// Schedule: Thu & Sat at 00:00 IST. Cron runs in server local time; convert to equivalent UTC cron if needed.
-// node-cron supports timezone option, use Asia/Kolkata to guarantee correct timing.
 function scheduleVendorDuesJob() {
   // Runs at 00:00 on Thu and Sat in Asia/Kolkata
   const expression = "0 0 * * 4,6"; // minute hour day month day-of-week
