@@ -684,7 +684,6 @@ export default function Checkout() {
                       key={item.id}
                       className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                     >
-                      <span className="text-2xl">{item.image}</span>
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{item.name}</p>
                         <p className="text-sm text-gray-500">
