@@ -88,6 +88,7 @@ const normalizeOrder = (o) => {
   return {
     id: o._id || o.id,
     code:
+      o.orderCode ||
       o.code ||
       (o._id ? `ORD_${String(o._id).slice(0, 6).toUpperCase()}` : "ORD_000"),
     status: normalizedStatus,
