@@ -81,6 +81,13 @@ export default function Cart() {
 
   const toggleWallet = () => setUseWallet(!useWallet);
 
+  // Sync platform fee from backend whenever it changes
+  useEffect(() => {
+    if (backendPlatformFee !== undefined && backendPlatformFee !== null) {
+      setPlatformFee(backendPlatformFee);
+    }
+  }, [backendPlatformFee]);
+
   useEffect(() => {
     if (cartItems.length > 0) calculatePlatformFee();
     else setPlatformFee(0);

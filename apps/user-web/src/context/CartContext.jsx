@@ -179,14 +179,19 @@ export function CartProvider({ children }) {
           ...i,
         }));
 
-        // Recalculate totals on frontend
+        // Use backend-calculated values
         const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = items.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0
-        );
+        const subtotal = data.data.subtotal || 0;
+        const platformFee = data.data.platformFee || 0;
+        const total = data.data.total || 0;
+        const totalPrice = subtotal; // Keep totalPrice as subtotal for compatibility
 
-        console.log("After add - Frontend totals:", { totalItems, totalPrice });
+        console.log("After add - Backend cart values:", {
+          subtotal,
+          platformFee,
+          total,
+          totalItems,
+        });
 
         dispatch({
           type: CART_ACTIONS.LOAD_CART,
@@ -194,6 +199,9 @@ export function CartProvider({ children }) {
             items,
             totalItems,
             totalPrice,
+            subtotal,
+            platformFee,
+            total,
             restaurantId: data.data.vendor,
           },
         });
@@ -264,16 +272,18 @@ export function CartProvider({ children }) {
             ...i,
           }));
 
-          // Recalculate totals on frontend
+          // Use backend-calculated values
           const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-          const totalPrice = items.reduce(
-            (sum, i) => sum + i.price * i.quantity,
-            0
-          );
+          const subtotal = data.data.subtotal || 0;
+          const platformFee = data.data.platformFee || 0;
+          const total = data.data.total || 0;
+          const totalPrice = subtotal; // Keep totalPrice as subtotal for compatibility
 
-          console.log("After update - Frontend totals:", {
+          console.log("After update - Backend cart values:", {
+            subtotal,
+            platformFee,
+            total,
             totalItems,
-            totalPrice,
           });
 
           dispatch({
@@ -282,6 +292,9 @@ export function CartProvider({ children }) {
               items,
               totalItems,
               totalPrice,
+              subtotal,
+              platformFee,
+              total,
               restaurantId: data.data.vendor,
             },
           });
@@ -347,18 +360,29 @@ export function CartProvider({ children }) {
             price: i.price,
             ...i,
           }));
-          // Recalculate totals on frontend
+          // Use backend-calculated values
           const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-          const totalPrice = items.reduce(
-            (sum, i) => sum + i.price * i.quantity,
-            0
-          );
+          const subtotal = data.data.subtotal || 0;
+          const platformFee = data.data.platformFee || 0;
+          const total = data.data.total || 0;
+          const totalPrice = subtotal; // Keep totalPrice as subtotal for compatibility
+
+          console.log("After remove - Backend cart values:", {
+            subtotal,
+            platformFee,
+            total,
+            totalItems,
+          });
+
           dispatch({
             type: CART_ACTIONS.LOAD_CART,
             payload: {
               items,
               totalItems,
               totalPrice,
+              subtotal,
+              platformFee,
+              total,
               restaurantId: data.data.vendor,
             },
           });
@@ -413,12 +437,19 @@ export function CartProvider({ children }) {
           ...i,
         }));
 
-        // Recalculate totals on frontend
+        // Use backend-calculated values
         const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-        const totalPrice = items.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0
-        );
+        const subtotal = data.data.subtotal || 0;
+        const platformFee = data.data.platformFee || 0;
+        const total = data.data.total || 0;
+        const totalPrice = subtotal; // Keep totalPrice as subtotal for compatibility
+
+        console.log("After refresh - Backend cart values:", {
+          subtotal,
+          platformFee,
+          total,
+          totalItems,
+        });
 
         dispatch({
           type: CART_ACTIONS.LOAD_CART,
@@ -426,6 +457,9 @@ export function CartProvider({ children }) {
             items,
             totalItems,
             totalPrice,
+            subtotal,
+            platformFee,
+            total,
             restaurantId: data.data.vendor,
           },
         });
