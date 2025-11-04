@@ -9,17 +9,16 @@ import {
   ShoppingBag,
   Edit,
 } from "lucide-react";
-import Navbar from '../components/Navigation/Navbar';
-import MobileHeader from '../components/Navigation/MobileHeader';
+import Navbar from "../components/Navigation/Navbar";
+import MobileHeader from "../components/Navigation/MobileHeader";
 import { useCart } from "../context/CartContext";
 
 import { getAuth } from "firebase/auth";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-
 export default function Checkout() {
-  console.log('Checkout page loaded');
-  console.log('API_BASE_URL:', API_BASE_URL);
+  console.log("Checkout page loaded");
+  console.log("API_BASE_URL:", API_BASE_URL);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState("cod");
   const [showNewAddress, setShowNewAddress] = useState(false);
@@ -37,11 +36,11 @@ export default function Checkout() {
   // Fetch addresses from backend
   useEffect(() => {
     const fetchAddresses = async () => {
-      console.log('Fetching addresses...');
+      console.log("Fetching addresses...");
       try {
         const auth = getAuth();
         const user = auth.currentUser;
-        console.log('User:', user);
+        console.log("User:", user);
         if (!user) return;
         const token = await user.getIdToken();
         const res = await fetch(`${API_BASE_URL}/api/v1/users/addresses`, {
@@ -50,19 +49,19 @@ export default function Checkout() {
             "Content-Type": "application/json",
           },
         });
-        console.log('Fetch response:', res);
+        console.log("Fetch response:", res);
         try {
           const data = await res.json();
-          console.log('Backend addresses response:', data);
+          console.log("Backend addresses response:", data);
           setSavedAddresses(data.addresses || []);
           if (data.addresses && data.addresses.length > 0) {
             setSelectedAddress(data.addresses[0]);
           }
         } catch (err) {
-          console.error('Error parsing response:', err);
+          console.error("Error parsing response:", err);
         }
       } catch (err) {
-        console.error('Fetch error:', err);
+        console.error("Fetch error:", err);
         setSavedAddresses([]);
       }
     };
@@ -70,10 +69,28 @@ export default function Checkout() {
   }, []);
 
   // Use cart context for order summary
-  const { items: cartItems, totalItems, totalPrice } = useCart();
-  const platformfee = 5;
-  const subtotal = totalPrice;
-  const total = subtotal + platformfee;
+  const {
+    items: cartItems,
+    totalItems,
+    totalPrice,
+    platformFee: backendPlatformFee,
+    subtotal: backendSubtotal,
+    total: backendTotal,
+  } = useCart();
+
+  // Use backend-calculated values, fallback to old logic if not available
+  const subtotal = backendSubtotal || totalPrice;
+  const platformfee = backendPlatformFee || 5;
+  const total = backendTotal || subtotal + platformfee;
+
+  console.log("Checkout cart values:", {
+    subtotal,
+    platformfee,
+    total,
+    backendSubtotal,
+    backendPlatformFee,
+    backendTotal,
+  });
 
   useEffect(() => {
     if (savedAddresses.length > 0) {
@@ -121,93 +138,91 @@ export default function Checkout() {
     }
   };
 
-const handlePlaceOrder = async () => {
-  if (!selectedAddress || !selectedPayment) {
-    alert("Please select delivery address and payment method");
-    return;
-  }
-
-  setIsPlacingOrder(true);
-  const auth = getAuth();
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
-
-  const token = await user.getIdToken();
-  try {
-    // POST /api/v1/payments/orders for UPI or COD
-    const response = await fetch(`${API_BASE_URL}/api/v1/payments/orders`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        addressId: selectedAddress._id || selectedAddress.id,
-        paymentMethod: selectedPayment, // ✅ added payment method
-      }),
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log("Order placed successfully:", result);
-      setOrderSuccess(true);
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to place order");
+  const handlePlaceOrder = async () => {
+    if (!selectedAddress || !selectedPayment) {
+      alert("Please select delivery address and payment method");
+      return;
     }
-  } catch (error) {
-    console.error("Error placing order:", error);
-    alert("Failed to place order. Please try again.");
-  } finally {
-    setIsPlacingOrder(false);
-  }
-};
 
+    setIsPlacingOrder(true);
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
 
+    const token = await user.getIdToken();
+    try {
+      // POST /api/v1/payments/orders for UPI or COD
+      const response = await fetch(`${API_BASE_URL}/api/v1/payments/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          addressId: selectedAddress._id || selectedAddress.id,
+          paymentMethod: selectedPayment, // ✅ added payment method
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Order placed successfully:", result);
+        setOrderSuccess(true);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to place order");
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      alert("Failed to place order. Please try again.");
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
 
   if (orderSuccess) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-white/90 px-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md w-full">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Check className="h-8 w-8 text-green-600" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Order Placed Successfully!
-        </h2>
-        <p className="text-gray-600 mb-6">
-          Your order will be delivered in 30-45 minutes
-        </p>
-        <div className="bg-green-50 rounded-lg p-4 mb-6">
-          <p className="text-sm text-green-800">
-            Order ID: #FD{Math.floor(Math.random() * 10000)}
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white/90 px-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md w-full">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="h-8 w-8 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Order Placed Successfully!
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Your order will be delivered in 30-45 minutes
           </p>
-          <p className="text-sm text-green-800">Total: ₹{total}</p>
+          <div className="bg-green-50 rounded-lg p-4 mb-6">
+            <p className="text-sm text-green-800">
+              Order ID: #FD{Math.floor(Math.random() * 10000)}
+            </p>
+            <p className="text-sm text-green-800">Total: ₹{total}</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-colors"
+          >
+            Place Another Order
+          </button>
         </div>
-        <button
-          onClick={() => window.location.reload()}
-          className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-colors"
-        >
-          Place Another Order
-        </button>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <>
       {/* Mobile View */}
       <div className="block lg:hidden min-h-screen bg-white">
         <Navbar />
-        <MobileHeader 
-          title="Checkout" 
+        <MobileHeader
+          title="Checkout"
           showCart={true}
           cartItemCount={cartItems.length}
         />
-        
+
         <div className="bg-white pt-16">
           {/* Mobile Order Summary - Collapsible */}
           <div className="p-4 border-gray-100">
@@ -440,7 +455,7 @@ const handlePlaceOrder = async () => {
 
       {/* Desktop View */}
       <div className="hidden lg:block min-h-screen bg-white/92">
-        <Navbar/>
+        <Navbar />
         <div className="max-w-7xl mx-auto px-6 py-8 mt-20">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column - Address & Payment */}
@@ -482,13 +497,12 @@ const handlePlaceOrder = async () => {
                             <span className="font-semibold text-gray-900">
                               {address.label}
                             </span>
-                            {selectedAddress?._id === (address._id || address.id) && (
+                            {selectedAddress?._id ===
+                              (address._id || address.id) && (
                               <Check className="h-4 w-4 text-orange-500" />
                             )}
                           </div>
-                          <p className="text-gray-600 mb-1">
-                            {address.street}
-                          </p>
+                          <p className="text-gray-600 mb-1">{address.street}</p>
                           <p className="text-gray-600 mb-1">
                             {address.city}, {address.state} - {address.zipCode}
                           </p>

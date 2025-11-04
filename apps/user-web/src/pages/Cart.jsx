@@ -19,6 +19,7 @@ export default function Cart() {
     items: cartItems,
     totalItems,
     totalPrice: subtotal,
+    platformFee: backendPlatformFee,
     updateQuantity,
     removeItem,
     clearCart,
@@ -27,15 +28,15 @@ export default function Cart() {
 
   console.log("Cart items:", cartItems);
   console.log("Subtotal from context:", subtotal);
+  console.log("Platform fee from backend:", backendPlatformFee);
 
   const navigate = useNavigate();
 
-  const [deliveryFee, setDeliveryFee] = useState(5);
+  const [platformFee, setPlatformFee] = useState(backendPlatformFee || 5);
   const [walletBalance] = useState(850);
   const [useWallet, setUseWallet] = useState(false);
-  const [isCalculatingDelivery, setIsCalculatingDelivery] = useState(false);
 
-  const totalBeforeWallet = subtotal + deliveryFee;
+  const totalBeforeWallet = subtotal + platformFee;
   const walletDeduction = useWallet
     ? Math.min(walletBalance, totalBeforeWallet)
     : 0;
@@ -45,23 +46,16 @@ export default function Cart() {
     navigate("/checkout");
   };
 
-  const calculateDeliveryFee = async () => {
-    setIsCalculatingDelivery(true);
-    try {
-      setTimeout(() => {
-        let simulatedFee;
-        if (subtotal >= 500) simulatedFee = 0;
-        else if (subtotal >= 300) simulatedFee = 25;
-        else simulatedFee = 49;
-
-        setDeliveryFee(Math.max(simulatedFee, 5));
-        setIsCalculatingDelivery(false);
-      }, 800);
-    } catch (error) {
-      console.error("Failed to calculate delivery fee:", error);
-      setDeliveryFee(Math.max(subtotal >= 500 ? 0 : 49, 5));
-      setIsCalculatingDelivery(false);
+  const calculatePlatformFee = async () => {
+    // Use backend-calculated platform fee if available
+    if (backendPlatformFee !== undefined && backendPlatformFee !== null) {
+      setPlatformFee(backendPlatformFee);
+      return;
     }
+
+    // Fallback: platform fee should always come from backend
+    console.warn("Platform fee not available from backend, using fallback");
+    setPlatformFee(5);
   };
 
   const handleUpdateQuantity = (menuItemId, newQuantity) => {
@@ -88,8 +82,8 @@ export default function Cart() {
   const toggleWallet = () => setUseWallet(!useWallet);
 
   useEffect(() => {
-    if (cartItems.length > 0) calculateDeliveryFee();
-    else setDeliveryFee(0);
+    if (cartItems.length > 0) calculatePlatformFee();
+    else setPlatformFee(0);
   }, [cartItems.length, subtotal]);
 
   // Call refreshCart on mount if cart is empty
@@ -167,14 +161,14 @@ export default function Cart() {
                           style={{ color: "hsl(var(--card-foreground))" }}
                         >
                           {/* Added item name display */}
-                          {item.name ? item.name.replace(/^"|"$/g, "") : "Unnamed Item"}
+                          {item.name
+                            ? item.name.replace(/^"|"$/g, "")
+                            : "Unnamed Item"}
                         </h3>
                         {item.veg !== undefined && (
                           <div
                             className={`w-4 h-4 border-2 flex items-center justify-center ${
-                              item.veg
-                                ? "border-green-500"
-                                : "border-red-500"
+                              item.veg ? "border-green-500" : "border-red-500"
                             }`}
                           >
                             <div
@@ -293,10 +287,10 @@ export default function Cart() {
             </div>
             <div className="flex justify-between text-sm mb-2">
               <span style={{ color: "hsl(var(--muted-foreground))" }}>
-                Delivery
+                Platform Fee
               </span>
               <span style={{ color: "hsl(var(--card-foreground))" }}>
-                {deliveryFee === 0 ? "FREE" : `₹${deliveryFee.toFixed(0)}`}
+                ₹{platformFee.toFixed(0)}
               </span>
             </div>
 
@@ -308,7 +302,9 @@ export default function Cart() {
             )}
 
             <div className="flex justify-between font-bold text-lg mt-4">
-              <span style={{ color: "hsl(var(--card-foreground))" }}>Total</span>
+              <span style={{ color: "hsl(var(--card-foreground))" }}>
+                Total
+              </span>
               <span style={{ color: "hsl(var(--card-foreground))" }}>
                 ₹{finalTotal.toFixed(0)}
               </span>
@@ -357,7 +353,7 @@ export default function Cart() {
                 className="font-semibold"
                 style={{ color: "hsl(var(--card-foreground))" }}
               >
-                {deliveryFee === 0 ? "FREE" : `₹${deliveryFee.toFixed(0)}`}
+                ₹{platformFee.toFixed(0)}
               </span>
             </div>
 
