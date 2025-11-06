@@ -1,46 +1,80 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { getRestaurantMenu } from '../api/restaurants';
 import { useCart } from '../context/CartContext';
-import { FixedSizeList as List } from 'react-window';
 
 import Navbar from '../components/Navigation/Navbar';
 import MobileHeader from '../components/Navigation/MobileHeader';
 
-// Memoized MenuItem for better performance
+// Memoized MenuItem component for better performance
 const MenuItem = React.memo(({ item, qty, onAdd, onIncrease, onDecrease, isBestseller = false }) => {
+  if (isBestseller) {
+    return (
+      <div className="flex flex-col bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-md text-center">
+        <img src={item.image} alt={item.name} className="w-full aspect-square object-cover" />
+        <div className="p-2.5 pb-4">
+          <div className="font-semibold text-base mb-1">{item.name}</div>
+          <div className="text-xs text-[#555] mb-1.5">{item.desc}</div>
+          <div className="font-bold text-[#2e7d32] mb-2">₹{item.price}</div>
+          {qty === 0 ? (
+            <button
+              onClick={() => onAdd(item._id)}
+              className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm hover:bg-[#e85d00] transition-colors"
+            >
+              Add
+            </button>
+          ) : (
+            <div className="inline-flex items-center gap-2 bg-white p-1.5 rounded-full shadow-md border border-gray-200">
+              <button
+                onClick={() => onDecrease(item._id)}
+                className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer flex items-center justify-center hover:bg-[#e85d00] transition-colors"
+              >
+                -
+              </button>
+              <span className="min-w-6 text-center font-semibold text-sm px-1">
+                {qty}
+              </span>
+              <button
+                onClick={() => onIncrease(item._id)}
+                className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer flex items-center justify-center hover:bg-[#e85d00] transition-colors"
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`flex flex-col ${isBestseller ? 'bg-white/80 backdrop-blur-sm shadow-md rounded-xl overflow-hidden text-center' : 'relative text-center'}`}>
+    <div className="flex-1 relative text-center">
       <img 
         src={item.image} 
-        alt={item.name} 
-        className={`w-full ${isBestseller ? 'aspect-square object-cover' : 'h-[120px] rounded-[10px] object-cover'}`}
-        loading="lazy"
+        alt={item.name}
+        className="w-full rounded-[10px] object-cover h-[120px]"
       />
-      <div className={isBestseller ? 'p-2.5 pb-4' : 'absolute -bottom-3 left-1/2 transform -translate-x-1/2'}>
-        <div className="font-semibold text-base mb-1">{item.name}</div>
-        {isBestseller && <div className="text-xs text-[#555] mb-1.5">{item.desc}</div>}
-        <div className="font-bold text-[#2e7d32] mb-2">₹{item.price}</div>
+      <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
         {qty === 0 ? (
-          <button
+          <button 
             onClick={() => onAdd(item._id)}
             className="bg-[#ff7e2d] text-white font-semibold px-3 py-1.5 border-none rounded-lg cursor-pointer text-sm hover:bg-[#e85d00] transition-colors"
           >
             Add
           </button>
         ) : (
-          <div className={`inline-flex items-center gap-2 ${isBestseller ? 'bg-white p-1.5 rounded-full shadow-md border border-gray-200' : 'bg-white/90 p-1 rounded-[20px] shadow-sm'}`}>
-            <button
+          <div className="flex items-center gap-2 bg-white/90 p-1 rounded-[20px] shadow-sm">
+            <button 
               onClick={() => onDecrease(item._id)}
-              className="bg-[#ff7e2d] text-white text-base w-7 h-7 rounded-full flex items-center justify-center hover:bg-[#e85d00] transition-colors"
+              className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer hover:bg-[#e85d00] transition-colors"
             >
               -
             </button>
-            <span className="min-w-6 text-center font-semibold text-sm px-1">{qty}</span>
-            <button
+            <span className="min-w-5 text-center">{qty}</span>
+            <button 
               onClick={() => onIncrease(item._id)}
-              className="bg-[#ff7e2d] text-white text-base w-7 h-7 rounded-full flex items-center justify-center hover:bg-[#e85d00] transition-colors"
+              className="bg-[#ff7e2d] border-none text-white text-base w-7 h-7 rounded-full cursor-pointer hover:bg-[#e85d00] transition-colors"
             >
               +
             </button>
@@ -57,7 +91,8 @@ export default function RestaurantMenu() {
   const { id: restaurantId } = useParams();
   const navigate = useNavigate();
   const auth = getAuth();
-
+  
+  
   const { addItem, getItemQuantity, updateQuantity, totalItems } = useCart();
 
   const [menuData, setMenuData] = useState(null);
@@ -66,8 +101,6 @@ export default function RestaurantMenu() {
   const [collapsedCategories, setCollapsedCategories] = useState(new Set());
   const [showCategoryPanel, setShowCategoryPanel] = useState(false);
 
-  const categoryRefs = useRef({});
-
   // Fetch menu data
   useEffect(() => {
     const loadMenuData = async () => {
@@ -75,6 +108,7 @@ export default function RestaurantMenu() {
         setLoading(true);
         const response = await getRestaurantMenu(restaurantId);
         if (response.error === "User not authenticated") {
+          // If user is not authenticated, redirect to login page
           navigate('/login', { state: { from: location.pathname } });
           return;
         }
@@ -82,134 +116,218 @@ export default function RestaurantMenu() {
         (response.data.menu || []).forEach(category => {
           categories[category.name] = category.items;
         });
-        setMenuData({ ...response.data, categories });
+        setMenuData({
+          ...response.data,
+          categories
+        });
       } catch (err) {
         setError('Failed to load menu');
       } finally {
         setLoading(false);
       }
     };
-    if (restaurantId) loadMenuData();
+
+    if (restaurantId) {
+      loadMenuData();
+    }
   }, [restaurantId]);
 
-  // Memoize all items & create lookup map
+  // Memoize all items to avoid recalculation
   const allItems = useMemo(() => {
     if (!menuData) return [];
-    return [...(menuData.bestsellers || []), ...Object.values(menuData.categories || {}).flat()];
+    return [
+      ...(menuData.bestsellers || []),
+      ...Object.values(menuData.categories || {}).flat()
+    ];
   }, [menuData]);
 
+  // Create item lookup map for O(1) access
   const itemsMap = useMemo(() => {
     const map = new Map();
     allItems.forEach(item => map.set(item._id, item));
     return map;
   }, [allItems]);
 
-  // Optimized handlers
-  const handleAddToCart = useCallback(itemId => {
+  // Optimized handlers with useCallback
+  const handleAddToCart = useCallback((itemId) => {
     const item = itemsMap.get(itemId);
-    if (item) addItem(item, restaurantId);
+    if (item) {
+      addItem(item, restaurantId);
+    }
   }, [itemsMap, addItem, restaurantId]);
 
-  const handleIncreaseQty = useCallback(itemId => {
-    const qty = getItemQuantity(itemId);
-    if (qty > 0) updateQuantity(itemId, qty + 1);
-    else {
+  const handleIncreaseQty = useCallback((itemId) => {
+    const currentQty = getItemQuantity(itemId);
+    if (currentQty > 0) {
+      updateQuantity(itemId, currentQty + 1);
+    } else {
       const item = itemsMap.get(itemId);
-      if (item) addItem(item, restaurantId);
+      if (item) {
+        addItem(item, restaurantId);
+      }
     }
   }, [itemsMap, getItemQuantity, updateQuantity, addItem, restaurantId]);
 
-  const handleDecreaseQty = useCallback(itemId => {
-    const qty = getItemQuantity(itemId);
-    if (qty > 1) updateQuantity(itemId, qty - 1);
-    else if (qty === 1) updateQuantity(itemId, 0);
+  const handleDecreaseQty = useCallback((itemId) => {
+    const currentQty = getItemQuantity(itemId);
+    if (currentQty > 1) {
+      updateQuantity(itemId, currentQty - 1);
+    } else if (currentQty === 1) {
+      updateQuantity(itemId, 0);
+    }
   }, [getItemQuantity, updateQuantity]);
 
-  const toggleCategory = useCallback(name => {
+  const toggleCategory = useCallback((categoryName) => {
     setCollapsedCategories(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(name)) newSet.delete(name);
-      else newSet.add(name);
+      if (newSet.has(categoryName)) {
+        newSet.delete(categoryName);
+      } else {
+        newSet.add(categoryName);
+      }
       return newSet;
     });
   }, []);
 
-  const scrollToCategory = useCallback(name => {
-    const el = categoryRefs.current[name];
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const scrollToCategory = useCallback((categoryName) => {
+    const element = document.getElementById(`cat-${categoryName}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
     setShowCategoryPanel(false);
   }, []);
 
-  const toggleCategoryPanel = useCallback(() => setShowCategoryPanel(prev => !prev), []);
+  const toggleCategoryPanel = useCallback(() => {
+    setShowCategoryPanel(prev => !prev);
+  }, []);
 
-  if (loading) return <LoadingScreen />;
-  if (error) return <ErrorScreen error={error} navigate={navigate} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#fefefe]">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Loading menu...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#fefefe]">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Failed to load menu: {error}</p>
+            <button
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 bg-[#ff6600] text-white rounded-lg hover:bg-[#e55a00] transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!menuData) return null;
 
-  // Virtualized Category List
-  const CategoryList = ({ categories }) => (
-    <div className="space-y-6">
-      {Object.entries(categories).map(([categoryName, items]) => (
-        <div key={categoryName} ref={el => categoryRefs.current[categoryName] = el}>
-          <div 
-            onClick={() => toggleCategory(categoryName)}
-            className={`bg-[#050505] text-white p-3.5 font-semibold cursor-pointer flex justify-between items-center ${
-              collapsedCategories.has(categoryName) ? 'active' : ''
-            }`}
-          >
-            {categoryName}
-            <i className={`fas fa-chevron-down transition-transform duration-300 ${
-              collapsedCategories.has(categoryName) ? 'rotate-180' : ''
-            }`}></i>
-          </div>
-          {!collapsedCategories.has(categoryName) && (
-            <List
-              height={Math.min(400, items.length * 140)}
-              itemCount={items.length}
-              itemSize={140}
-              width="100%"
-            >
-              {({ index, style }) => {
-                const item = items[index];
-                const qty = getItemQuantity(item._id);
-                return (
-                  <div key={item._id} style={style} className="flex justify-between gap-3 p-4 border-b border-[#eee]">
-                    <div className="flex-[2] text-left">
-                      <div className="font-semibold text-lg mb-1.5">{item.name}</div>
-                      <div className="text-sm text-[#555] mb-1.5">{item.desc}</div>
-                      <div className="font-bold text-[#2e7d32]">₹{item.price}</div>
-                    </div>
-                    <MenuItem
-                      item={item}
-                      qty={qty}
-                      onAdd={handleAddToCart}
-                      onIncrease={handleIncreaseQty}
-                      onDecrease={handleDecreaseQty}
-                    />
-                  </div>
-                );
-              }}
-            </List>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-
   return (
-    <div className="min-h-screen font-['Poppins',sans-serif] text-[#222] relative pb-14">
-      {/* Notebook background */}
-      <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: `repeating-linear-gradient(to bottom,#ffffff,#ffffff 44px,#e0e0e0 45px)`, zIndex: -1 }} />
+    <div 
+      className="min-h-screen font-['Poppins',sans-serif] text-[#222] relative pb-14"
+    >
+      {/* Notebook background pattern */}
+      <div 
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          width: '100%',
+          height: '100%',
+          backgroundImage: `repeating-linear-gradient(
+            to bottom, 
+            #ffffff,       
+            #ffffff 44px,  
+            #e0e0e0 45px   
+          )`,
+          zIndex: -1
+        }}
+      />
 
+      {/* Navigation */}
       <Navbar />
       <MobileHeader />
+      
+      {/* Bottom Navigation */}
+      <div 
+        className="md:hidden fixed bottom-3 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-2xl z-[100] w-[calc(100%-2rem)] max-w-[500px] h-12 flex items-center"
+        style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}
+      >
+      <div className="flex items-center justify-around w-full h-full">
+        <Link 
+          to="/home" 
+          className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
+        >
+          <i className="fas fa-home "></i>
+        </Link>
+        
+        <Link 
+          to="/restaurants" 
+          className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
+        >
+          <i className="fas fa-utensils"></i>
+        </Link>
+        
+        <Link 
+          to="/search" 
+          className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
+        >
+          <i className="fas fa-search"></i>
+        </Link>
+  
+        <Link 
+          to="/cart" 
+          className="flex flex-col items-center justify-center text-[#ff7e2d] no-underline relative"
+        >
+          <i className="fas fa-shopping-cart"></i>
+          {totalItems > 0 && (
+            <span 
+              className="absolute text-white text-xs font-semibold"
+              style={{
+                top: '-8px',
+                right: '-12px',
+                background: '#ff3d00',
+                padding: '2px 6px',
+                borderRadius: '50%'
+              }}
+            >
+              {totalItems}
+            </span>
+          )}
+        </Link>
+
+        <button 
+          onClick={toggleCategoryPanel}
+          className="flex flex-col items-center justify-center text-[#ff7e2d] bg-transparent border-none cursor-pointer relative"
+        >
+          <i className="fas fa-list"></i>
+        </button>
+
+        </div>
+      </div>
 
       {/* Banner */}
       <div className="w-full flex justify-center mt-16 md:mt-16">
-        <img src={menuData?.restaurant?.image || '/placeholder-restaurant.jpg'} alt="Banner" className="w-full h-[40vh] object-cover" loading="lazy" />
+        <img 
+          src={menuData?.restaurant?.image || '/placeholder-restaurant.jpg'} 
+          alt="Banner" 
+          className="w-full h-[40vh] object-cover"
+        />
       </div>
 
+      {/* Menu Section */}
       <div className="max-w-4xl mx-auto my-10 px-4">
+        {/* Bestsellers */}
         <h2 className="text-3xl font-bold mb-4">Bestsellers</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {(menuData.bestsellers || []).map(item => (
@@ -220,16 +338,17 @@ export default function RestaurantMenu() {
               onAdd={handleAddToCart}
               onIncrease={handleIncreaseQty}
               onDecrease={handleDecreaseQty}
-              isBestseller
+              isBestseller={true}
             />
           ))}
         </div>
 
+        {/* Categories */}
         <h2 className="text-3xl font-bold mb-4">Categories</h2>
-
+        
         {/* Category Bar */}
         <div className="flex gap-2.5 overflow-x-auto py-2.5 mb-5 scrollbar-hide">
-          {Object.keys(menuData.categories).map(categoryName => (
+          {Object.keys(menuData?.categories || {}).map(categoryName => (
             <button
               key={categoryName}
               onClick={() => scrollToCategory(categoryName)}
@@ -240,35 +359,143 @@ export default function RestaurantMenu() {
           ))}
         </div>
 
-        <CategoryList categories={menuData.categories} />
+        {/* Category Items */}
+        <div className="space-y-6">
+          {Object.entries(menuData?.categories || {}).map(([categoryName, items]) => (
+            <div 
+              key={categoryName}
+              id={`cat-${categoryName}`}
+              className="mb-6 rounded-xl shadow-sm overflow-hidden"
+            >
+              <div 
+                onClick={() => toggleCategory(categoryName)}
+                className={`bg-[#050505] text-white p-3.5 font-semibold cursor-pointer flex justify-between items-center ${
+                  collapsedCategories.has(categoryName) ? 'active' : ''
+                }`}
+              >
+                {categoryName}
+                <i className={`fas fa-chevron-down transition-transform duration-300 ${
+                  collapsedCategories.has(categoryName) ? 'rotate-180' : ''
+                }`}></i>
+              </div>
+              
+              {!collapsedCategories.has(categoryName) && (
+                <div className="bg-transparent">
+                  {items.map((item, index) => {
+                    const qty = getItemQuantity(item._id);
+                    return (
+                      <div 
+                        key={item._id}
+                        className={`flex justify-between gap-3 p-4 ${
+                          index < items.length - 1 ? 'border-b border-[#eee]' : ''
+                        }`}
+                      >
+                        <div className="flex-[2] text-left">
+                          <div className="font-semibold text-lg mb-1.5">{item.name}</div>
+                          <div className="text-sm text-[#555] mb-1.5">{item.desc}</div>
+                          <div className="font-bold text-[#2e7d32]">₹{item.price}</div>
+                        </div>
+                        <MenuItem
+                          item={item}
+                          qty={qty}
+                          onAdd={handleAddToCart}
+                          onIncrease={handleIncreaseQty}
+                          onDecrease={handleDecreaseQty}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Floating bottom nav, cart, category panels (mobile + desktop) */}
-      {/* Copy your previous implementation here; optimized with memoization and callbacks */}
+      {/* Floating Hamburger Menu - Desktop */}
+      <div className="hidden md:block">
+        {/* Category Panel */}
+        <div 
+          className={`fixed top-1/2 transform -translate-y-1/2 w-60 bg-white/90 backdrop-blur-sm p-4 transition-all duration-300 ease-in-out z-[350] ${
+            showCategoryPanel ? 'right-0' : '-right-60'
+          }`}
+          style={{ 
+            boxShadow: '-4px 0 12px rgba(0,0,0,0.15)',
+            borderRadius: '12px 0 0 12px'
+          }}
+        >
+          <h3 className="mt-0 mb-3 text-lg font-semibold text-[#ff7e2d]">Categories</h3>
+          <div className="flex flex-col gap-2">
+            {menuData && Object.keys(menuData.categories).map(categoryName => (
+              <button
+                key={categoryName}
+                onClick={() => scrollToCategory(categoryName)}
+                className="px-2.5 py-2 border-none bg-[#f5f5f5] rounded-md text-left text-sm cursor-pointer transition-colors duration-200 hover:bg-[#ff7e2d] hover:text-white"
+              >
+                {categoryName}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Overlay to close panel - Desktop only */}
+        {showCategoryPanel && (
+          <div 
+            className="hidden md:block fixed inset-0 z-[240]" 
+            onClick={() => setShowCategoryPanel(false)}
+          />
+        )}
+
+        {/* Floating Category Button - Desktop only */}
+        <button
+          onClick={toggleCategoryPanel}
+          className="hidden md:flex fixed right-5 bottom-[150px] bg-[#ff7e2d] text-white rounded-full w-14 h-14 items-center justify-center text-xl cursor-pointer z-[300] hover:bg-[#e85d00] transition-colors"
+          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
+          aria-label="Toggle Categories"
+        >
+          <i className="fas fa-list"></i>
+        </button>
+      </div>
+
+      {/* Mobile Category Panel */}
+      <div className={`md:hidden fixed top-1/2 right-0 transform -translate-y-1/2 transition-transform duration-300 z-[350] ${
+        showCategoryPanel ? 'translate-x-0' : 'translate-x-full'
+      }`}>
+        <div className="bg-white/90 backdrop-blur-sm rounded-l-xl shadow-lg p-4 min-w-[240px]" style={{ boxShadow: '-4px 0 12px rgba(0,0,0,0.15)' }}>
+          <h3 className="text-[#ff7e2d] font-semibold text-lg mb-3">Categories</h3>
+          <div className="space-y-2">
+            {menuData && Object.keys(menuData.categories).map(categoryName => (
+              <button
+                key={categoryName}
+                onClick={() => scrollToCategory(categoryName)}
+                className="block w-full text-left px-2.5 py-2 text-[#333] bg-[#f5f5f5] rounded-md hover:bg-[#ff7e2d] hover:text-white transition-all text-sm font-medium"
+              >
+                {categoryName}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Category Panel Overlay */}
+      {showCategoryPanel && (
+        <div 
+          className="md:hidden fixed inset-0 z-[340]" 
+          onClick={() => setShowCategoryPanel(false)}
+        />
+      )}
+
+      {/* Floating View Cart - Mobile */}
+      {totalItems > 0 && (
+        <div 
+          onClick={() => navigate('/cart')}
+          className="fixed bottom-[70px] left-1/2 transform -translate-x-1/2 bg-[#ff7e2d] text-white font-semibold px-4 py-3 rounded-[30px] cursor-pointer z-[200] w-[80vw] max-w-[500px] flex justify-between items-center text-[0.95rem]"
+          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
+        >
+          <span>View Cart ({totalItems})</span>
+          <i className="fas fa-arrow-right text-base"></i>
+        </div>
+      )}
     </div>
   );
-}
-
-// Loading & Error screens
-const LoadingScreen = () => (
-  <div className="min-h-screen bg-[#fefefe] flex items-center justify-center h-96">
-    <div className="text-center">
-      <div className="h-12 w-12 rounded-full border-4 border-[#ff6600] border-t-transparent animate-spin mx-auto mb-4" />
-      <p className="text-gray-600">Loading menu...</p>
-    </div>
-  </div>
-);
-
-const ErrorScreen = ({ error, navigate }) => (
-  <div className="min-h-screen bg-[#fefefe] flex items-center justify-center h-96">
-    <div className="text-center">
-      <p className="text-red-500 mb-4">Failed to load menu: {error}</p>
-      <button
-        onClick={() => navigate(-1)}
-        className="px-4 py-2 bg-[#ff6600] text-white rounded-lg hover:bg-[#e55a00] transition-colors"
-      >
-        Go Back
-      </button>
-    </div>
-  </div>
-);
+} ]
