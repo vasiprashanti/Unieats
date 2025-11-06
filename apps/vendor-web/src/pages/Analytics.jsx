@@ -36,7 +36,7 @@ export default function Analytics() {
         startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       }
 
-      const data = await getAnalytics({ token, startDate, endDate });
+      const data = await getAnalytics({ startDate, endDate });
 
       // Wrap API response into summary for UI consistency
       setAnalyticsData({
