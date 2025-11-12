@@ -40,12 +40,6 @@ export default function RestaurantList() {
       cuisines: ["Fast Food", "Multi-cuisine"],
     },
     {
-      id: 7,
-      name: "Noodles",
-      image: "/Chowmein.jpg",
-      cuisines: ["Chinese", "Multi-cuisine", "Fast Food"],
-    },
-    {
       id: 4,
       name: "Coffee",
       image: "/Coffee.jpg",
